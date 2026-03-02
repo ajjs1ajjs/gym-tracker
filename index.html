@@ -1,124 +1,77 @@
 <!DOCTYPE html>
 <html lang="uk">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мій Тренувальний План</title>
+    <title>GymProgress - Тренування</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
     <header>
-        <h1>Тренування в залі</h1>
-        <div id="progress-container">
-            <!-- Сюди будемо додавати статус по групах м'язів -->
+        <div class="header-top">
+            <h1>💪 Тренування</h1>
+            <div class="header-actions">
+                <button class="btn-reset" onclick="resetProgress()">Скинути</button>
+            </div>
+        </div>
+        <p class="subtitle">Обери групу м'язів та відмічай виконані вправи</p>
+        
+        <div class="stats-bar">
+            <div class="stat">
+                <span class="stat-value" id="total-exercises">0</span>
+                <span class="stat-label">Всього вправ</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="completed-exercises">0</span>
+                <span class="stat-label">Виконано</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="progress-percent">0%</span>
+                <span class="stat-label">Прогрес</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="total-workouts">0</span>
+                <span class="stat-label">Тренувань</span>
+            </div>
         </div>
     </header>
 
-    <main id="app-container">
-        <!-- Сюди JavaScript буде додавати картки вправ -->
-    </main>
+    <div class="main-layout">
+        <aside class="sidebar">
+            <h3>Групи м'язів</h3>
+            <div class="muscle-groups" id="muscle-groups"></div>
+        </aside>
+
+        <main>
+            <div class="exercises-wrapper" id="exercises-list"></div>
+        </main>
+    </div>
+
+    <div class="modal" id="exercise-modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <img id="modal-image" src="" alt="">
+            <h2 id="modal-title"></h2>
+            <div class="modal-meta">
+                <span class="muscle-tag" id="modal-muscle"></span>
+                <span class="difficulty-tag" id="modal-difficulty"></span>
+            </div>
+            <p class="modal-description" id="modal-description"></p>
+            <div class="modal-instructions">
+                <h4>Як виконувати:</h4>
+                <ul id="modal-instructions"></ul>
+            </div>
+            <div class="modal-sets">
+                <h4>Підходи та повтори:</h4>
+                <p id="modal-sets"></p>
+            </div>
+            <div class="modal-checkin">
+                <button id="modal-checkin-btn" onclick="toggleFromModal()">✓ Відмітити виконаним</button>
+                <p class="checkin-date" id="checkin-date"></p>
+            </div>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>
-
 </html>
-// Дані про тренування (з Кроку 2)
-const trainingData = [ /* ... */ ];
-
-// Отримуємо контейнери з HTML
-const appContainer = document.getElementById('app-container');
-const progressContainer = document.getElementById('progress-container');
-
-// Стан виконання вправ. Будемо завантажувати з localStorage
-let completionState = {};
-
-// Функція для збереження прогресу в localStorage
-function saveState() {
-localStorage.setItem('trainingProgress', JSON.stringify(completionState));
-}
-
-// Функція для завантаження прогресу
-function loadState() {
-const savedState = localStorage.getItem('trainingProgress');
-if (savedState) {
-completionState = JSON.parse(savedState);
-}
-}
-
-// Функція для відображення карток вправ
-function renderExercises() {
-appContainer.innerHTML = ''; // Очищуємо контейнер
-
-trainingData.forEach(muscleGroup => {
-const groupTitle = document.createElement('h2');
-groupTitle.textContent = muscleGroup.group;
-appContainer.appendChild(groupTitle);
-
-const exercisesWrapper = document.createElement('div');
-exercisesWrapper.className = 'exercises-wrapper';
-
-muscleGroup.exercises.forEach(exercise => {
-const isCompleted = completionState[exercise.id] === true;
-
-const card = document.createElement('div');
-card.className = `exercise-card ${isCompleted ? 'completed' : ''}`;
-
-card.innerHTML = `
-<img src="${exercise.image}" alt="${exercise.name}">
-<h3>${exercise.name}</h3>
-<p>${exercise.description}</p>
-<div class="card-footer">
-    <label>
-        <input type="checkbox" data-id="${exercise.id}" ${isCompleted ? 'checked' : '' }>
-        Виконано
-    </label>
-</div>
-`;
-
-exercisesWrapper.appendChild(card);
-});
-
-appContainer.appendChild(exercisesWrapper);
-});
-
-renderProgress();
-}
-
-// Функція для оновлення прогресу
-function renderProgress() {
-progressContainer.innerHTML = '';
-trainingData.forEach(muscleGroup => {
-const allExercises = muscleGroup.exercises.length;
-const completedExercises = muscleGroup.exercises.filter(ex => completionState[ex.id]).length;
-
-const progressElement = document.createElement('div');
-progressElement.className = 'progress-item';
-
-if (completedExercises === 0) {
-progressElement.classList.add('not-started');
-progressElement.textContent = `❌ ${muscleGroup.group} (не зроблено)`;
-} else if (completedExercises < allExercises) { progressElement.textContent=`⏳ ${muscleGroup.group} (/)`; } else {
-    progressElement.classList.add('fully-completed'); progressElement.textContent=`✅ ${muscleGroup.group} (завершено)`;
-    } progressContainer.appendChild(progressElement); }); } // Обробник подій для "чекінів"
-    appContainer.addEventListener('change', (event)=> {
-    if (event.target.type === 'checkbox') {
-    const exerciseId = event.target.dataset.id;
-    completionState[exerciseId] = event.target.checked;
-
-    // Зберігаємо та оновлюємо вигляд
-    saveState();
-    renderExercises();
-    }
-    });
-
-
-    // Ініціалізація додатку
-    function init() {
-    loadState();
-    renderExercises();
-    }
-
-    init();

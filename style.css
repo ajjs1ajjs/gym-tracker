@@ -12,221 +12,508 @@ body {
 }
 
 header {
-    text-align: center;
-    padding: 30px 20px;
-    background: rgba(0, 0, 0, 0.3);
+    padding: 20px 30px;
+    background: rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 header h1 {
-    margin: 0 0 10px 0;
-    font-size: 2.5rem;
+    margin: 0;
+    font-size: 2rem;
     color: #00d4ff;
 }
 
 .subtitle {
     color: #aaa;
-    margin-bottom: 25px;
+    margin: 10px 0 0 0;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.progress-container {
+.stats-bar {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 40px;
+    margin-top: 20px;
     flex-wrap: wrap;
-    max-width: 600px;
-    margin: 0 auto;
 }
 
-.progress-item {
-    padding: 12px 20px;
-    border-radius: 25px;
-    background-color: #2a2a4a;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 600;
-    border: 2px solid transparent;
+.stat {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px 25px;
+    border-radius: 12px;
+    min-width: 120px;
 }
 
-.progress-item:hover {
-    transform: scale(1.05);
+.stat-value {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #00d4ff;
 }
 
-.progress-item.not-started {
-    background-color: #2a2a4a;
+.stat-label {
+    font-size: 0.85rem;
     color: #888;
 }
 
-.progress-item.not-started:hover {
-    background-color: #3a3a5a;
-}
-
-.progress-item.partially-completed {
-    background-color: #ffc107;
-    color: #000;
-}
-
-.progress-item.fully-completed {
-    background-color: #28a745;
-    color: #fff;
-}
-
-.progress-item.active {
-    border-color: #00d4ff;
-    box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
-}
-
 .header-actions {
-    margin-top: 20px;
     display: flex;
-    justify-content: center;
-    gap: 15px;
-}
-
-.btn-reset, .btn-show-all {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s ease;
+    gap: 10px;
 }
 
 .btn-reset {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
     background-color: #dc3545;
     color: white;
+    font-size: 14px;
+    transition: all 0.3s ease;
 }
 
 .btn-reset:hover {
     background-color: #c82333;
 }
 
-.btn-show-all {
-    background-color: #00d4ff;
-    color: #000;
-    font-weight: 600;
+.main-layout {
+    display: flex;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    gap: 20px;
 }
 
-.btn-show-all:hover {
-    background-color: #00b8e6;
+.sidebar {
+    width: 250px;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    padding: 20px;
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+}
+
+.sidebar h3 {
+    margin: 0 0 15px 0;
+    color: #aaa;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.muscle-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.muscle-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.muscle-group:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.muscle-group.active {
+    border-color: #00d4ff;
+    background: rgba(0, 212, 255, 0.1);
+}
+
+.muscle-group.completed {
+    background: rgba(40, 167, 69, 0.2);
+}
+
+.muscle-icon {
+    font-size: 1.2rem;
+}
+
+.muscle-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.muscle-progress {
+    font-size: 0.8rem;
+    color: #888;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 8px;
+    border-radius: 10px;
 }
 
 main {
-    padding: 30px 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+    flex: 1;
 }
 
-.exercises-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 25px;
-    justify-content: center;
+.exercise-group {
+    margin-bottom: 30px;
+}
+
+.group-title {
+    font-size: 1.5rem;
+    margin: 0 0 20px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+    color: #fff;
+}
+
+.exercises-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
 }
 
 .exercise-card {
-    background-color: #1e1e3f;
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 15px;
-    width: 350px;
     overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
 }
 
 .exercise-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-}
-
-.exercise-card img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-}
-
-.exercise-content {
-    padding: 20px;
-}
-
-.exercise-content h3 {
-    margin: 0 0 10px 0;
-    font-size: 1.4rem;
-    color: #00d4ff;
-}
-
-.day-badge {
-    display: inline-block;
-    background-color: #2a2a4a;
-    color: #aaa;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    margin-bottom: 15px;
-}
-
-.description {
-    color: #ccc;
-    line-height: 1.6;
-    margin-bottom: 15px;
-}
-
-.approach {
-    background-color: rgba(0, 212, 255, 0.1);
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    color: #00d4ff;
-}
-
-.card-footer {
-    display: flex;
-    justify-content: center;
-}
-
-.card-footer button {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    background-color: #2a2a4a;
-    color: #fff;
-}
-
-.card-footer button:hover {
-    background-color: #3a3a5a;
-}
-
-.card-footer button.btn-completed {
-    background-color: #28a745;
-    color: #fff;
-}
-
-.card-footer button.btn-completed:hover {
-    background-color: #218838;
+    transform: translateY(-5px);
+    border-color: rgba(0, 212, 255, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .exercise-card.completed {
-    opacity: 0.85;
+    border-color: rgba(40, 167, 69, 0.5);
 }
 
-.exercise-card.completed img {
-    filter: grayscale(30%);
+.card-image {
+    position: relative;
+    height: 180px;
+    overflow: hidden;
 }
 
-@media (max-width: 768px) {
-    .exercise-card {
+.card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.exercise-card:hover .card-image img {
+    transform: scale(1.05);
+}
+
+.completed-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #28a745;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.card-content {
+    padding: 15px;
+}
+
+.card-content h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.1rem;
+    color: #fff;
+}
+
+.card-meta {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.muscle-tag, .difficulty-tag {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.muscle-tag {
+    background: rgba(0, 212, 255, 0.2);
+    color: #00d4ff;
+}
+
+.difficulty-tag {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.difficulty-tag.легкий {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.difficulty-tag.середній {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+}
+
+.difficulty-tag.складний {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.completed-date {
+    font-size: 0.8rem;
+    color: #28a745;
+    margin: 10px 0;
+}
+
+.check-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
+.check-btn:hover {
+    background: rgba(0, 212, 255, 0.3);
+}
+
+.check-btn.checked {
+    background: #28a745;
+}
+
+.check-btn.checked:hover {
+    background: #218838;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-content {
+    background: #1e1e3f;
+    border-radius: 20px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: modalIn 0.3s ease;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #fff;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.5);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    background: rgba(220, 53, 69, 0.8);
+}
+
+.modal-content img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 20px 20px 0 0;
+}
+
+.modal-content h2 {
+    margin: 20px;
+    color: #00d4ff;
+}
+
+.modal-meta {
+    margin: 0 20px 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.modal-description {
+    margin: 0 20px 20px;
+    color: #ccc;
+    line-height: 1.6;
+}
+
+.modal-instructions {
+    margin: 0 20px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.modal-instructions h4 {
+    margin: 0 0 10px 0;
+    color: #00d4ff;
+}
+
+.modal-instructions ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #ccc;
+}
+
+.modal-instructions li {
+    margin-bottom: 8px;
+}
+
+.modal-sets {
+    margin: 0 20px 20px;
+    background: rgba(0, 212, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.modal-sets h4 {
+    margin: 0 0 10px 0;
+    color: #00d4ff;
+}
+
+.modal-sets p {
+    margin: 0;
+    color: #fff;
+    font-weight: 500;
+}
+
+.modal-checkin {
+    margin: 20px;
+    text-align: center;
+}
+
+.modal-checkin button {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: #28a745;
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
+.modal-checkin button:hover {
+    background: #218838;
+}
+
+.modal-checkin button.btn-completed {
+    background: #dc3545;
+}
+
+.modal-checkin button.btn-completed:hover {
+    background: #c82333;
+}
+
+.checkin-date {
+    margin-top: 10px;
+    color: #28a745;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+    .main-layout {
+        flex-direction: column;
+    }
+    
+    .sidebar {
         width: 100%;
-        max-width: 400px;
+        position: static;
     }
     
+    .muscle-groups {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .muscle-group {
+        flex: 1;
+        min-width: 140px;
+    }
+}
+
+@media (max-width: 600px) {
     header h1 {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
     }
     
-    .progress-item {
-        padding: 10px 15px;
+    .stats-bar {
+        gap: 15px;
+    }
+    
+    .stat {
+        min-width: 80px;
+        padding: 10px;
+    }
+    
+    .stat-value {
+        font-size: 1.4rem;
+    }
+    
+    .exercises-grid {
+        grid-template-columns: 1fr;
     }
 }
