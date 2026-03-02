@@ -1,36 +1,124 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GymProgress - Тренування</title>
+    <title>Мій Тренувальний План</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+
     <header>
-        <h1>💪 Тренування</h1>
-        <p class="subtitle">Обери день і відмічай виконані вправи</p>
-        
-        <div class="progress-container">
-            <div class="progress-item not-started" data-day="1">Пн</div>
-            <div class="progress-item not-started" data-day="2">Вт</div>
-            <div class="progress-item not-started" data-day="3">Ср</div>
-            <div class="progress-item not-started" data-day="4">Чт</div>
-            <div class="progress-item not-started" data-day="5">Пт</div>
-            <div class="progress-item not-started" data-day="6">Сб</div>
-            <div class="progress-item not-started" data-day="7">Нд</div>
-        </div>
-        
-        <div class="header-actions">
-            <button class="btn-reset" onclick="resetProgress()">Скинути прогрес</button>
-            <button class="btn-show-all" onclick="filterByDay(null)">Показати всі</button>
+        <h1>Тренування в залі</h1>
+        <div id="progress-container">
+            <!-- Сюди будемо додавати статус по групах м'язів -->
         </div>
     </header>
 
-    <main>
-        <div class="exercises-wrapper" id="exercises-list"></div>
+    <main id="app-container">
+        <!-- Сюди JavaScript буде додавати картки вправ -->
     </main>
 
     <script src="app.js"></script>
 </body>
+
 </html>
+// Дані про тренування (з Кроку 2)
+const trainingData = [ /* ... */ ];
+
+// Отримуємо контейнери з HTML
+const appContainer = document.getElementById('app-container');
+const progressContainer = document.getElementById('progress-container');
+
+// Стан виконання вправ. Будемо завантажувати з localStorage
+let completionState = {};
+
+// Функція для збереження прогресу в localStorage
+function saveState() {
+localStorage.setItem('trainingProgress', JSON.stringify(completionState));
+}
+
+// Функція для завантаження прогресу
+function loadState() {
+const savedState = localStorage.getItem('trainingProgress');
+if (savedState) {
+completionState = JSON.parse(savedState);
+}
+}
+
+// Функція для відображення карток вправ
+function renderExercises() {
+appContainer.innerHTML = ''; // Очищуємо контейнер
+
+trainingData.forEach(muscleGroup => {
+const groupTitle = document.createElement('h2');
+groupTitle.textContent = muscleGroup.group;
+appContainer.appendChild(groupTitle);
+
+const exercisesWrapper = document.createElement('div');
+exercisesWrapper.className = 'exercises-wrapper';
+
+muscleGroup.exercises.forEach(exercise => {
+const isCompleted = completionState[exercise.id] === true;
+
+const card = document.createElement('div');
+card.className = `exercise-card ${isCompleted ? 'completed' : ''}`;
+
+card.innerHTML = `
+<img src="${exercise.image}" alt="${exercise.name}">
+<h3>${exercise.name}</h3>
+<p>${exercise.description}</p>
+<div class="card-footer">
+    <label>
+        <input type="checkbox" data-id="${exercise.id}" ${isCompleted ? 'checked' : '' }>
+        Виконано
+    </label>
+</div>
+`;
+
+exercisesWrapper.appendChild(card);
+});
+
+appContainer.appendChild(exercisesWrapper);
+});
+
+renderProgress();
+}
+
+// Функція для оновлення прогресу
+function renderProgress() {
+progressContainer.innerHTML = '';
+trainingData.forEach(muscleGroup => {
+const allExercises = muscleGroup.exercises.length;
+const completedExercises = muscleGroup.exercises.filter(ex => completionState[ex.id]).length;
+
+const progressElement = document.createElement('div');
+progressElement.className = 'progress-item';
+
+if (completedExercises === 0) {
+progressElement.classList.add('not-started');
+progressElement.textContent = `❌ ${muscleGroup.group} (не зроблено)`;
+} else if (completedExercises < allExercises) { progressElement.textContent=`⏳ ${muscleGroup.group} (/)`; } else {
+    progressElement.classList.add('fully-completed'); progressElement.textContent=`✅ ${muscleGroup.group} (завершено)`;
+    } progressContainer.appendChild(progressElement); }); } // Обробник подій для "чекінів"
+    appContainer.addEventListener('change', (event)=> {
+    if (event.target.type === 'checkbox') {
+    const exerciseId = event.target.dataset.id;
+    completionState[exerciseId] = event.target.checked;
+
+    // Зберігаємо та оновлюємо вигляд
+    saveState();
+    renderExercises();
+    }
+    });
+
+
+    // Ініціалізація додатку
+    function init() {
+    loadState();
+    renderExercises();
+    }
+
+    init();
