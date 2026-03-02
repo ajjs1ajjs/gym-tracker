@@ -5,7 +5,7 @@ const trainingData = [
         icon: "💪",
         exercises: [
             {
-                id: D: \WORK_CODE\Training\images\Жим штанги лежачи.png,
+                id: 1,
                 name: "Жим штанги лежачи",
                 image: "images/Жим штанги лежачи.png",
                 description: "Базовий комплексний вправ для розвитку грудних м'язів. Виконується на горизонтальній лаві.",
@@ -21,7 +21,7 @@ const trainingData = [
                 muscle: "Великі грудні"
             },
             {
-                id: D: \WORK_CODE\Training\images\Жим в тренажері.png,
+                id: 2,
                 name: "Жим в тренажері",
                 image: "images/Жим в тренажері.png",
                 description: "Безпечна вправа для грудей в тренажері. Підходить для початківців.",
