@@ -7,7 +7,7 @@ const trainingData = [
             {
                 id: 1,
                 name: "Жим штанги лежачи",
-                image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop",
+                image: "images/Жим штанги лежачи.png",
                 description: "Базовий комплексний вправ для розвитку грудних м'язів. Виконується на горизонтальній лаві.",
                 difficulty: "Середній",
                 instructions: [
@@ -23,7 +23,7 @@ const trainingData = [
             {
                 id: 2,
                 name: "Жим в тренажері",
-                image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop",
+                image: "images/Жим в тренажері.png",
                 description: "Безпечна вправа для грудей в тренажері. Підходить для початківців.",
                 difficulty: "Легкий",
                 instructions: [
@@ -38,7 +38,7 @@ const trainingData = [
             {
                 id: 3,
                 name: "Бабочка",
-                image: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600&h=400&fit=crop",
+                image: "images/Бабочка.png",
                 description: "Ізоляційна вправа для грудних м'язів у тренажері.",
                 difficulty: "Легкий",
                 instructions: [
@@ -53,7 +53,7 @@ const trainingData = [
             {
                 id: 4,
                 name: "Віджимання на брусах",
-                image: "https://images.unsplash.com/photo-1597347316205-36f6c451902a?w=600&h=400&fit=crop",
+                image: "images/Віджимання на брусах.png",
                 description: "Вправа для нижньої частини грудей та триголового м'яза плеча.",
                 difficulty: "Середній",
                 instructions: [
@@ -68,7 +68,7 @@ const trainingData = [
             {
                 id: 5,
                 name: "Розведення гантелей",
-                image: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600&h=400&fit=crop",
+                image: "images/Розведення гантелей.png",
                 description: "Ізоляційна вправа для розтягування грудних м'язів.",
                 difficulty: "Легкий",
                 instructions: [
@@ -91,7 +91,7 @@ const trainingData = [
             {
                 id: 6,
                 name: "Тяга верхнього блоку",
-                image: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&h=400&fit=crop",
+                image: "images/Тяга верхнього блоку.png",
                 description: "Альтернатива підтягуванням для широчайших м'язів спини.",
                 difficulty: "Легкий",
                 instructions: [
@@ -106,7 +106,7 @@ const trainingData = [
             {
                 id: 7,
                 name: "Тяга нижнього блоку",
-                image: "https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=600&h=400&fit=crop",
+                image: "images/Тяга нижнього блоку.png",
                 description: "Вправа для розвитку широчайших м'язів знизу.",
                 difficulty: "Середній",
                 instructions: [
@@ -121,7 +121,7 @@ const trainingData = [
             {
                 id: 8,
                 name: "Підтягування",
-                image: "https://images.unsplash.com/photo-1598266663439-2056e6900339?w=600&h=400&fit=crop",
+                image: "images/Підтягування.png",
                 description: "Класична базова вправа для широчайших м'язів спини.",
                 difficulty: "Середній",
                 instructions: [
@@ -136,7 +136,7 @@ const trainingData = [
             {
                 id: 9,
                 name: "Тяга штанги в нахилі",
-                image: "https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=600&h=400&fit=crop",
+                image: "images/Тяга штанги в нахилі.png",
                 description: "Ефективна вправа для товщини спини.",
                 difficulty: "Середній",
                 instructions: [
@@ -147,6 +147,22 @@ const trainingData = [
                 ],
                 sets: "4 підходи по 8-12 повторів",
                 muscle: "Широчайші, трапеції"
+            },
+            {
+                id: 31,
+                name: "Станова тяга",
+                image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&h=400&fit=crop",
+                description: "Базова вправа для задньої ланцюга: спина, сідниці, задня поверхня стегна.",
+                difficulty: "Складний",
+                instructions: [
+                    "Станьте біля штанги, ноги на ширині плечей",
+                    "Штанга біля гомілок, спина пряма",
+                    "Тримаючи спину, підніміть штангу",
+                    "Підніміться, випрямивши корпус",
+                    "Опускайте штангу контрольовано"
+                ],
+                sets: "4 підходи по 6-10 повторів",
+                muscle: "Спина, сідниці, задня поверхня стегна"
             }
         ]
     },
@@ -158,7 +174,7 @@ const trainingData = [
             {
                 id: 10,
                 name: "Згинання рук зі штангою",
-                image: "https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=600&h=400&fit=crop",
+                image: "images/Згинання рук зі штангою.png",
                 description: "Класична вправа для біцепса.",
                 difficulty: "Легкий",
                 instructions: [
@@ -173,7 +189,7 @@ const trainingData = [
             {
                 id: 11,
                 name: "Згинання рук з гантелями",
-                image: "https://images.unsplash.com/photo-1601422407692-ec4eeec1d9b3?w=600&h=400&fit=crop",
+                image: "images/Згинання рук з гантелями.png",
                 description: "Вправа для біцепса з гантелями.",
                 difficulty: "Легкий",
                 instructions: [
@@ -188,7 +204,7 @@ const trainingData = [
             {
                 id: 12,
                 name: "Біцепс в тренажері",
-                image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=400&fit=crop",
+                image: "images/Біцепс в тренажері.png",
                 description: "Ізоляційна вправа для біцепса в тренажері.",
                 difficulty: "Легкий",
                 instructions: [
@@ -210,7 +226,7 @@ const trainingData = [
             {
                 id: 13,
                 name: "Тріцепс в кросовері",
-                image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=400&fit=crop",
+                image: "images/Тріцепс в кросовері.png",
                 description: "Вправа для трицепса з верхнім блоком.",
                 difficulty: "Легкий",
                 instructions: [
@@ -226,7 +242,7 @@ const trainingData = [
             {
                 id: 14,
                 name: "Розгинання на блоці",
-                image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=400&fit=crop",
+                image: "images/Розгинання на блоці.png",
                 description: "Вправа для трицепса на верхньому блоці.",
                 difficulty: "Легкий",
                 instructions: [
@@ -241,7 +257,7 @@ const trainingData = [
             {
                 id: 15,
                 name: "Французький жим",
-                image: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=600&h=400&fit=crop",
+                image: "images/Французький жим.png",
                 description: "Ефективна вправа для трицепса.",
                 difficulty: "Середній",
                 instructions: [
@@ -263,7 +279,7 @@ const trainingData = [
             {
                 id: 16,
                 name: "Приседання зі штангою",
-                image: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&h=400&fit=crop",
+                image: "images/Приседання зі штангою.png",
                 description: "Королева вправ для ніг. Розвиває квадрицепси та сідниці.",
                 difficulty: "Складний",
                 instructions: [
@@ -278,7 +294,7 @@ const trainingData = [
             {
                 id: 17,
                 name: "Жим ногами",
-                image: "https://images.unsplash.com/photo-1434608519344-49d77a699e1d?w=600&h=400&fit=crop",
+                image: "images/Жим ногами.png",
                 description: "Безпечна альтернатива присіданням.",
                 difficulty: "Середній",
                 instructions: [
@@ -293,7 +309,7 @@ const trainingData = [
             {
                 id: 18,
                 name: "Розгинання ніг в тренажері",
-                image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop",
+                image: "images/Розгинання ніг в тренажері.png",
                 description: "Вправа для квадрицепсів.",
                 difficulty: "Легкий",
                 instructions: [
@@ -306,9 +322,24 @@ const trainingData = [
                 muscle: "Квадрицепси"
             },
             {
+                id: 32,
+                name: "Згинання ніг в тренажері",
+                image: "images/Розгинання ніг в тренажері.png",
+                description: "Вправа для задньої поверхні стегна (біцепс стегна).",
+                difficulty: "Легкий",
+                instructions: [
+                    "Ляжте в тренажер на животі",
+                    "Валик під стегнами, ноги зачеплені",
+                    "Згинайте ноги, піднімаючи п'яти до сідниць",
+                    "Повільно опускайте"
+                ],
+                sets: "3 підходи по 12-15 повторів",
+                muscle: "Задня поверхня стегна"
+            },
+            {
                 id: 19,
                 name: "Випади",
-                image: "https://images.unsplash.com/photo-1597452485669-2c7bb5fef90d?w=600&h=400&fit=crop",
+                image: "images/Випади.png",
                 description: "Вправа для квадрицепсів та сідниць.",
                 difficulty: "Середній",
                 instructions: [
@@ -323,7 +354,7 @@ const trainingData = [
             {
                 id: 20,
                 name: "Підйоми на носки",
-                image: "https://images.unsplash.com/photo-1606890658317-7d14490b76fd?w=600&h=400&fit=crop",
+                image: "images/Підйоми на носки.png",
                 description: "Вправа для литкових м'язів.",
                 difficulty: "Легкий",
                 instructions: [
@@ -345,7 +376,7 @@ const trainingData = [
             {
                 id: 21,
                 name: "Розведення в боки",
-                image: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&h=400&fit=crop",
+                image: "images/Розведення в боки.png",
                 description: "Ізоляційна вправа для середньої частини дельт.",
                 difficulty: "Легкий",
                 instructions: [
@@ -360,7 +391,7 @@ const trainingData = [
             {
                 id: 22,
                 name: "Махи з гантелями",
-                image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&h=400&fit=crop",
+                image: "images/Махи з гантелями.png",
                 description: "Вправа для дельтовидних м'язів.",
                 difficulty: "Легкий",
                 instructions: [
@@ -375,7 +406,7 @@ const trainingData = [
             {
                 id: 23,
                 name: "Жим гантелей над головою",
-                image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&h=400&fit=crop",
+                image: "images/Жим гантелей над головою.png",
                 description: "Базовий вправа для розвитку дельтовидних м'язів.",
                 difficulty: "Середній",
                 instructions: [
@@ -397,7 +428,7 @@ const trainingData = [
             {
                 id: 24,
                 name: "Трапеції з гантелями",
-                image: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&h=400&fit=crop",
+                image: "images/Трапеції з гантелями.png",
                 description: "Вправа для розвитку трапецієвидних м'язів.",
                 difficulty: "Легкий",
                 instructions: [
@@ -412,7 +443,7 @@ const trainingData = [
             {
                 id: 25,
                 name: "Тяга до підборіддя",
-                image: "https://images.unsplash.com/photo-1603287681836-b174ce5074c2?w=600&h=400&fit=crop",
+                image: "images/Тяга до підборіддя.png",
                 description: "Вправа для трапецій та дельт.",
                 difficulty: "Середній",
                 instructions: [
@@ -434,7 +465,7 @@ const trainingData = [
             {
                 id: 26,
                 name: "Передпліччя в кросовері",
-                image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=400&fit=crop",
+                image: "images/Передпліччя в кросовері.png",
                 description: "Вправа для передпліччя в кросовері.",
                 difficulty: "Легкий",
                 instructions: [
@@ -456,7 +487,7 @@ const trainingData = [
             {
                 id: 27,
                 name: "Скручування",
-                image: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&h=400&fit=crop",
+                image: "images/Скручування.png",
                 description: "Класична вправа для прямого м'яза живота.",
                 difficulty: "Легкий",
                 instructions: [
@@ -471,7 +502,7 @@ const trainingData = [
             {
                 id: 28,
                 name: "Планка",
-                image: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=600&h=400&fit=crop",
+                image: "images/Планка.png",
                 description: "Статична вправа для зміцнення кора.",
                 difficulty: "Середній",
                 instructions: [
@@ -486,7 +517,7 @@ const trainingData = [
             {
                 id: 29,
                 name: "Підйоми ніг лежачи",
-                image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop",
+                image: "images/Підйоми ніг лежачи.png",
                 description: "Вправа для нижнього преса.",
                 difficulty: "Середній",
                 instructions: [
@@ -500,7 +531,7 @@ const trainingData = [
             {
                 id: 30,
                 name: "Велосипед",
-                image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&h=400&fit=crop",
+                image: "images/Велосипед.png",
                 description: "Вправа для косих м'язів живота.",
                 difficulty: "Середній",
                 instructions: [
