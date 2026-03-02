@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GymProgress - Тренування</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>💪 Тренування</h1>
+        <p class="subtitle">Обери день і відмічай виконані вправи</p>
+        
+        <div class="progress-container">
+            <div class="progress-item not-started" data-day="1">Пн</div>
+            <div class="progress-item not-started" data-day="2">Вт</div>
+            <div class="progress-item not-started" data-day="3">Ср</div>
+            <div class="progress-item not-started" data-day="4">Чт</div>
+            <div class="progress-item not-started" data-day="5">Пт</div>
+            <div class="progress-item not-started" data-day="6">Сб</div>
+            <div class="progress-item not-started" data-day="7">Нд</div>
+        </div>
+        
+        <div class="header-actions">
+            <button class="btn-reset" onclick="resetProgress()">Скинути прогрес</button>
+            <button class="btn-show-all" onclick="filterByDay(null)">Показати всі</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="exercises-wrapper" id="exercises-list"></div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

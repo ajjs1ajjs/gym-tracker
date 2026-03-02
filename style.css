@@ -1,0 +1,232 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #fff;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+header {
+    text-align: center;
+    padding: 30px 20px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+header h1 {
+    margin: 0 0 10px 0;
+    font-size: 2.5rem;
+    color: #00d4ff;
+}
+
+.subtitle {
+    color: #aaa;
+    margin-bottom: 25px;
+}
+
+.progress-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.progress-item {
+    padding: 12px 20px;
+    border-radius: 25px;
+    background-color: #2a2a4a;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    border: 2px solid transparent;
+}
+
+.progress-item:hover {
+    transform: scale(1.05);
+}
+
+.progress-item.not-started {
+    background-color: #2a2a4a;
+    color: #888;
+}
+
+.progress-item.not-started:hover {
+    background-color: #3a3a5a;
+}
+
+.progress-item.partially-completed {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.progress-item.fully-completed {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.progress-item.active {
+    border-color: #00d4ff;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+}
+
+.header-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.btn-reset, .btn-show-all {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-reset {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-reset:hover {
+    background-color: #c82333;
+}
+
+.btn-show-all {
+    background-color: #00d4ff;
+    color: #000;
+    font-weight: 600;
+}
+
+.btn-show-all:hover {
+    background-color: #00b8e6;
+}
+
+main {
+    padding: 30px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.exercises-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    justify-content: center;
+}
+
+.exercise-card {
+    background-color: #1e1e3f;
+    border-radius: 15px;
+    width: 350px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.exercise-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.exercise-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.exercise-content {
+    padding: 20px;
+}
+
+.exercise-content h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.4rem;
+    color: #00d4ff;
+}
+
+.day-badge {
+    display: inline-block;
+    background-color: #2a2a4a;
+    color: #aaa;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    margin-bottom: 15px;
+}
+
+.description {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.approach {
+    background-color: rgba(0, 212, 255, 0.1);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    color: #00d4ff;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: center;
+}
+
+.card-footer button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background-color: #2a2a4a;
+    color: #fff;
+}
+
+.card-footer button:hover {
+    background-color: #3a3a5a;
+}
+
+.card-footer button.btn-completed {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.card-footer button.btn-completed:hover {
+    background-color: #218838;
+}
+
+.exercise-card.completed {
+    opacity: 0.85;
+}
+
+.exercise-card.completed img {
+    filter: grayscale(30%);
+}
+
+@media (max-width: 768px) {
+    .exercise-card {
+        width: 100%;
+        max-width: 400px;
+    }
+    
+    header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .progress-item {
+        padding: 10px 15px;
+    }
+}
