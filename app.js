@@ -5,7 +5,7 @@ const trainingData = [
         icon: "💪",
         exercises: [
             {
-                id: 1,
+                id: D: \WORK_CODE\Training\images\Жим штанги лежачи.png,
                 name: "Жим штанги лежачи",
                 image: "images/Жим штанги лежачи.png",
                 description: "Базовий комплексний вправ для розвитку грудних м'язів. Виконується на горизонтальній лаві.",
@@ -21,7 +21,7 @@ const trainingData = [
                 muscle: "Великі грудні"
             },
             {
-                id: 2,
+                id: D: \WORK_CODE\Training\images\Жим в тренажері.png,
                 name: "Жим в тренажері",
                 image: "images/Жим в тренажері.png",
                 description: "Безпечна вправа для грудей в тренажері. Підходить для початківців.",
@@ -151,7 +151,7 @@ const trainingData = [
             {
                 id: 31,
                 name: "Станова тяга",
-                image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&h=400&fit=crop",
+                image: "images/Станова тяга.png",
                 description: "Базова вправа для задньої ланцюга: спина, сідниці, задня поверхня стегна.",
                 difficulty: "Складний",
                 instructions: [
@@ -324,7 +324,7 @@ const trainingData = [
             {
                 id: 32,
                 name: "Згинання ніг в тренажері",
-                image: "images/Розгинання ніг в тренажері.png",
+                image: "images/Згинання ніг в тренажері.png",
                 description: "Вправа для задньої поверхні стегна (біцепс стегна).",
                 difficulty: "Легкий",
                 instructions: [
@@ -565,9 +565,9 @@ function saveState() {
 function formatDate(timestamp) {
     if (!timestamp) return '';
     const date = new Date(timestamp);
-    return date.toLocaleDateString('uk-UA', { 
-        day: 'numeric', 
-        month: 'long', 
+    return date.toLocaleDateString('uk-UA', {
+        day: 'numeric',
+        month: 'long',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
@@ -613,7 +613,7 @@ function renderMuscleGroups() {
 
         const isActive = selectedMuscleGroup === group.id;
         const isComplete = groupCompleted === groupExercises;
-        
+
         return `
             <div class="muscle-group ${isActive ? 'active' : ''} ${isComplete ? 'completed' : ''}" 
                  onclick="filterByGroup('${group.id}')">
@@ -633,8 +633,8 @@ function filterByGroup(groupId) {
 
 function renderExercises() {
     const container = document.getElementById('exercises-list');
-    
-    const filteredGroups = selectedMuscleGroup 
+
+    const filteredGroups = selectedMuscleGroup
         ? trainingData.filter(g => g.id === selectedMuscleGroup)
         : trainingData;
 
@@ -643,10 +643,10 @@ function renderExercises() {
             <h2 class="group-title">${group.icon} ${group.name}</h2>
             <div class="exercises-grid">
                 ${group.exercises.map(ex => {
-                    const state = completionState[ex.id];
-                    const isCompleted = !!state;
-                    
-                    return `
+        const state = completionState[ex.id];
+        const isCompleted = !!state;
+
+        return `
                         <div class="exercise-card ${isCompleted ? 'completed' : ''}" onclick="openModal(${ex.id})">
                             <div class="card-image">
                                 <img src="${ex.image}" alt="${ex.name}">
@@ -665,7 +665,7 @@ function renderExercises() {
                             </div>
                         </div>
                     `;
-                }).join('')}
+    }).join('')}
             </div>
         </div>
     `).join('');
@@ -674,7 +674,7 @@ function renderExercises() {
 function toggleExercise(id) {
     const allExercises = getAllExercises();
     const exercise = allExercises.find(ex => ex.id === id);
-    
+
     if (completionState[id]) {
         delete completionState[id];
     } else {
@@ -684,7 +684,7 @@ function toggleExercise(id) {
             name: exercise.name
         };
     }
-    
+
     saveState();
     updateStats();
     renderMuscleGroups();
@@ -696,7 +696,7 @@ function openModal(id) {
     selectedExerciseId = id;
     const allExercises = getAllExercises();
     const exercise = allExercises.find(ex => ex.id === id);
-    
+
     if (!exercise) return;
 
     const state = completionState[id];
@@ -708,7 +708,7 @@ function openModal(id) {
     document.getElementById('modal-difficulty').textContent = exercise.difficulty;
     document.getElementById('modal-description').textContent = exercise.description;
     document.getElementById('modal-sets').textContent = exercise.sets;
-    
+
     document.getElementById('modal-instructions').innerHTML = exercise.instructions
         .map(i => `<li>${i}</li>`)
         .join('');
