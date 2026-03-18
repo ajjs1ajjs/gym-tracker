@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#00d4ff">
+    <meta name="description" content="Додаток для відстежування тренувань та прогресу">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="images/icon-192.png">
+    <title>GymProgress - Тренування</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <h1>💪 Тренування</h1>
+            <div class="header-actions">
+                <button class="btn-timer" onclick="openTimerModal()">⏱ Таймер</button>
+                <button class="btn-export" onclick="exportData()">📤 Експорт</button>
+                <label class="btn-import">
+                    📥 Імпорт
+                    <input type="file" accept=".json" onchange="importData(event)" hidden>
+                </label>
+                <button class="btn-reset" onclick="resetProgress()">Скинути</button>
+            </div>
+        </div>
+        <p class="subtitle">Обери групу м'язів та відмічай виконані вправи</p>
+        
+        <div class="stats-bar">
+            <div class="stat">
+                <span class="stat-value" id="total-exercises">0</span>
+                <span class="stat-label">Всього вправ</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="completed-exercises">0</span>
+                <span class="stat-label">Виконано</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="progress-percent">0%</span>
+                <span class="stat-label">Прогрес</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="total-workouts">0</span>
+                <span class="stat-label">Тренувань</span>
+            </div>
+        </div>
+        
+        <div class="header-tabs">
+            <button class="tab-btn active" onclick="switchTab('exercises')">Вправи</button>
+            <button class="tab-btn" onclick="switchTab('history')">Історія</button>
+            <button class="tab-btn" onclick="switchTab('plans')">Плани</button>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <aside class="sidebar">
+            <h3>Групи м'язів</h3>
+            <div class="muscle-groups" id="muscle-groups"></div>
+        </aside>
+
+        <main>
+            <div class="exercises-wrapper" id="exercises-list"></div>
+        </main>
+    </div>
+
+    <div class="modal" id="exercise-modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <img id="modal-image" src="" alt="">
+            <h2 id="modal-title"></h2>
+            <div class="modal-meta">
+                <span class="muscle-tag" id="modal-muscle"></span>
+                <span class="difficulty-tag" id="modal-difficulty"></span>
+            </div>
+            <p class="modal-description" id="modal-description"></p>
+            <div class="modal-instructions">
+                <h4>Як виконувати:</h4>
+                <ul id="modal-instructions"></ul>
+            </div>
+            <div class="modal-sets">
+                <h4>Підходи та повтори:</h4>
+                <p id="modal-sets"></p>
+            </div>
+            <div class="modal-checkin">
+                <button id="modal-checkin-btn" onclick="toggleFromModal()">✓ Відмітити виконаним</button>
+                <p class="checkin-date" id="checkin-date"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="timer-modal">
+        <div class="modal-content timer-modal-content">
+            <span class="modal-close" onclick="closeTimerModal()">&times;</span>
+            <h2>⏱ Таймер відпочинку</h2>
+            <div class="timer-display" id="timer-display">01:30</div>
+            <div class="timer-presets">
+                <button class="timer-preset" onclick="setTimer(30)">30с</button>
+                <button class="timer-preset" onclick="setTimer(60)">1хв</button>
+                <button class="timer-preset active" onclick="setTimer(90)">1.5хв</button>
+                <button class="timer-preset" onclick="setTimer(120)">2хв</button>
+                <button class="timer-preset" onclick="setTimer(180)">3хв</button>
+            </div>
+            <div class="timer-controls">
+                <button class="timer-btn start" id="timer-start-btn" onclick="startTimer()">▶ Старт</button>
+                <button class="timer-btn pause" id="timer-pause-btn" onclick="pauseTimer()" style="display:none;">⏸ Пауза</button>
+                <button class="timer-btn reset" onclick="resetTimer()">↻ Скинути</button>
+            </div>
+        </div>
+    </div>
+
+    <section class="history-section" id="history-section" style="display:none;">
+        <div class="section-container">
+            <h2>📅 Історія тренувань</h2>
+            <div class="history-filters">
+                <select id="history-period" onchange="filterHistory()">
+                    <option value="all">Весь час</option>
+                    <option value="week">Цей тиждень</option>
+                    <option value="month">Цей місяць</option>
+                </select>
+            </div>
+            <div class="history-chart-container">
+                <canvas id="history-chart"></canvas>
+            </div>
+            <div class="history-list" id="history-list"></div>
+        </div>
+    </section>
+
+    <section class="plans-section" id="plans-section" style="display:none;">
+        <div class="section-container">
+            <h2>📋 Плани тренувань</h2>
+            <button class="btn-add-plan" onclick="openPlanModal()">+ Новий план</button>
+            <div class="plans-list" id="plans-list"></div>
+        </div>
+    </section>
+
+    <div class="modal" id="plan-modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closePlanModal()">&times;</span>
+            <h2 id="plan-modal-title">Новий план тренувань</h2>
+            <div class="plan-form">
+                <div class="form-group">
+                    <label>Назва плану:</label>
+                    <input type="text" id="plan-name" placeholder="Назва плану">
+                </div>
+                <div class="form-group">
+                    <label>Оберіть вправи:</label>
+                    <div class="plan-exercises-select" id="plan-exercises-select"></div>
+                </div>
+                <button class="btn-save-plan" onclick="savePlan()">Зберегти план</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=20260318-1"></script>
+</body>
+</html>
