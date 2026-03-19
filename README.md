@@ -1,6 +1,287 @@
-https://ajjs1ajjs.github.io/gym-tracker/
-<img width="1421" height="1029" alt="image" src="https://github.com/user-attachments/assets/213991c6-853b-42f5-8071-00e8074c8e29" />
-<img width="1111" height="1159" alt="image" src="https://github.com/user-attachments/assets/abba25c3-9742-40ef-ae04-51fcd89715c1" />
-<img width="1116" height="1132" alt="image" src="https://github.com/user-attachments/assets/b50dc397-fd89-4285-842d-fd49d09640b0" />
-<img width="1117" height="1220" alt="image" src="https://github.com/user-attachments/assets/28e62ea8-0e55-43b5-8cf6-32724f6dceec" />
-<img width="1125" height="717" alt="image" src="https://github.com/user-attachments/assets/8c164753-761d-440e-8501-3596ec200dbb" />
+# 💪 Gym Tracker - Progress Tracking App
+
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/ajjs1ajjs/gym-tracker/releases)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
+[![CI/CD](https://github.com/ajjs1ajjs/gym-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/ajjs1ajjs/gym-tracker/actions)
+
+**Progressive Web App for workout tracking with exercise library, progress tracking, and workout plans.**
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Exercises-32+-orange" alt="Exercises">
+  <img src="https://img.shields.io/badge/Muscle%20Groups-10-blue" alt="Muscle Groups">
+  <img src="https://img.shields.io/badge/PWA-Ready-red" alt="PWA">
+</p>
+
+---
+
+## 🌟 Features
+
+| Category | Features |
+|----------|----------|
+| **Exercise Library** | 32+ exercises across 10 muscle groups with images & instructions |
+| **Progress Tracking** | Mark completed exercises, track workout history |
+| **Workout Logging** | Log sets, reps, weight for each exercise |
+| **Personal Records** | Automatic PR tracking for weight, reps, duration |
+| **Statistics** | Charts and graphs showing your progress |
+| **Workout Plans** | Create and save custom workout plans |
+| **Timer** | Rest timer with customizable presets |
+| **PWA** | Offline support, installable on mobile devices |
+| **Dark/Light Theme** | Toggle between dark and light themes |
+| **Cloud Sync** | User accounts with cloud data synchronization |
+
+---
+
+## 🚀 Quick Start
+
+### Frontend Only (Static)
+
+```bash
+# Just open in browser
+open index.html
+
+# Or use any static server
+npx serve .
+```
+
+### Full Stack (with Backend)
+
+```bash
+# Install dependencies
+npm install
+
+# Start server
+npm start
+
+# Access at http://localhost:3000
+```
+
+### Development Mode
+
+```bash
+# Auto-restart on changes
+npm run dev
+```
+
+---
+
+## 📱 PWA Installation
+
+1. Open the app in Chrome/Edge
+2. Click the install icon (⊕) in the address bar
+3. Click "Install"
+4. App will be available on your home screen
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **HTML5/CSS3** - Modern responsive design
+- **Vanilla JavaScript** - No framework dependencies
+- **Chart.js** - Progress visualization
+- **Service Worker** - Offline support
+
+### Backend
+- **Node.js** - Runtime environment
+- **Express.js** - Web framework
+- **SQLite** - Database (better-sqlite3)
+- **JWT** - Authentication
+
+---
+
+## 📊 API Endpoints
+
+### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register new user |
+| POST | `/api/auth/login` | Login user |
+| GET | `/api/auth/me` | Get current user |
+
+### Exercises
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/exercises` | Get all exercises |
+| GET | `/api/exercises/:id` | Get exercise by ID |
+| GET | `/api/exercises/group/:id` | Get exercises by group |
+| POST | `/api/exercises` | Create exercise (admin) |
+| PUT | `/api/exercises/:id` | Update exercise (admin) |
+| DELETE | `/api/exercises/:id` | Delete exercise (admin) |
+
+### Workouts
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/workouts` | Get workout history |
+| POST | `/api/workouts` | Log a workout |
+| GET | `/api/workouts/stats` | Get statistics |
+| POST | `/api/workouts/plan` | Create workout plan |
+| GET | `/api/workouts/plan` | Get user's plans |
+
+---
+
+## 📁 Project Structure
+
+```
+gym-tracker/
+├── index.html          # Main HTML file
+├── app.js              # Frontend application logic
+├── style.css           # Styles with theme support
+├── manifest.json       # PWA manifest
+├── sw.js               # Service Worker
+├── images/             # Exercise images (32 files)
+├── server.js           # Express server
+├── database.js         # SQLite database module
+├── routes/
+│   ├── auth.js         # Authentication routes
+│   ├── exercises.js    # Exercise CRUD routes
+│   ├── workouts.js     # Workout logging routes
+│   └── users.js        # User profile routes
+├── tests/
+│   └── api.test.js     # API tests
+├── package.json        # Dependencies
+└── README.md           # This file
+```
+
+---
+
+## 🎨 Themes
+
+### Dark Theme (Default)
+- Modern dark gradient background
+- Neon blue accents
+- Easy on eyes for gym environments
+
+### Light Theme
+- Clean light background
+- Professional look
+- Better for outdoor use
+
+**Toggle:** Click the theme button (🌙/☀️) in the header.
+
+---
+
+## 📈 Progress Charts
+
+The app includes Chart.js visualizations for:
+- **Workout Frequency** - Workouts per week/month
+- **Exercise Completion** - Progress by muscle group
+- **Personal Records** - PR history over time
+- **Volume Tracking** - Total weight lifted over time
+
+---
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Create a `.env` file:
+
+```env
+PORT=3000
+JWT_SECRET=your-super-secret-key-change-this
+NODE_ENV=development
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run with coverage
+npm test -- --coverage
+```
+
+---
+
+## 📦 Deployment
+
+### Vercel/Netlify (Frontend Only)
+
+```bash
+# Build static files
+npm run build
+
+# Deploy to Vercel
+vercel
+
+# Deploy to Netlify
+netlify deploy
+```
+
+### Heroku (Full Stack)
+
+```bash
+# Login to Heroku
+heroku login
+
+# Create app
+heroku create gym-tracker
+
+# Deploy
+git push heroku main
+```
+
+### Docker
+
+```bash
+# Build image
+docker build -t gym-tracker .
+
+# Run container
+docker run -p 3000:3000 gym-tracker
+```
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
+
+---
+
+## 📝 License
+
+MIT License - see [LICENSE](LICENSE) file.
+
+---
+
+## 👥 Support
+
+- **Issues**: https://github.com/ajjs1ajjs/gym-tracker/issues
+- **Discussions**: https://github.com/ajjs1ajjs/gym-tracker/discussions
+
+---
+
+## 🎯 Roadmap
+
+### v2.1.0 (Q2 2026)
+- [ ] Exercise videos
+- [ ] Workout templates
+- [ ] Social sharing
+
+### v2.2.0 (Q3 2026)
+- [ ] Nutrition tracking
+- [ ] Body weight tracking
+- [ ] Apple Health/Google Fit integration
+
+### v3.0.0 (Q4 2026)
+- [ ] Coach mode
+- [ ] Multi-language support
+- [ ] Mobile app (React Native)
+
+---
+
+**⭐ Star this repo if you find it useful!**
+
+**💪 Happy Training!**

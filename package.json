@@ -1,0 +1,52 @@
+{
+  "name": "gym-tracker",
+  "version": "2.0.0",
+  "description": "Progressive Web App for workout tracking with exercise library, progress tracking, and workout plans",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{js,jsx,json,md}\""
+  },
+  "keywords": [
+    "gym",
+    "fitness",
+    "workout",
+    "tracking",
+    "pwa",
+    "exercise"
+  ],
+  "author": "ajjs1ajjs",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "better-sqlite3": "^9.2.2",
+    "uuid": "^9.0.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ajjs1ajjs/gym-tracker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ajjs1ajjs/gym-tracker/issues"
+  },
+  "homepage": "https://github.com/ajjs1ajjs/gym-tracker#readme"
+}
