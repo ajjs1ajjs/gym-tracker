@@ -32,39 +32,6 @@
 
 ---
 
-## 🚀 Quick Start
-
-### Frontend Only (Static)
-
-```bash
-# Just open in browser
-open index.html
-
-# Or use any static server
-npx serve .
-```
-
-### Full Stack (with Backend)
-
-```bash
-# Install dependencies
-npm install
-
-# Start server
-npm start
-
-# Access at http://localhost:3000
-```
-
-### Development Mode
-
-```bash
-# Auto-restart on changes
-npm run dev
-```
-
----
-
 ## 📱 PWA Installation
 
 1. Open the app in Chrome/Edge
