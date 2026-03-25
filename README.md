@@ -90,35 +90,6 @@ npm run dev
 
 ---
 
-## 📊 API Endpoints
-
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | Register new user |
-| POST | `/api/auth/login` | Login user |
-| GET | `/api/auth/me` | Get current user |
-
-### Exercises
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/exercises` | Get all exercises |
-| GET | `/api/exercises/:id` | Get exercise by ID |
-| GET | `/api/exercises/group/:id` | Get exercises by group |
-| POST | `/api/exercises` | Create exercise (admin) |
-| PUT | `/api/exercises/:id` | Update exercise (admin) |
-| DELETE | `/api/exercises/:id` | Delete exercise (admin) |
-
-### Workouts
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/workouts` | Get workout history |
-| POST | `/api/workouts` | Log a workout |
-| GET | `/api/workouts/stats` | Get statistics |
-| POST | `/api/workouts/plan` | Create workout plan |
-| GET | `/api/workouts/plan` | Get user's plans |
-
----
 
 ## 📁 Project Structure
 
@@ -169,76 +140,7 @@ The app includes Chart.js visualizations for:
 - **Personal Records** - PR history over time
 - **Volume Tracking** - Total weight lifted over time
 
----
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env` file:
-
-```env
-PORT=3000
-JWT_SECRET=your-super-secret-key-change-this
-NODE_ENV=development
 ```
-
----
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run with coverage
-npm test -- --coverage
-```
-
----
-
-## 📦 Deployment
-
-### Vercel/Netlify (Frontend Only)
-
-```bash
-# Build static files
-npm run build
-
-# Deploy to Vercel
-vercel
-
-# Deploy to Netlify
-netlify deploy
-```
-
-### Heroku (Full Stack)
-
-```bash
-# Login to Heroku
-heroku login
-
-# Create app
-heroku create gym-tracker
-
-# Deploy
-git push heroku main
-```
-
-### Docker
-
-```bash
-# Build image
-docker build -t gym-tracker .
-
-# Run container
-docker run -p 3000:3000 gym-tracker
-```
-
----
 
 ## 🤝 Contributing
 
@@ -263,22 +165,6 @@ MIT License - see [LICENSE](LICENSE) file.
 
 ---
 
-## 🎯 Roadmap
-
-### v2.1.0 (Q2 2026)
-- [ ] Exercise videos
-- [ ] Workout templates
-- [ ] Social sharing
-
-### v2.2.0 (Q3 2026)
-- [ ] Nutrition tracking
-- [ ] Body weight tracking
-- [ ] Apple Health/Google Fit integration
-
-### v3.0.0 (Q4 2026)
-- [ ] Coach mode
-- [ ] Multi-language support
-- [ ] Mobile app (React Native)
 
 ---
 
