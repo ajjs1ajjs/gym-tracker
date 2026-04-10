@@ -1,20 +1,55 @@
+:root {
+    --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    --bg-solid: #1a1a2e;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --header-bg: rgba(0, 0, 0, 0.4);
+    --sidebar-bg: rgba(0, 0, 0, 0.3);
+    --text-primary: #fff;
+    --text-secondary: #aaa;
+    --accent: #00d4ff;
+    --accent-dim: rgba(0, 212, 255, 0.2);
+    --success: #28a745;
+    --danger: #dc3545;
+    --warning: #ffc107;
+    --modal-bg: #1e1e3f;
+    --border: rgba(255, 255, 255, 0.1);
+}
+
+body.light-theme {
+    --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    --bg-solid: #f5f7fa;
+    --card-bg: #fff;
+    --header-bg: rgba(255, 255, 255, 0.8);
+    --sidebar-bg: #fff;
+    --text-primary: #2d3436;
+    --text-secondary: #636e72;
+    --accent: #0984e3;
+    --accent-dim: rgba(9, 132, 227, 0.2);
+    --success: #27ae60;
+    --danger: #d63031;
+    --warning: #f1c40f;
+    --modal-bg: #fff;
+    --border: rgba(0, 0, 0, 0.1);
+}
+
 * {
     box-sizing: border-box;
 }
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    color: #fff;
+    background: var(--bg-gradient);
+    color: var(--text-primary);
     margin: 0;
     padding: 0;
     min-height: 100vh;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 header {
     padding: 20px 30px;
-    background: rgba(0, 0, 0, 0.4);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border);
 }
 
 .header-top {
@@ -784,18 +819,101 @@ main {
     background: #00b8e6;
 }
 
-.plans-list {
+/* Heatmap Styles */
+.heatmap-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(53, 1fr);
+    grid-template-rows: repeat(7, 1fr);
+    gap: 3px;
+    margin: 20px 0;
+    overflow-x: auto;
+    padding-bottom: 10px;
 }
 
-.plan-card {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 15px;
-    padding: 20px;
-    border: 2px solid transparent;
-    transition: all 0.3s ease;
+.heatmap-day {
+    width: 12px;
+    height: 12px;
+    background: var(--card-bg);
+    border-radius: 2px;
+    transition: transform 0.2s;
+}
+
+.heatmap-day:hover {
+    transform: scale(1.3);
+    z-index: 10;
+}
+
+.heatmap-day.level-1 { background: #0e4429; }
+.heatmap-day.level-2 { background: #006d32; }
+.heatmap-day.level-3 { background: #26a641; }
+.heatmap-day.level-4 { background: #39d353; }
+
+body.light-theme .heatmap-day.level-1 { background: #9be9a8; }
+body.light-theme .heatmap-day.level-2 { background: #40c463; }
+body.light-theme .heatmap-day.level-3 { background: #30a14e; }
+body.light-theme .heatmap-day.level-4 { background: #216e39; }
+
+/* Plate visualizer */
+.plate-visualizer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 150px;
+    background: var(--sidebar-bg);
+    border-radius: 10px;
+    margin: 20px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.barbell {
+    height: 12px;
+    width: 250px;
+    background: #888;
+    border-radius: 6px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.plates-stack {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+}
+
+.plate {
+    background: #333;
+    border: 1px solid #000;
+    border-radius: 4px;
+    color: white;
+    font-size: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plate.p25 { height: 100px; width: 22px; background: #e74c3c; }
+.plate.p20 { height: 90px; width: 20px; background: #3498db; }
+.plate.p15 { height: 80px; width: 18px; background: #f1c40f; color: black; }
+.plate.p10 { height: 70px; width: 16px; background: #27ae60; }
+.plate.p5 { height: 60px; width: 14px; background: #fff; color: black; }
+.plate.p2_5 { height: 50px; width: 12px; background: #000; }
+.plate.p1_25 { height: 40px; width: 10px; background: #888; }
+
+.btn-theme, .btn-plate, .btn-settings {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+
+.btn-theme:hover, .btn-plate:hover, .btn-settings:hover {
+    background: var(--accent-dim);
 }
 
 .plan-card:hover {

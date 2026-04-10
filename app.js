@@ -556,6 +556,91 @@ let timerSeconds = 90;
 let timerRunning = false;
 let timerDefaultSeconds = 90;
 
+// Premium Helpers
+function vibrate(pattern = [50]) {
+    if ('vibrate' in navigator) {
+        navigator.vibrate(pattern);
+    }
+}
+
+function playBeep() {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.5);
+    } catch (e) {
+        console.log('Audio failed:', e);
+    }
+}
+
+function requestNotifications() {
+    if ('Notification' in window && Notification.permission !== 'granted') {
+        Notification.requestPermission();
+    }
+}
+
+function showNotification(title, body) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, { body, icon: 'images/icon-192.png' });
+    }
+}
+
+function celebration() {
+    const duration = 3 * 1000;
+    const end = Date.now() + duration;
+
+    (function frame() {
+        confetti({
+            particleCount: 3,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#00d4ff', '#28a745', '#ffc107']
+        });
+        confetti({
+            particleCount: 3,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#00d4ff', '#28a745', '#ffc107']
+        });
+
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    }());
+    vibrate([200, 100, 200, 100, 200]);
+}
+
+// Theme Logic
+function initTheme() {
+    const saved = localStorage.getItem('theme');
+    const toggle = document.getElementById('theme-toggle');
+    
+    if (saved === 'light') {
+        document.body.classList.add('light-theme');
+        toggle.textContent = '☀️';
+    }
+    
+    toggle.addEventListener('click', () => {
+        document.body.classList.toggle('light-theme');
+        const isLight = document.body.classList.contains('light-theme');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        toggle.textContent = isLight ? '☀️' : '🌙';
+        vibrate(30);
+    });
+}
 function loadState() {
     const saved = localStorage.getItem('trainingProgress');
     if (saved) {
@@ -636,6 +721,234 @@ function filterByGroup(groupId) {
     renderExercises();
 }
 
+// Plate Calculator
+function openPlateModal() {
+    document.getElementById('plate-modal').style.display = 'flex';
+    calculatePlates();
+}
+
+function closePlateModal() {
+    document.getElementById('plate-modal').style.display = 'none';
+}
+
+function calculatePlates() {
+    const totalWeight = parseFloat(document.getElementById('plate-weight-input').value) || 0;
+    const barWeight = 20;
+    let weightToDistribute = (totalWeight - barWeight) / 2;
+    
+    if (weightToDistribute < 0) weightToDistribute = 0;
+    
+    const availablePlates = [25, 20, 15, 10, 5, 2.5, 1.25];
+    const result = [];
+    
+    let temp = weightToDistribute;
+    availablePlates.forEach(p => {
+        const count = Math.floor(temp / p);
+        if (count > 0) {
+            for(let i=0; i<count; i++) result.push(p);
+            temp %= p;
+        }
+    });
+
+    // Visualizer
+    const visualizer = document.getElementById('plate-visualizer');
+    visualizer.innerHTML = `
+        <div class="barbell">
+            <div class="plates-stack">
+                ${result.map(p => `<div class="plate p${p.toString().replace('.', '_')}" title="${p}kg">${p}</div>`).join('')}
+            </div>
+        </div>
+    `;
+    
+    const resultsArea = document.getElementById('plate-results');
+    resultsArea.innerHTML = result.length > 0 
+        ? `<p>З кожного боку: ${result.join('kg, ')}kg</p>`
+        : `<p>Тільки гриф (20кг)</p>`;
+}
+
+// Heatmap Logic
+function renderHeatmap() {
+    const container = document.getElementById('activity-heatmap');
+    if (!container) return;
+    
+    const activity = {};
+    const allExercises = getAllExercises();
+    
+    // Aggregate by date
+    Object.values(completionState).forEach(val => {
+        if (val.date) {
+            const d = new Date(val.date).toDateString();
+            activity[d] = (activity[d] || 0) + 1;
+        }
+    });
+
+    const now = new Date();
+    const days = [];
+    
+    // Generate last 365 days
+    for (let i = 364; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(now.getDate() - i);
+        const dayStr = d.toDateString();
+        const count = activity[dayStr] || 0;
+        let level = 0;
+        if (count > 0) level = 1;
+        if (count > 3) level = 2;
+        if (count > 6) level = 3;
+        if (count > 9) level = 4;
+        
+        days.push(`<div class="heatmap-day level-${level}" title="${d.toLocaleDateString()}: ${count} вправ"></div>`);
+    }
+    
+    container.innerHTML = days.join('');
+}
+
+function switchTab(tabId) {
+    selectedMuscleGroup = null;
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add('active');
+    
+    const exercisesLayout = document.querySelector('.main-layout');
+    const historySection = document.getElementById('history-section');
+    const plansSection = document.getElementById('plans-section');
+    
+    exercisesLayout.style.display = 'none';
+    historySection.style.display = 'none';
+    plansSection.style.display = 'none';
+    
+    if (tabId === 'exercises') {
+        exercisesLayout.style.display = 'flex';
+        renderMuscleGroups();
+        renderExercises();
+    } else if (tabId === 'history') {
+        historySection.style.display = 'block';
+        renderHistory();
+        renderHeatmap();
+    } else if (tabId === 'plans') {
+        plansSection.style.display = 'block';
+        renderPlans();
+    }
+    
+    vibrate(20);
+}
+
+// Cloud Sync Logic
+function openSettingsModal() {
+    document.getElementById('settings-modal').style.display = 'flex';
+    document.getElementById('github-token').value = localStorage.getItem('gym_github_token') || '';
+    document.getElementById('gist-id').value = localStorage.getItem('gym_gist_id') || '';
+}
+
+function closeSettingsModal() {
+    document.getElementById('settings-modal').style.display = 'none';
+}
+
+function saveSettings() {
+    const token = document.getElementById('github-token').value.trim();
+    const gistId = document.getElementById('gist-id').value.trim();
+    
+    if (token) localStorage.setItem('gym_github_token', token);
+    if (gistId) localStorage.setItem('gym_gist_id', gistId);
+    
+    alert('Налаштування збережено!');
+    vibrate(50);
+}
+
+async function syncToCloud() {
+    const token = localStorage.getItem('gym_github_token');
+    const gistId = localStorage.getItem('gym_gist_id');
+    
+    if (!token) {
+        alert('Будь ласка, введіть GitHub Token у налаштуваннях');
+        openSettingsModal();
+        return;
+    }
+
+    const data = {
+        completionState,
+        workoutPlans,
+        lastSync: new Date().toISOString()
+    };
+
+    const body = {
+        description: "Gym Tracker Backup",
+        public: false,
+        files: {
+            "gym-data.json": {
+                content: JSON.stringify(data, null, 2)
+            }
+        }
+    };
+
+    try {
+        const url = gistId ? `https://api.github.com/gists/${gistId}` : 'https://api.github.com/gists';
+        const method = gistId ? 'PATCH' : 'POST';
+        
+        const response = await fetch(url, {
+            method,
+            headers: {
+                'Authorization': `token ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            if (!gistId) {
+                localStorage.setItem('gym_gist_id', result.id);
+                document.getElementById('gist-id').value = result.id;
+            }
+            alert('Синхронізація успішна! ✅');
+            vibrate([50, 100, 50]);
+        } else {
+            const err = await response.json();
+            alert('Помилка синхронізації: ' + (err.message || 'Unknown error'));
+        }
+    } catch (e) {
+        alert('Помилка мережі: ' + e.message);
+    }
+}
+
+async function fetchFromCloud() {
+    const token = localStorage.getItem('gym_github_token');
+    const gistId = localStorage.getItem('gym_gist_id');
+    
+    if (!token || !gistId) {
+        alert('Налаштуйте Token та Gist ID для імпорту');
+        return;
+    }
+
+    try {
+        const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+            headers: { 'Authorization': `token ${token}` }
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            const content = result.files["gym-data.json"].content;
+            const data = JSON.parse(content);
+            
+            if (confirm('Дані завантажено. Перезаписати поточний прогрес?')) {
+                completionState = data.completionState || {};
+                workoutPlans = data.workoutPlans || [];
+                saveState();
+                savePlans();
+                updateStats();
+                renderMuscleGroups();
+                renderExercises();
+                alert('Дані оновлено!');
+                vibrate([300, 100, 300]);
+            }
+        } else {
+            alert('Не вдалося завантажити дані');
+        }
+    } catch (e) {
+        alert('Помилка: ' + e.message);
+    }
+}
+
 function renderExercises() {
     const container = document.getElementById('exercises-list');
 
@@ -695,6 +1008,15 @@ function toggleExercise(id) {
     renderMuscleGroups();
     renderExercises();
     updateModalState();
+    
+    if (completionState[id]) {
+        vibrate(80);
+        // Check if group is complete
+        const group = trainingData.find(g => g.exercises.some(ex => ex.id === id));
+        if (group && group.exercises.every(ex => completionState[ex.id])) {
+            celebration();
+        }
+    }
 }
 
 function openModal(id) {
@@ -758,6 +1080,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateStats();
     renderMuscleGroups();
     renderExercises();
+    initTheme();
+    requestNotifications();
 
     document.getElementById('exercise-modal').addEventListener('click', (e) => {
         if (e.target.id === 'exercise-modal') {
@@ -812,23 +1136,11 @@ function importData(event) {
     event.target.value = '';
 }
 
-function switchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    document.querySelector('.main-layout').style.display = tab === 'exercises' ? 'flex' : 'none';
-    document.getElementById('history-section').style.display = tab === 'history' ? 'block' : 'none';
-    document.getElementById('plans-section').style.display = tab === 'plans' ? 'block' : 'none';
-    
-    if (tab === 'history') {
-        renderHistory();
-    } else if (tab === 'plans') {
-        renderPlans();
-    }
-}
+// Original switchTab removed in favor of the enhanced one above
 
 function openTimerModal() {
     document.getElementById('timer-modal').style.display = 'flex';
+    vibrate(30);
     resetTimer();
 }
 
@@ -839,6 +1151,7 @@ function closeTimerModal() {
     }
     timerRunning = false;
     document.getElementById('timer-modal').style.display = 'none';
+    vibrate(20);
 }
 
 function setTimer(seconds) {
@@ -1090,6 +1403,8 @@ function savePlan() {
         alert('Оберіть хоча б одну вправу');
         return;
     }
+    
+    celebration();
     
     workoutPlans.push({
         id: Date.now(),

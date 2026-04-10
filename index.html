@@ -9,18 +9,22 @@
     <link rel="apple-touch-icon" href="images/icon-192.png">
     <title>GymProgress - Тренування</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
     <header>
         <div class="header-top">
             <h1>💪 Тренування</h1>
             <div class="header-actions">
+                <button class="btn-theme" id="theme-toggle" title="Змінити тему">🌙</button>
                 <button class="btn-timer" onclick="openTimerModal()">⏱ Таймер</button>
+                <button class="btn-plate" onclick="openPlateModal()">🧮 Ваги</button>
                 <button class="btn-export" onclick="exportData()">📤 Експорт</button>
                 <label class="btn-import">
                     📥 Імпорт
                     <input type="file" accept=".json" onchange="importData(event)" hidden>
                 </label>
+                <button class="btn-settings" onclick="openSettingsModal()">⚙️</button>
                 <button class="btn-reset" onclick="resetProgress()">Скинути</button>
             </div>
         </div>
@@ -121,6 +125,8 @@
             <div class="history-chart-container">
                 <canvas id="history-chart"></canvas>
             </div>
+            <h3>🔥 Графік активності</h3>
+            <div class="heatmap-container" id="activity-heatmap"></div>
             <div class="history-list" id="history-list"></div>
         </div>
     </section>
@@ -147,6 +153,39 @@
                     <div class="plan-exercises-select" id="plan-exercises-select"></div>
                 </div>
                 <button class="btn-save-plan" onclick="savePlan()">Зберегти план</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="plate-modal">
+        <div class="modal-content plate-modal-content">
+            <span class="modal-close" onclick="closePlateModal()">&times;</span>
+            <h2>🧮 Калькулятор млинців</h2>
+            <div class="form-group">
+                <label>Вага на штанзі (кг):</label>
+                <input type="number" id="plate-weight-input" value="100" step="2.5" oninput="calculatePlates()">
+            </div>
+            <div class="plate-visualizer" id="plate-visualizer"></div>
+            <div class="plate-results" id="plate-results"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeSettingsModal()">&times;</span>
+            <h2>⚙️ Налаштування синхронізації</h2>
+            <p>Використовуйте GitHub Gist для збереження даних у хмарі.</p>
+            <div class="form-group">
+                <label>GitHub Personal Access Token:</label>
+                <input type="password" id="github-token" placeholder="ghp_xxxxxxxxxxxx">
+            </div>
+            <div class="form-group">
+                <label>Gist ID (опціонально):</label>
+                <input type="text" id="gist-id" placeholder="Залиште пустим для нової синхронізації">
+            </div>
+            <div class="settings-actions">
+                <button class="btn-save-settings" onclick="saveSettings()">Зберегти налаштування</button>
+                <button class="btn-sync" onclick="syncToCloud()">☁️ Синхронізувати зараз</button>
             </div>
         </div>
     </div>
