@@ -10,6 +10,7 @@
     <title>GymProgress - Тренування</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header>
@@ -53,6 +54,7 @@
             <button class="tab-btn active" onclick="switchTab('exercises')">Вправи</button>
             <button class="tab-btn" onclick="switchTab('history')">Історія</button>
             <button class="tab-btn" onclick="switchTab('plans')">Плани</button>
+            <button class="tab-btn" onclick="switchTab('body')">⚖️ Тіло</button>
         </div>
     </header>
 
@@ -60,6 +62,7 @@
         <aside class="sidebar">
             <h3>Групи м'язів</h3>
             <div class="muscle-groups" id="muscle-groups"></div>
+            <button class="btn-add-custom-ex" onclick="openCustomExerciseModal()">+ Створити вправу</button>
         </aside>
 
         <main>
@@ -84,6 +87,19 @@
             <div class="modal-sets">
                 <h4>Підходи та повтори:</h4>
                 <p id="modal-sets"></p>
+            </div>
+            <div class="modal-progression">
+                <h4>Лог підходів (сьогодні)</h4>
+                <div id="exercise-sets-log"></div>
+                <div class="set-input-row">
+                    <input type="number" id="set-weight" placeholder="Вага (кг)" step="0.5">
+                    <input type="number" id="set-reps" placeholder="Повтори" step="1">
+                    <button onclick="logSet()">+ Додати</button>
+                </div>
+                <button class="btn-toggle-chart" onclick="toggleProgressionChart()">📈 Показати прогрес</button>
+                <div class="progression-chart-container" id="progression-chart-wrapper" style="display:none;">
+                    <canvas id="progression-chart"></canvas>
+                </div>
             </div>
             <div class="modal-checkin">
                 <button id="modal-checkin-btn" onclick="toggleFromModal()">✓ Відмітити виконаним</button>
@@ -139,6 +155,20 @@
         </div>
     </section>
 
+    <section class="body-section" id="body-section" style="display:none;">
+        <div class="section-container">
+            <h2>⚖️ Вага тіла та виміри</h2>
+            <div class="body-input-row">
+                <input type="number" id="body-weight-input" placeholder="Сьогоднішня вага (кг)" step="0.1">
+                <button class="btn-save-weight" onclick="saveBodyWeight()">Зберегти (Кожен день)</button>
+            </div>
+            <div class="body-chart-container">
+                <canvas id="body-chart"></canvas>
+            </div>
+            <div class="body-history-list" id="body-history-list"></div>
+        </div>
+    </section>
+
     <div class="modal" id="plan-modal">
         <div class="modal-content">
             <span class="modal-close" onclick="closePlanModal()">&times;</span>
@@ -186,10 +216,39 @@
             <div class="settings-actions">
                 <button class="btn-save-settings" onclick="saveSettings()">Зберегти налаштування</button>
                 <button class="btn-sync" onclick="syncToCloud()">☁️ Синхронізувати зараз</button>
+                <button class="btn-sync" style="background:#28a745; margin-left:10px;" onclick="fetchFromCloud()">📥 Завантажити з хмари</button>
             </div>
         </div>
     </div>
 
-    <script src="app.js?v=20260318-1"></script>
+    <div class="modal" id="custom-exercise-modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeCustomExerciseModal()">&times;</span>
+            <h2>➕ Створити вправу</h2>
+            <div class="form-group">
+                <label>Назва вправи:</label>
+                <input type="text" id="ce-name" placeholder="Наприклад: Підйом на біцепс">
+            </div>
+            <div class="form-group">
+                <label>Група м'язів:</label>
+                <select id="ce-muscle" style="width:100%; padding:10px; border-radius:5px; background:var(--card-bg); color:var(--text-primary);">
+                    <option value="Груди">Груди</option>
+                    <option value="Спина">Спина</option>
+                    <option value="Ноги">Ноги</option>
+                    <option value="Плечі">Плечі</option>
+                    <option value="Руки">Руки</option>
+                    <option value="Прес">Прес</option>
+                    <option value="Кардіо">Кардіо</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Опис (опціонально):</label>
+                <textarea id="ce-desc" rows="3" style="width:100%; padding:10px; border-radius:5px; background:var(--card-bg); color:var(--text-primary);"></textarea>
+            </div>
+            <button class="btn-save-plan" onclick="saveCustomExercise()">Зберегти вправу</button>
+        </div>
+    </div>
+
+    <script src="app.js?v=20260318-2"></script>
 </body>
 </html>

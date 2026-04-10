@@ -555,6 +555,13 @@ let timerInterval = null;
 let timerSeconds = 90;
 let timerRunning = false;
 let timerDefaultSeconds = 90;
+let exerciseLogs = {}; // { exId: [{ date, weight, reps }] }
+let bodyWeightHistory = []; // [{ date, weight }]
+let customExercises = [];
+let wakeLock = null;
+let progressionChart = null;
+let bodyChart = null;
+
 
 // Premium Helpers (Audio & Vibrate)
 let audioCtx = null;
@@ -652,6 +659,25 @@ function celebration() {
     vibrate([200, 100, 200, 100, 200]);
 }
 
+// Wake Lock API
+async function requestWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+            console.log('Wake Lock is active');
+        }
+    } catch (err) {
+        console.log(`${err.name}, ${err.message}`);
+    }
+}
+
+function releaseWakeLock() {
+    if (wakeLock !== null) {
+        wakeLock.release();
+        wakeLock = null;
+    }
+}
+
 // Theme Logic
 function initTheme() {
     const saved = localStorage.getItem('theme');
@@ -675,11 +701,38 @@ function loadState() {
     if (saved) {
         completionState = JSON.parse(saved);
     }
+    
+    // Phase 2: Load new data
+    const logs = localStorage.getItem('exerciseLogs');
+    if (logs) exerciseLogs = JSON.parse(logs);
+    
+    const bw = localStorage.getItem('bodyWeightHistory');
+    if (bw) bodyWeightHistory = JSON.parse(bw);
+    
+    const ce = localStorage.getItem('customExercises');
+    if (ce) {
+        customExercises = JSON.parse(ce);
+        mergeCustomExercises();
+    }
 }
 
 function saveState() {
     localStorage.setItem('trainingProgress', JSON.stringify(completionState));
+    localStorage.setItem('exerciseLogs', JSON.stringify(exerciseLogs));
+    localStorage.setItem('bodyWeightHistory', JSON.stringify(bodyWeightHistory));
+    localStorage.setItem('customExercises', JSON.stringify(customExercises));
 }
+
+function mergeCustomExercises() {
+    // Add custom exercises to trainingData structure
+    customExercises.forEach(ce => {
+        const group = trainingData.find(g => g.name === ce.muscleGroup);
+        if (group && !group.exercises.some(ex => ex.id === ce.id)) {
+            group.exercises.push(ce);
+        }
+    });
+}
+
 
 function formatDate(timestamp) {
     if (!timestamp) return '';
@@ -857,9 +910,119 @@ function switchTab(tabId) {
     } else if (tabId === 'plans') {
         plansSection.style.display = 'block';
         renderPlans();
+    } else if (tabId === 'body') {
+        document.getElementById('body-section').style.display = 'block';
+        renderBodyStats();
     }
     
+    // Auto Wake Lock on Exercise tab
+    if (tabId === 'exercises') requestWakeLock();
+    else releaseWakeLock();
+    
     vibrate(20);
+}
+
+// Phase 2: Custom Exercises
+function openCustomExerciseModal() {
+    document.getElementById('custom-exercise-modal').style.display = 'flex';
+}
+
+function closeCustomExerciseModal() {
+    document.getElementById('custom-exercise-modal').style.display = 'none';
+}
+
+function saveCustomExercise() {
+    const name = document.getElementById('ce-name').value.trim();
+    const muscleGroup = document.getElementById('ce-muscle').value;
+    const description = document.getElementById('ce-desc').value.trim();
+    
+    if (!name) {
+        alert('Введіть назву вправи');
+        return;
+    }
+    
+    const newEx = {
+        id: Date.now(),
+        name,
+        muscle: muscleGroup,
+        muscleGroup: muscleGroup,
+        difficulty: 'Середній',
+        description: description,
+        instructions: ['Користувацька вправа'],
+        sets: '3 x 10',
+        image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=300&auto=format&fit=crop'
+    };
+    
+    customExercises.push(newEx);
+    mergeCustomExercises();
+    saveState();
+    renderExercises();
+    closeCustomExerciseModal();
+    celebration();
+}
+
+// Phase 2: Body Stats
+function saveBodyWeight() {
+    const weight = parseFloat(document.getElementById('body-weight-input').value);
+    if (!weight || weight <= 0) {
+        alert('Введіть коректну вагу');
+        return;
+    }
+    
+    const date = new Date().toISOString();
+    bodyWeightHistory.push({ date, weight });
+    saveState();
+    renderBodyStats();
+    vibrate(50);
+    document.getElementById('body-weight-input').value = '';
+}
+
+function renderBodyStats() {
+    const historyList = document.getElementById('body-history-list');
+    if (!historyList) return;
+    
+    const sortedHistory = [...bodyWeightHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    historyList.innerHTML = sortedHistory.map(item => `
+        <div class="body-history-item">
+            <span>${formatDate(item.date)}</span>
+            <span style="color:var(--accent); font-weight:bold;">${item.weight} кг</span>
+        </div>
+    `).join('');
+    
+    renderBodyChart();
+}
+
+function renderBodyChart() {
+    const ctx = document.getElementById('body-chart');
+    if (!ctx) return;
+    
+    if (bodyChart) bodyChart.destroy();
+    
+    const data = bodyWeightHistory.slice(-15);
+    
+    bodyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(i => new Date(i.date).toLocaleDateString()),
+            datasets: [{
+                label: 'Вага тіла (кг)',
+                data: data.map(i => i.weight),
+                borderColor: '#00d4ff',
+                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: false, grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
 }
 
 // Cloud Sync Logic
@@ -897,6 +1060,9 @@ async function syncToCloud() {
     const data = {
         completionState,
         workoutPlans,
+        exerciseLogs,
+        bodyWeightHistory,
+        customExercises,
         lastSync: new Date().toISOString()
     };
 
@@ -962,6 +1128,11 @@ async function fetchFromCloud() {
             if (confirm('Дані завантажено. Перезаписати поточний прогрес?')) {
                 completionState = data.completionState || {};
                 workoutPlans = data.workoutPlans || [];
+                exerciseLogs = data.exerciseLogs || {};
+                bodyWeightHistory = data.bodyWeightHistory || [];
+                customExercises = data.customExercises || [];
+                
+                mergeCustomExercises();
                 saveState();
                 savePlans();
                 updateStats();
@@ -1073,8 +1244,113 @@ function openModal(id) {
     document.getElementById('modal-checkin-btn').className = isCompleted ? 'btn-completed' : '';
     document.getElementById('checkin-date').textContent = state ? `Дата: ${formatDate(state.date)}` : '';
 
+    renderExerciseSetsLog(id);
     document.getElementById('exercise-modal').style.display = 'flex';
+    document.getElementById('progression-chart-wrapper').style.display = 'none';
 }
+
+function renderExerciseSetsLog(id) {
+    const logContainer = document.getElementById('exercise-sets-log');
+    const logs = exerciseLogs[id] || [];
+    const today = new Date().toDateString();
+    
+    const todaySets = logs.filter(l => new Date(l.date).toDateString() === today);
+    
+    logContainer.innerHTML = todaySets.length > 0
+        ? todaySets.map((s, i) => `
+            <div class="exercise-set-item">
+                <span>Підхід ${i + 1}</span>
+                <span>${s.weight} кг x ${s.reps}</span>
+            </div>
+        `).join('')
+        : '<p style="color:var(--text-secondary); font-size:0.8rem;">Підходів за сьогодні немає</p>';
+}
+
+function logSet() {
+    if (!selectedExerciseId) return;
+    const weight = parseFloat(document.getElementById('set-weight').value);
+    const reps = parseInt(document.getElementById('set-reps').value);
+    
+    if (isNaN(weight) || isNaN(reps)) {
+        alert('Введіть вагу та повтори');
+        return;
+    }
+    
+    if (!exerciseLogs[selectedExerciseId]) exerciseLogs[selectedExerciseId] = [];
+    
+    exerciseLogs[selectedExerciseId].push({
+        date: new Date().toISOString(),
+        weight,
+        reps
+    });
+    
+    saveState();
+    renderExerciseSetsLog(selectedExerciseId);
+    vibrate(30);
+    
+    document.getElementById('set-weight').value = '';
+    document.getElementById('set-reps').value = '';
+}
+
+function toggleProgressionChart() {
+    const wrapper = document.getElementById('progression-chart-wrapper');
+    const btn = document.querySelector('.btn-toggle-chart');
+    
+    if (wrapper.style.display === 'none') {
+        wrapper.style.display = 'block';
+        btn.textContent = '▲ Сховати прогрес';
+        renderProgressionChart(selectedExerciseId);
+    } else {
+        wrapper.style.display = 'none';
+        btn.textContent = '📈 Показати прогрес';
+    }
+}
+
+function renderProgressionChart(id) {
+    const ctx = document.getElementById('progression-chart');
+    if (!ctx) return;
+    
+    const logs = exerciseLogs[id] || [];
+    if (logs.length === 0) {
+        ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+        return;
+    }
+    
+    if (progressionChart) progressionChart.destroy();
+    
+    // Group by date, get max weight for each day
+    const entries = {};
+    logs.forEach(l => {
+        const d = new Date(l.date).toLocaleDateString();
+        if (!entries[d] || l.weight > entries[d]) entries[d] = l.weight;
+    });
+    
+    const labels = Object.keys(entries).slice(-7); // Last 7 days
+    const datasets = labels.map(l => entries[l]);
+    
+    progressionChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Максимальна вага (кг)',
+                data: datasets,
+                borderColor: '#28a745',
+                tension: 0.1,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display : false } }
+            }
+        }
+    });
+}
+
 
 function closeModal() {
     document.getElementById('exercise-modal').style.display = 'none';
@@ -1121,17 +1397,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function exportData() {
     const data = {
-        version: 1,
+        version: 2,
         exportDate: new Date().toISOString(),
-        completionState: completionState,
-        workoutPlans: workoutPlans
+        completionState,
+        workoutPlans,
+        exerciseLogs,
+        bodyWeightHistory,
+        customExercises
     };
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `gym-tracker-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `gym-tracker-full-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
 }
@@ -1144,14 +1423,16 @@ function importData(event) {
     reader.onload = (e) => {
         try {
             const data = JSON.parse(e.target.result);
-            if (data.completionState) {
-                completionState = data.completionState;
-                saveState();
-            }
-            if (data.workoutPlans) {
-                workoutPlans = data.workoutPlans;
-                savePlans();
-            }
+            completionState = data.completionState || {};
+            workoutPlans = data.workoutPlans || [];
+            exerciseLogs = data.exerciseLogs || {};
+            bodyWeightHistory = data.bodyWeightHistory || [];
+            customExercises = data.customExercises || [];
+            
+            mergeCustomExercises();
+            saveState();
+            savePlans();
+            
             updateStats();
             renderMuscleGroups();
             renderExercises();

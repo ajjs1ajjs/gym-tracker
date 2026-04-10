@@ -1050,3 +1050,133 @@ body.light-theme .heatmap-day.level-4 { background: #216e39; }
 .btn-save-plan:hover {
     background: #218838;
 }
+
+/* Phase 2: Additional Styles */
+.btn-add-custom-ex {
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: 1px dashed var(--accent);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-add-custom-ex:hover {
+    background: var(--accent);
+    color: var(--bg-solid);
+}
+
+.modal-progression {
+    margin: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+}
+
+.modal-progression h4 {
+    margin: 0 0 10px 0;
+    color: var(--accent);
+}
+
+.set-input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.set-input-row input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 5px;
+    border: none;
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+.set-input-row button {
+    padding: 8px 15px;
+    background: var(--success);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.exercise-set-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.btn-toggle-chart {
+    width: 100%;
+    margin: 10px 0;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.body-input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.body-input-row input {
+    flex: 1;
+    padding: 12px;
+    background: var(--card-bg);
+    border: none;
+    border-radius: 8px;
+    color: var(--text-primary);
+}
+
+.btn-save-weight {
+    padding: 12px 20px;
+    background: var(--accent);
+    color: var(--bg-solid);
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.body-chart-container {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.body-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.body-history-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px;
+    background: var(--card-bg);
+    border-radius: 8px;
+}
+
+@media (max-width: 600px) {
+    .set-input-row {
+        flex-direction: column;
+    }
+    .body-input-row {
+        flex-direction: column;
+    }
+}
+
