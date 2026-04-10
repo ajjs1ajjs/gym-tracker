@@ -49,12 +49,6 @@
 - **Chart.js** - Progress visualization
 - **Service Worker** - Offline support
 
-### Backend
-- **Node.js** - Runtime environment
-- **Express.js** - Web framework
-- **SQLite** - Database (better-sqlite3)
-- **JWT** - Authentication
-
 ---
 
 
@@ -68,15 +62,6 @@ gym-tracker/
 ├── manifest.json       # PWA manifest
 ├── sw.js               # Service Worker
 ├── images/             # Exercise images (32 files)
-├── server.js           # Express server
-├── database.js         # SQLite database module
-├── routes/
-│   ├── auth.js         # Authentication routes
-│   ├── exercises.js    # Exercise CRUD routes
-│   ├── workouts.js     # Workout logging routes
-│   └── users.js        # User profile routes
-├── tests/
-│   └── api.test.js     # API tests
 ├── package.json        # Dependencies
 └── README.md           # This file
 ```
