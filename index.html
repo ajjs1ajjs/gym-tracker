@@ -48,6 +48,10 @@
                 <span class="stat-value" id="total-workouts">0</span>
                 <span class="stat-label">Тренувань</span>
             </div>
+            <div class="stat">
+                <span class="stat-value" id="total-volume">0кг</span>
+                <span class="stat-label">Тоннаж</span>
+            </div>
         </div>
         
         <div class="header-tabs">
@@ -213,10 +217,18 @@
                 <label>Gist ID (опціонально):</label>
                 <input type="text" id="gist-id" placeholder="Залиште пустим для нової синхронізації">
             </div>
+            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
+                <label style="margin:0;">Автостарт таймера:</label>
+                <input type="checkbox" id="smart-timer-toggle" style="width:25px; height:25px;" checked>
+            </div>
             <div class="settings-actions">
                 <button class="btn-save-settings" onclick="saveSettings()">Зберегти налаштування</button>
                 <button class="btn-sync" onclick="syncToCloud()">☁️ Синхронізувати зараз</button>
                 <button class="btn-sync" style="background:#28a745; margin-left:10px;" onclick="fetchFromCloud()">📥 Завантажити з хмари</button>
+            </div>
+            <div style="margin-top:20px; border-top:1px solid var(--border); padding-top:20px; display:flex; gap:10px;">
+                <button class="btn-plate" style="flex:1;" onclick="exportData()">💾 Експорт JSON</button>
+                <button class="btn-plate" style="flex:1; background:var(--success); color:white;" onclick="exportToCSV()">📊 Експорт Excel/CSV</button>
             </div>
         </div>
     </div>

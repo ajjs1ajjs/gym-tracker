@@ -1,125 +1,79 @@
-# 💪 Gym Tracker - Progress Tracking App
+# 💪 GymProgress - Ultimate Workout Tracker
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/ajjs1ajjs/gym-tracker/releases)
+[![PWA](https://img.shields.io/badge/PWA-Ready-red.svg)](https://ajjs1ajjs.github.io/gym-tracker/)
+[![Version](https://img.shields.io/badge/version-3.0.0--premium-gold.svg)](https://github.com/ajjs1ajjs/gym-tracker/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
-[![CI/CD](https://github.com/ajjs1ajjs/gym-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/ajjs1ajjs/gym-tracker/actions)
 
-**Progressive Web App for workout tracking with exercise library, progress tracking, and workout plans.**
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Exercises-32+-orange" alt="Exercises">
-  <img src="https://img.shields.io/badge/Muscle%20Groups-10-blue" alt="Muscle Groups">
-  <img src="https://img.shields.io/badge/PWA-Ready-red" alt="PWA">
-</p>
+**GymProgress** — це потужний, приватний та повністю безкоштовний Progressive Web App (PWA) для відстежування ваших тренувань. Жодних підписок, жодної реклами, 100% серверлес архітектура.
 
 ---
 
-## 🌟 Features
+## 🌟 Ключові особливості
 
-| Category | Features |
-|----------|----------|
-| **Exercise Library** | 32+ exercises across 10 muscle groups with images & instructions |
-| **Progress Tracking** | Mark completed exercises, track workout history |
-| **Workout Logging** | Log sets, reps, weight for each exercise |
-| **Personal Records** | Automatic PR tracking for weight, reps, duration |
-| **Statistics** | Charts and graphs showing your progress |
-| **Workout Plans** | Create and save custom workout plans |
-| **Timer** | Rest timer with customizable presets |
-| **PWA** | Offline support, installable on mobile devices |
-| **Dark/Light Theme** | Toggle between dark and light themes |
-| **Cloud Sync** | User accounts with cloud data synchronization |
+### 📈 Професійне відстежування
+- **Детальне логування:** Записуйте вагу, повтори та автоматично розраховуйте **1RM (Одноповторний максимум)**.
+- **Об'єм (Тоннаж):** Відстежуйте сумарну підняту вагу за кожне тренування та за весь час.
+- **Графіки прогресії:** Візуалізуйте свій силовий прогрес за допомогою динамічних графіків (Chart.js).
 
----
+### ⌚️ Спритна автоматизація
+- **Smart Timer:** Таймер відпочинку запускається автоматично після запису кожного підходу.
+- **Wake Lock API:** Екран телефону не гасне під час активного тренування.
+- **Тактильний відгук:** Відчуйте вібрацію та звукові сигнали при завершенні таймера чи вправ.
 
-## 📱 PWA Installation
+### ⚖️ Контроль тіла та інструменти
+- **Трекер ваги тіла:** Записуйте свою вагу та аналізуйте тренди на графіку.
+- **Калькулятор млинців:** Миттєво дізнайтеся, які млинці повісити на штангу для потрібної ваги.
+- **Heatmap активності:** Візуальний календар ваших тренувань у стилі GitHub.
 
-1. Open the app in Chrome/Edge
-2. Click the install icon (⊕) in the address bar
-3. Click "Install"
-4. App will be available on your home screen
+### 🔒 Приватність та Хмара
+- **Cloud Sync:** Безпечна синхронізація даних у ваші приватні **GitHub Gists**.
+- **Експорт даних:** Завантажуйте свою історію у форматах **JSON** або **Excel (CSV)**.
+- **100% Offline:** Працює без інтернету після першого завантаження.
 
 ---
 
-## 🛠️ Tech Stack
+## 📱 Встановлення (PWA)
 
-### Frontend
-- **HTML5/CSS3** - Modern responsive design
-- **Vanilla JavaScript** - No framework dependencies
-- **Chart.js** - Progress visualization
-- **Service Worker** - Offline support
+Додаток працює прямо в браузері, але найкраще відчувається як встановлений застосунок:
+
+1. Відкрийте [GymProgress](https://ajjs1ajjs.github.io/gym-tracker/) в Chrome або Safari.
+2. Натисніть **"Додати до початкового екрана"** або іконку **Install**.
+3. Додаток з'явиться поруч з іншими вашими програмами.
 
 ---
 
+## 🎨 Теми
+- **Dark Neon (За замовчуванням):** Преміальний темний дизайн з синіми акцентами — ідеально для залу.
+- **Clean Light:** Світла тема для кращої видимості на вулиці.
 
-## 📁 Project Structure
+---
 
+## 🛠 Технологічний стек
+- **Vanilla JS & HTML5** (Без фреймворків — максимальна швидкість)
+- **CSS Variables & Glassmorphism** (Rich aesthetics)
+- **Chart.js** (Візуалізація даних)
+- **Web Audio API & Vibration API** (Нативні відчуття)
+- **Service Workers** (Офлайн режим)
+
+---
+
+## 📁 Структура проекту
 ```
 gym-tracker/
-├── index.html          # Main HTML file
-├── app.js              # Frontend application logic
-├── style.css           # Styles with theme support
-├── manifest.json       # PWA manifest
-├── sw.js               # Service Worker
-├── images/             # Exercise images (32 files)
-├── package.json        # Dependencies
-└── README.md           # This file
+├── index.html       # Головна сторінка та UI
+├── app.js           # Вся бізнес-логіка (Stage 1-3)
+├── style.css        # Дизайн система та теми
+├── manifest.json    # Конфігурація PWA
+├── sw.js            # Service Worker для офлайну
+└── images/          # Бібліотека вправ
 ```
 
 ---
 
-## 🎨 Themes
-
-### Dark Theme (Default)
-- Modern dark gradient background
-- Neon blue accents
-- Easy on eyes for gym environments
-
-### Light Theme
-- Clean light background
-- Professional look
-- Better for outdoor use
-
-**Toggle:** Click the theme button (🌙/☀️) in the header.
+## 📝 Ліцензія
+Розповсюджується під ліцензією MIT. Дивіться `LICENSE` для деталей.
 
 ---
 
-## 📈 Progress Charts
-
-The app includes Chart.js visualizations for:
-- **Workout Frequency** - Workouts per week/month
-- **Exercise Completion** - Progress by muscle group
-- **Personal Records** - PR history over time
-- **Volume Tracking** - Total weight lifted over time
-
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
----
-
-## 📝 License
-
-MIT License - see [LICENSE](LICENSE) file.
-
----
-
-## 👥 Support
-
-- **Issues**: https://github.com/ajjs1ajjs/gym-tracker/issues
-- **Discussions**: https://github.com/ajjs1ajjs/gym-tracker/discussions
-
----
-
-
----
-
-**⭐ Star this repo if you find it useful!**
-
-**💪 Happy Training!**
+💪 **Тренуйтеся розумніше, а не важче!**
+**⭐ Поставте зірочку проекту, якщо він став вам у пригоді!**

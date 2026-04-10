@@ -755,6 +755,7 @@ function updateStats() {
     const total = allExercises.length;
     let completed = 0;
     const workoutDates = new Set();
+    let totalVolume = 0;
 
     allExercises.forEach(ex => {
         if (completionState[ex.id]) {
@@ -765,12 +766,26 @@ function updateStats() {
         }
     });
 
+    // Calculate total lifetime volume from logs
+    Object.values(exerciseLogs).forEach(logs => {
+        logs.forEach(s => {
+            totalVolume += (s.weight || 0) * (s.reps || 0);
+        });
+    });
+
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     document.getElementById('total-exercises').textContent = total;
     document.getElementById('completed-exercises').textContent = completed;
     document.getElementById('progress-percent').textContent = percent + '%';
     document.getElementById('total-workouts').textContent = workoutDates.size;
+    
+    const volumeEl = document.getElementById('total-volume');
+    if (volumeEl) {
+        volumeEl.textContent = totalVolume > 1000 
+            ? (totalVolume / 1000).toFixed(1) + 'т' 
+            : totalVolume + 'кг';
+    }
 }
 
 function renderMuscleGroups() {
@@ -1249,6 +1264,13 @@ function openModal(id) {
     document.getElementById('progression-chart-wrapper').style.display = 'none';
 }
 
+// Phase 3: Ultimate Logic
+function calculate1RM(weight, reps) {
+    if (reps === 1) return weight;
+    // Epley Formula
+    return Math.round(weight * (1 + reps / 30));
+}
+
 function renderExerciseSetsLog(id) {
     const logContainer = document.getElementById('exercise-sets-log');
     const logs = exerciseLogs[id] || [];
@@ -1256,13 +1278,26 @@ function renderExerciseSetsLog(id) {
     
     const todaySets = logs.filter(l => new Date(l.date).toDateString() === today);
     
+    let max1RM = 0;
+    if (todaySets.length > 0) {
+        max1RM = Math.max(...todaySets.map(s => calculate1RM(s.weight, s.reps)));
+    }
+
     logContainer.innerHTML = todaySets.length > 0
-        ? todaySets.map((s, i) => `
-            <div class="exercise-set-item">
-                <span>Підхід ${i + 1}</span>
-                <span>${s.weight} кг x ${s.reps}</span>
+        ? `
+            <div style="margin-bottom:10px; color:var(--success); font-weight:bold; font-size:0.9rem;">
+                🏆 Кращий 1RM сьогодні: ${max1RM}кг
             </div>
-        `).join('')
+            ${todaySets.map((s, i) => {
+                const oneRM = calculate1RM(s.weight, s.reps);
+                return `
+                    <div class="exercise-set-item">
+                        <span>Підхід ${i + 1} <small style="color:#888;">(1RM: ${oneRM}кг)</small></span>
+                        <span>${s.weight} кг x ${s.reps}</span>
+                    </div>
+                `;
+            }).join('')}
+        `
         : '<p style="color:var(--text-secondary); font-size:0.8rem;">Підходів за сьогодні немає</p>';
 }
 
@@ -1286,11 +1321,46 @@ function logSet() {
     
     saveState();
     renderExerciseSetsLog(selectedExerciseId);
+    updateStats();
     vibrate(30);
     
     document.getElementById('set-weight').value = '';
     document.getElementById('set-reps').value = '';
+
+    // Phase 3: Smart Timer Auto-start
+    const isSmartTimer = document.getElementById('smart-timer-toggle').checked;
+    if (isSmartTimer) {
+        openTimerModal();
+        startTimer();
+    }
 }
+
+function exportToCSV() {
+    let csv = "Дата,Вправа,Група,Вага,Повтори,1RM\n";
+    const allEx = getAllExercises();
+
+    Object.keys(exerciseLogs).forEach(id => {
+        const ex = allEx.find(e => e.id == id);
+        const name = ex ? ex.name : "Вправа " + id;
+        const group = ex ? ex.muscle : "-";
+        
+        exerciseLogs[id].forEach(s => {
+            const date = new Date(s.date).toLocaleDateString();
+            const oneRM = calculate1RM(s.weight, s.reps);
+            csv += `${date},"${name}",${group},${s.weight},${s.reps},${oneRM}\n`;
+        });
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `gym_data_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 
 function toggleProgressionChart() {
     const wrapper = document.getElementById('progression-chart-wrapper');
@@ -1545,13 +1615,27 @@ function renderHistory() {
             return ex ? ex.name : '';
         }).filter(n => n).join(', ');
         
+        // Calculate session volume
+        let sessionVolume = 0;
+        w.exercises.forEach(exId => {
+            const logs = exerciseLogs[exId] || [];
+            logs.forEach(s => {
+                if (new Date(s.date).toDateString() === new Date(w.date).toDateString()) {
+                    sessionVolume += (s.weight || 0) * (s.reps || 0);
+                }
+            });
+        });
+        
         return `
             <div class="history-item">
                 <div>
                     <div class="history-item-date">${formatDate(w.date)}</div>
                     <div class="history-item-exercises">${exerciseNames.substring(0, 100)}${exerciseNames.length > 100 ? '...' : ''}</div>
                 </div>
-                <div class="history-item-count">${w.count} вправ</div>
+                <div style="text-align:right;">
+                    <div class="history-item-count">${w.count} вправ</div>
+                    <div style="font-size:0.8rem; color:var(--success);">${sessionVolume} кг</div>
+                </div>
             </div>
         `;
     }).join('');
