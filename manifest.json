@@ -2,7 +2,7 @@
     "name": "GymProgress - Тренування",
     "short_name": "GymProgress",
     "description": "Додаток для відстежування тренувань та прогресу",
-    "start_url": "./",
+    "start_url": "/gym-tracker/",
     "display": "standalone",
     "background_color": "#1a1a2e",
     "theme_color": "#00d4ff",
@@ -23,6 +23,6 @@
     ],
     "categories": ["fitness", "health"],
     "lang": "uk",
-    "scope": "./",
+    "scope": "/gym-tracker/",
     "prefer_related_applications": false
 }
