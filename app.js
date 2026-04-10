@@ -557,16 +557,28 @@ let timerRunning = false;
 let timerDefaultSeconds = 90;
 
 // Premium Helpers (Audio & Vibrate)
-const beepSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleFk9TGiNrLauhD8cH4nG2NnOiisXGSuQv9XThkwqMT5gnb65lYkzKkdUdZG4moVTOTpEZp+7lIVNMTdCY566lJBNMTc/');
+let audioCtx = null;
 
-function unlockAudio() {
-    beepSound.play().then(() => {
-        beepSound.pause();
-        beepSound.currentTime = 0;
-    }).catch(() => {});
-    document.body.removeEventListener('click', unlockAudio);
+function initAudio() {
+    if (audioCtx) return;
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+        
+        // Play a silent buffer to unlock
+        const buffer = audioCtx.createBuffer(1, 1, 22050);
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioCtx.destination);
+        if (source.start) source.start(0);
+        
+        // Clean up listeners
+        ['touchstart', 'touchend', 'click'].forEach(evt => document.body.removeEventListener(evt, initAudio));
+    } catch (e) { console.log('Audio init failed', e); }
 }
-document.body.addEventListener('click', unlockAudio);
+
+// Listen to multiple interaction events for iOS reliability
+['touchstart', 'touchend', 'click'].forEach(evt => document.body.addEventListener(evt, initAudio));
 
 function vibrate(pattern = [50]) {
     if ('vibrate' in navigator) {
@@ -575,9 +587,29 @@ function vibrate(pattern = [50]) {
 }
 
 function playBeep() {
+    if (!audioCtx) initAudio();
+    if (!audioCtx) return;
+    
+    // iOS Safari often suspends the context, need to resume it
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+
     try {
-        beepSound.currentTime = 0;
-        beepSound.play().catch(e => console.log('Audio autoplay blocked', e));
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        // Quick ramp to zero
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.5);
     } catch (e) {}
 }
 
