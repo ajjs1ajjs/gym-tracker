@@ -556,7 +556,18 @@ let timerSeconds = 90;
 let timerRunning = false;
 let timerDefaultSeconds = 90;
 
-// Premium Helpers
+// Premium Helpers (Audio & Vibrate)
+const beepSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleFk9TGiNrLauhD8cH4nG2NnOiisXGSuQv9XThkwqMT5gnb65lYkzKkdUdZG4moVTOTpEZp+7lIVNMTdCY566lJBNMTc/');
+
+function unlockAudio() {
+    beepSound.play().then(() => {
+        beepSound.pause();
+        beepSound.currentTime = 0;
+    }).catch(() => {});
+    document.body.removeEventListener('click', unlockAudio);
+}
+document.body.addEventListener('click', unlockAudio);
+
 function vibrate(pattern = [50]) {
     if ('vibrate' in navigator) {
         navigator.vibrate(pattern);
@@ -565,23 +576,9 @@ function vibrate(pattern = [50]) {
 
 function playBeep() {
     try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
-        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.5);
-    } catch (e) {
-        console.log('Audio failed:', e);
-    }
+        beepSound.currentTime = 0;
+        beepSound.play().catch(e => console.log('Audio autoplay blocked', e));
+    } catch (e) {}
 }
 
 function requestNotifications() {
@@ -1186,9 +1183,9 @@ function startTimer() {
             if (Notification.permission === 'granted') {
                 new Notification('GymProgress', { body: 'Час відпочинку закінчився!' });
             }
-            try {
-                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleFk9TGiNrLauhD8cH4nG2NnOiisXGSuQv9XThkwqMT5gnb65lYkzKkdUdZG4moVTOTpEZp+7lIVNMTdCY566lJBNMTc/');
-            } catch(e) {}
+            playBeep();
+            vibrate([500, 200, 500]);
+            
             document.getElementById('timer-start-btn').style.display = 'inline-block';
             document.getElementById('timer-pause-btn').style.display = 'none';
         }
