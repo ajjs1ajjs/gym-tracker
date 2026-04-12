@@ -562,6 +562,10 @@ let wakeLock = null;
 let progressionChart = null;
 let bodyChart = null;
 
+// Logbook Global State
+let logbookExercises = []; // [{ id, name }]
+let logbookSessions = []; // { id, timestamp, exerciseId, sets: [{ weight, reps }] }
+let logbookActiveSets = []; // temporary array for the current unsaved session
 
 // Premium Helpers (Audio & Vibrate)
 let audioCtx = null;
@@ -714,6 +718,13 @@ function loadState() {
         customExercises = JSON.parse(ce);
         mergeCustomExercises();
     }
+    
+    // Logbook independent state
+    const lbEx = localStorage.getItem('logbookExercises');
+    if (lbEx) logbookExercises = JSON.parse(lbEx);
+    
+    const lbSess = localStorage.getItem('logbookSessions');
+    if (lbSess) logbookSessions = JSON.parse(lbSess);
 }
 
 function saveState() {
@@ -721,6 +732,8 @@ function saveState() {
     localStorage.setItem('exerciseLogs', JSON.stringify(exerciseLogs));
     localStorage.setItem('bodyWeightHistory', JSON.stringify(bodyWeightHistory));
     localStorage.setItem('customExercises', JSON.stringify(customExercises));
+    localStorage.setItem('logbookExercises', JSON.stringify(logbookExercises));
+    localStorage.setItem('logbookSessions', JSON.stringify(logbookSessions));
 }
 
 function mergeCustomExercises() {
@@ -909,10 +922,14 @@ function switchTab(tabId) {
     const exercisesLayout = document.querySelector('.main-layout');
     const historySection = document.getElementById('history-section');
     const plansSection = document.getElementById('plans-section');
+    const bodySection = document.getElementById('body-section');
+    const logbookSection = document.getElementById('logbook-section');
     
     exercisesLayout.style.display = 'none';
     historySection.style.display = 'none';
     plansSection.style.display = 'none';
+    if(bodySection) bodySection.style.display = 'none';
+    if(logbookSection) logbookSection.style.display = 'none';
     
     if (tabId === 'exercises') {
         exercisesLayout.style.display = 'flex';
@@ -926,12 +943,15 @@ function switchTab(tabId) {
         plansSection.style.display = 'block';
         renderPlans();
     } else if (tabId === 'body') {
-        document.getElementById('body-section').style.display = 'block';
+        if(bodySection) bodySection.style.display = 'block';
         renderBodyStats();
+    } else if (tabId === 'logbook') {
+        if(logbookSection) logbookSection.style.display = 'block';
+        loadLogbookSelect();
     }
     
     // Auto Wake Lock on Exercise tab
-    if (tabId === 'exercises') requestWakeLock();
+    if (tabId === 'exercises' || tabId === 'logbook') requestWakeLock();
     else releaseWakeLock();
     
     vibrate(20);
@@ -1849,3 +1869,277 @@ if ('serviceWorker' in navigator) {
             });
     });
 }
+
+// ==========================================
+// NEW LOGBOOK MODULE (ISOLATED TAB)
+// ==========================================
+function switchLogbookTab(tabId) {
+    document.getElementById('logbook-tab-log').classList.remove('active');
+    document.getElementById('logbook-tab-history').classList.remove('active');
+    document.getElementById('logbook-view-log').style.display = 'none';
+    document.getElementById('logbook-view-history').style.display = 'none';
+    
+    document.getElementById('logbook-tab-' + tabId).classList.add('active');
+    document.getElementById('logbook-view-' + tabId).style.display = 'block';
+    
+    if(tabId === 'history') {
+        LogbookModule.renderHistory();
+    }
+}
+
+const LogbookModule = {
+    exercises: [],
+    sessions: [],
+    activeSets: [],
+    
+    init() {
+        this.load();
+        this.bindEvents();
+    },
+    
+    load() {
+        const rawData = localStorage.getItem('my_custom_logbook');
+        if (rawData) {
+            try {
+                const data = JSON.parse(rawData);
+                this.exercises = data.exercises || [];
+                this.sessions = data.sessions || [];
+            } catch (e) {
+                console.error("Logbook parsing error", e);
+            }
+        }
+    },
+    
+    save() {
+        const data = {
+            exercises: this.exercises,
+            sessions: this.sessions
+        };
+        localStorage.setItem('my_custom_logbook', JSON.stringify(data));
+    },
+    
+    bindEvents() {
+        const btnAdd = document.getElementById('btn-add-logbook-set');
+        if (btnAdd) {
+            btnAdd.addEventListener('click', (e) => {
+                e.preventDefault();
+                const wInput = document.getElementById('logbook-weight');
+                const rInput = document.getElementById('logbook-reps');
+                const w = parseFloat(wInput.value);
+                const r = parseInt(rInput.value);
+                
+                if (isNaN(w) || isNaN(r)) return;
+                
+                this.activeSets.push({ weight: w, reps: r });
+                wInput.value = '';
+                rInput.value = '';
+                this.renderSets();
+            });
+        }
+        
+        const btnSave = document.getElementById('btn-save-logbook');
+        if (btnSave) {
+            btnSave.addEventListener('click', (e) => {
+                e.preventDefault();
+                const select = document.getElementById('logbook-ex-select');
+                const exerciseId = select?.value;
+                
+                if (!exerciseId || this.activeSets.length === 0) return;
+                
+                this.sessions.push({
+                    id: 'lbsess_' + Date.now(),
+                    timestamp: Date.now(),
+                    exerciseId: exerciseId,
+                    sets: [...this.activeSets]
+                });
+                
+                this.save();
+                this.activeSets = [];
+                this.renderSets();
+                
+                const toast = document.getElementById('logbook-toast');
+                if (toast) {
+                    toast.style.display = 'block';
+                    setTimeout(() => {
+                        toast.style.display = 'none';
+                    }, 2000);
+                }
+            });
+        }
+        
+        const exSelect = document.getElementById('logbook-ex-select');
+        if (exSelect) {
+            exSelect.addEventListener('change', () => {
+                this.activeSets = [];
+                this.renderSets();
+            });
+        }
+        
+        const histSelect = document.getElementById('logbook-history-select');
+        if (histSelect) {
+            histSelect.addEventListener('change', () => {
+                this.renderHistory();
+            });
+        }
+        
+        const btnDelEx = document.getElementById('btn-delete-logbook-ex');
+        if (btnDelEx) {
+            btnDelEx.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.deleteExercise();
+            });
+        }
+    },
+    
+    renderSets() {
+        const container = document.getElementById('logbook-sets-container');
+        if (!container) return;
+        
+        container.innerHTML = this.activeSets.map((s, idx) => `
+            <div style="display:flex; justify-content:space-between; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; align-items:center;">
+                <span>Підхід ${idx + 1}</span>
+                <span style="color: var(--theme-color, #00d4ff); font-weight: bold;">${s.weight} кг × ${s.reps}</span>
+                <button onclick="LogbookModule.removeSet(${idx})" style="background:transparent; border:none; color:#ff4444; font-size:16px; cursor:pointer;">✕</button>
+            </div>
+        `).join('');
+    },
+    
+    removeSet(idx) {
+        this.activeSets.splice(idx, 1);
+        this.renderSets();
+    },
+    
+    deleteExercise() {
+        const select = document.getElementById('logbook-ex-select');
+        const exId = select?.value;
+        if (!exId) return;
+        
+        const ex = this.exercises.find(e => e.id === exId);
+        if (!ex) return;
+        
+        if (confirm(`Ви впевнені, що хочете видалити вправу "${ex.name}"? Її минулі записи в історії збережуться.`)) {
+            this.exercises = this.exercises.filter(e => e.id !== exId);
+            this.save();
+            
+            this.activeSets = [];
+            this.renderSets();
+            this.loadSelect();
+            
+            // if history dropdown happens to be on it, clear it
+            const histSelect = document.getElementById('logbook-history-select');
+            if (histSelect && histSelect.value === exId) {
+                histSelect.value = '';
+                this.renderHistory();
+            }
+        }
+    },
+    
+    deleteSession(sessionId) {
+        if (confirm("Ви впевнені, що хочете видалити цей запис тренування з історії?")) {
+            this.sessions = this.sessions.filter(s => s.id !== sessionId);
+            this.save();
+            this.renderHistory();
+        }
+    },
+    
+    createExercise() {
+        const input = document.getElementById('logbook-custom-ex');
+        if (!input) return;
+        const title = input.value.trim();
+        if (!title) return;
+        
+        const newEx = {
+            id: 'lb_' + Date.now(),
+            name: title
+        };
+        this.exercises.push(newEx);
+        this.save();
+        
+        input.value = '';
+        this.loadSelect();
+        
+        const select = document.getElementById('logbook-ex-select');
+        if (select) select.value = newEx.id;
+        
+        this.activeSets = [];
+        this.renderSets();
+    },
+    
+    loadSelect() {
+        const selectLog = document.getElementById('logbook-ex-select');
+        const selectHist = document.getElementById('logbook-history-select');
+        
+        const optionsBase = this.exercises.map(ex => `<option value="${ex.id}">${ex.name}</option>`).join('');
+        
+        if (selectLog) {
+            selectLog.innerHTML = '<option value="" disabled selected>Оберіть вправу</option>' + optionsBase;
+        }
+        
+        if (selectHist) {
+            // Keep current value if one is already selected
+            const currentVal = selectHist.value;
+            selectHist.innerHTML = '<option value="" disabled selected>Оберіть вправу для перегляду</option>' + optionsBase;
+            if (currentVal && this.exercises.find(e => e.id === currentVal)) {
+                selectHist.value = currentVal;
+            }
+        }
+    },
+    
+    renderHistory() {
+        const list = document.getElementById('logbook-history-list');
+        const selectHist = document.getElementById('logbook-history-select');
+        if (!list) return;
+        
+        const selectedId = selectHist?.value;
+        
+        if (!selectedId) {
+            list.innerHTML = '<p style="color:var(--text-secondary); text-align:center;">Оберіть вправу зі списку вище, щоб побачити історію.</p>';
+            return;
+        }
+        
+        const filteredSessions = this.sessions.filter(s => s.exerciseId === selectedId);
+        
+        if (filteredSessions.length === 0) {
+            list.innerHTML = '<p style="color:var(--text-secondary); text-align:center;">Історія порожня для цієї вправи.</p>';
+            return;
+        }
+        
+        const sorted = [...filteredSessions].sort((a,b) => b.timestamp - a.timestamp);
+        
+        list.innerHTML = sorted.map(sess => {
+            const ex = this.exercises.find(e => e.id === sess.exerciseId) || { name: 'Видалена вправа' };
+            const dateStr = new Date(sess.timestamp).toLocaleString('uk-UA', { 
+                day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' 
+            });
+            
+            const setsHtml = sess.sets.map((s, idx) => `
+                <div style="margin-top: 5px; font-size: 0.95rem;">
+                    <span style="color:var(--text-secondary);">Підхід ${idx + 1}:</span> 
+                    <b>${s.weight} кг х ${s.reps}</b>
+                </div>
+            `).join('');
+            
+            return `
+                <div class="history-card" style="background:var(--card-bg); padding:15px; border-radius:10px; border:1px solid var(--border); margin-bottom:15px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                        <span style="color:var(--theme-color, #00d4ff); font-weight:bold;">${ex.name}</span>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="color:var(--text-secondary); font-size:0.85rem;">${dateStr}</span>
+                            <button onclick="LogbookModule.deleteSession('${sess.id}')" style="background:transparent; border:none; cursor:pointer; color:#ef4444; font-size:1.1rem;" title="Видалити запис">🗑️</button>
+                        </div>
+                    </div>
+                    ${setsHtml}
+                </div>
+            `;
+        }).join('');
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    LogbookModule.init();
+});
+
+// Proxies for inline HTML attributes
+function createLogbookCustomExercise() { LogbookModule.createExercise(); }
+function loadLogbookSelect() { LogbookModule.loadSelect(); }
+function renderLogbookSets() { LogbookModule.renderSets(); }
