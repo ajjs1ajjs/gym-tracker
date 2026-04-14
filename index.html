@@ -11,6 +11,13 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Fix for select options text visibility on certain mobile OS */
+        #logbook-ex-select option, #logbook-history-select option {
+            background-color: #1e1e24; /* Dark theme fallback */
+            color: #ffffff;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -59,6 +66,7 @@
             <button class="tab-btn" onclick="switchTab('history')">Історія</button>
             <button class="tab-btn" onclick="switchTab('plans')">Плани</button>
             <button class="tab-btn" onclick="switchTab('body')">⚖️ Тіло</button>
+            <button class="tab-btn" onclick="switchTab('logbook')">📔 Журнал</button>
         </div>
     </header>
 
@@ -170,6 +178,57 @@
                 <canvas id="body-chart"></canvas>
             </div>
             <div class="body-history-list" id="body-history-list"></div>
+        </div>
+    </section>
+
+    <section class="logbook-section" id="logbook-section" style="display:none;">
+        <div class="section-container">
+            <h2>📔 Журнал тренувань</h2>
+            
+            <div class="header-tabs" style="margin-bottom: 20px;">
+                 <button class="tab-btn active" id="logbook-tab-log" onclick="switchLogbookTab('log')">Запис підходів</button>
+                 <button class="tab-btn" id="logbook-tab-history" onclick="switchLogbookTab('history')">Історія журналу</button>
+            </div>
+            
+            <div id="logbook-view-log">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Назва нової вправи:</label>
+                    <div style="display:flex; gap: 10px;">
+                        <input type="text" id="logbook-custom-ex" placeholder="Наприклад: Підтягування з вагою" style="flex:1; padding:10px; border-radius:5px; border:1px solid var(--border); background:var(--card-bg); color:var(--text-primary);">
+                        <button class="btn-save-plan" onclick="createLogbookCustomExercise()" style="width:auto; margin-top:0;">Створити</button>
+                    </div>
+                </div>
+
+                <hr style="border:none; border-top:1px solid var(--border, #333); margin: 25px 0;">
+
+                <div class="form-group">
+                    <label>Оберіть вправу для запису:</label>
+                    <div style="display:flex; gap: 10px; align-items:center;">
+                        <select id="logbook-ex-select" style="flex:1; padding:10px; border-radius:5px; background:var(--card-bg); color:var(--text-primary); border:1px solid var(--border);"></select>
+                        <button id="btn-delete-logbook-ex" style="width:auto; padding:10px 15px; border-radius:5px; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid #ef4444; cursor:pointer;" title="Видалити обрану вправу">🗑️</button>
+                    </div>
+                </div>
+
+                <div id="logbook-sets-container" style="margin-top: 15px; display:flex; flex-direction:column; gap:10px;"></div>
+                
+                <div class="set-input-row" style="margin-top: 15px;">
+                    <input type="number" id="logbook-weight" placeholder="Вага (кг)" step="0.5">
+                    <input type="number" id="logbook-reps" placeholder="Повтори" step="1">
+                    <button id="btn-add-logbook-set">+ Додати</button>
+                </div>
+                
+                <button id="btn-save-logbook" class="btn-save-plan" style="margin-top: 20px; width: 100%;">Зберегти результати</button>
+                <div id="logbook-toast" style="display:none; text-align:center; color:#28a745; font-weight:bold; margin-top:10px;">Успішно збережено</div>
+            </div>
+
+            <div id="logbook-view-history" style="display:none;">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Оберіть вправу для історії:</label>
+                    <select id="logbook-history-select" style="width:100%; padding:10px; border-radius:5px; background:var(--card-bg); color:var(--text-primary); border:1px solid var(--border);"></select>
+                </div>
+                
+                <div class="history-list" id="logbook-history-list"></div>
+            </div>
         </div>
     </section>
 
