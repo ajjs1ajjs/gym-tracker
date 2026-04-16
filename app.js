@@ -7,7 +7,7 @@ const trainingData = [
             {
                 id: 1,
                 name: "Жим штанги лежачи",
-                image: "images/Жим штанги лежачи.png",
+                image: "images/bench-press.png",
                 description: "Базовий комплексний вправ для розвитку грудних м'язів. Виконується на горизонтальній лаві.",
                 difficulty: "Середній",
                 instructions: [
@@ -23,7 +23,7 @@ const trainingData = [
             {
                 id: 2,
                 name: "Жим в тренажері",
-                image: "images/Жим в тренажері.png",
+                image: "images/chest-press-machine.png",
                 description: "Безпечна вправа для грудей в тренажері. Підходить для початківців.",
                 difficulty: "Легкий",
                 instructions: [
@@ -38,7 +38,7 @@ const trainingData = [
             {
                 id: 3,
                 name: "Бабочка",
-                image: "images/Бабочка.png",
+                image: "images/butterfly.png",
                 description: "Ізоляційна вправа для грудних м'язів у тренажері.",
                 difficulty: "Легкий",
                 instructions: [
@@ -53,7 +53,7 @@ const trainingData = [
             {
                 id: 4,
                 name: "Віджимання на брусах",
-                image: "images/Віджимання на брусах.png",
+                image: "images/dips.png",
                 description: "Вправа для нижньої частини грудей та триголового м'яза плеча.",
                 difficulty: "Середній",
                 instructions: [
@@ -68,7 +68,7 @@ const trainingData = [
             {
                 id: 5,
                 name: "Розведення гантелей",
-                image: "images/Розведення гантелей.png",
+                image: "images/dumbbell-fly.png",
                 description: "Ізоляційна вправа для розтягування грудних м'язів.",
                 difficulty: "Легкий",
                 instructions: [
@@ -91,7 +91,7 @@ const trainingData = [
             {
                 id: 6,
                 name: "Тяга верхнього блоку",
-                image: "images/Тяга верхнього блоку.png",
+                image: "images/lat-pulldown.png",
                 description: "Альтернатива підтягуванням для широчайших м'язів спини.",
                 difficulty: "Легкий",
                 instructions: [
@@ -106,7 +106,7 @@ const trainingData = [
             {
                 id: 7,
                 name: "Тяга нижнього блоку",
-                image: "images/Тяга нижнього блоку.png",
+                image: "images/cable-row.png",
                 description: "Вправа для розвитку широчайших м'язів знизу.",
                 difficulty: "Середній",
                 instructions: [
@@ -121,7 +121,7 @@ const trainingData = [
             {
                 id: 8,
                 name: "Підтягування",
-                image: "images/Підтягування.png",
+                image: "images/pullups.png",
                 description: "Класична базова вправа для широчайших м'язів спини.",
                 difficulty: "Середній",
                 instructions: [
@@ -136,7 +136,7 @@ const trainingData = [
             {
                 id: 9,
                 name: "Тяга штанги в нахилі",
-                image: "images/Тяга штанги в нахилі.png",
+                image: "images/barbell-row.png",
                 description: "Ефективна вправа для товщини спини.",
                 difficulty: "Середній",
                 instructions: [
@@ -151,7 +151,7 @@ const trainingData = [
             {
                 id: 31,
                 name: "Станова тяга",
-                image: "images/Станова тяга.png",
+                image: "images/deadlift.png",
                 description: "Базова вправа для задньої ланцюга: спина, сідниці, задня поверхня стегна.",
                 difficulty: "Складний",
                 instructions: [
@@ -174,7 +174,7 @@ const trainingData = [
             {
                 id: 10,
                 name: "Згинання рук зі штангою",
-                image: "images/Згинання рук зі штангою.png",
+                image: "images/barbell-curl.png",
                 description: "Класична вправа для біцепса.",
                 difficulty: "Легкий",
                 instructions: [
@@ -189,7 +189,7 @@ const trainingData = [
             {
                 id: 11,
                 name: "Згинання рук з гантелями",
-                image: "images/Згинання рук з гантелями.png",
+                image: "images/dumbbell-curl.png",
                 description: "Вправа для біцепса з гантелями.",
                 difficulty: "Легкий",
                 instructions: [
@@ -204,7 +204,7 @@ const trainingData = [
             {
                 id: 12,
                 name: "Біцепс в тренажері",
-                image: "images/Біцепс в тренажері.png",
+                image: "images/biceps-machine.png",
                 description: "Ізоляційна вправа для біцепса в тренажері.",
                 difficulty: "Легкий",
                 instructions: [
@@ -226,7 +226,7 @@ const trainingData = [
             {
                 id: 13,
                 name: "Тріцепс в кросовері",
-                image: "images/Тріцепс в кросовері.png",
+                image: "images/triceps-pulley.png",
                 description: "Вправа для трицепса з верхнім блоком.",
                 difficulty: "Легкий",
                 instructions: [
@@ -242,7 +242,7 @@ const trainingData = [
             {
                 id: 14,
                 name: "Розгинання на блоці",
-                image: "images/Розгинання на блоці.png",
+                image: "images/triceps-extension.png",
                 description: "Вправа для трицепса на верхньому блоці.",
                 difficulty: "Легкий",
                 instructions: [
@@ -257,7 +257,7 @@ const trainingData = [
             {
                 id: 15,
                 name: "Французький жим",
-                image: "images/Французький жим.png",
+                image: "images/french-press.png",
                 description: "Ефективна вправа для трицепса.",
                 difficulty: "Середній",
                 instructions: [
@@ -279,7 +279,7 @@ const trainingData = [
             {
                 id: 16,
                 name: "Приседання зі штангою",
-                image: "images/Приседання зі штангою.png",
+                image: "images/squat.png",
                 description: "Королева вправ для ніг. Розвиває квадрицепси та сідниці.",
                 difficulty: "Складний",
                 instructions: [
@@ -294,7 +294,7 @@ const trainingData = [
             {
                 id: 17,
                 name: "Жим ногами",
-                image: "images/Жим ногами.png",
+                image: "images/leg-press.png",
                 description: "Безпечна альтернатива присіданням.",
                 difficulty: "Середній",
                 instructions: [
@@ -309,7 +309,7 @@ const trainingData = [
             {
                 id: 18,
                 name: "Розгинання ніг в тренажері",
-                image: "images/Розгинання ніг в тренажері.png",
+                image: "images/leg-extension.png",
                 description: "Вправа для квадрицепсів.",
                 difficulty: "Легкий",
                 instructions: [
@@ -324,7 +324,7 @@ const trainingData = [
             {
                 id: 32,
                 name: "Згинання ніг в тренажері",
-                image: "images/Згинання ніг в тренажері.png",
+                image: "images/leg-curl.png",
                 description: "Вправа для задньої поверхні стегна (біцепс стегна).",
                 difficulty: "Легкий",
                 instructions: [
@@ -339,7 +339,7 @@ const trainingData = [
             {
                 id: 19,
                 name: "Випади",
-                image: "images/Випади.png",
+                image: "images/lunges.png",
                 description: "Вправа для квадрицепсів та сідниць.",
                 difficulty: "Середній",
                 instructions: [
@@ -354,7 +354,7 @@ const trainingData = [
             {
                 id: 20,
                 name: "Підйоми на носки",
-                image: "images/Підйоми на носки.png",
+                image: "images/calf-raise.png",
                 description: "Вправа для литкових м'язів.",
                 difficulty: "Легкий",
                 instructions: [
@@ -376,7 +376,7 @@ const trainingData = [
             {
                 id: 21,
                 name: "Розведення в боки",
-                image: "images/Розведення в боки.png",
+                image: "images/lateral-raise.png",
                 description: "Ізоляційна вправа для середньої частини дельт.",
                 difficulty: "Легкий",
                 instructions: [
@@ -391,7 +391,7 @@ const trainingData = [
             {
                 id: 22,
                 name: "Махи з гантелями",
-                image: "images/Махи з гантелями.png",
+                image: "images/front-raise.png",
                 description: "Вправа для дельтовидних м'язів.",
                 difficulty: "Легкий",
                 instructions: [
@@ -406,7 +406,7 @@ const trainingData = [
             {
                 id: 23,
                 name: "Жим гантелей над головою",
-                image: "images/Жим гантелей над головою.png",
+                image: "images/overhead-press.png",
                 description: "Базовий вправа для розвитку дельтовидних м'язів.",
                 difficulty: "Середній",
                 instructions: [
@@ -428,7 +428,7 @@ const trainingData = [
             {
                 id: 24,
                 name: "Трапеції з гантелями",
-                image: "images/Трапеції з гантелями.png",
+                image: "images/shrugs.png",
                 description: "Вправа для розвитку трапецієвидних м'язів.",
                 difficulty: "Легкий",
                 instructions: [
@@ -443,7 +443,7 @@ const trainingData = [
             {
                 id: 25,
                 name: "Тяга до підборіддя",
-                image: "images/Тяга до підборіддя.png",
+                image: "images/face-pull.png",
                 description: "Вправа для трапецій та дельт.",
                 difficulty: "Середній",
                 instructions: [
@@ -465,7 +465,7 @@ const trainingData = [
             {
                 id: 26,
                 name: "Передпліччя в кросовері",
-                image: "images/Передпліччя в кросовері.png",
+                image: "images/forearm-curl.png",
                 description: "Вправа для передпліччя в кросовері.",
                 difficulty: "Легкий",
                 instructions: [
@@ -487,7 +487,7 @@ const trainingData = [
             {
                 id: 27,
                 name: "Скручування",
-                image: "images/Скручування.png",
+                image: "images/crunches.png",
                 description: "Класична вправа для прямого м'яза живота.",
                 difficulty: "Легкий",
                 instructions: [
@@ -502,7 +502,7 @@ const trainingData = [
             {
                 id: 28,
                 name: "Планка",
-                image: "images/Планка.png",
+                image: "images/plank.png",
                 description: "Статична вправа для зміцнення кора.",
                 difficulty: "Середній",
                 instructions: [
@@ -517,7 +517,7 @@ const trainingData = [
             {
                 id: 29,
                 name: "Підйоми ніг лежачи",
-                image: "images/Підйоми ніг лежачи.png",
+                image: "images/leg-raise.png",
                 description: "Вправа для нижнього преса.",
                 difficulty: "Середній",
                 instructions: [
@@ -531,7 +531,7 @@ const trainingData = [
             {
                 id: 30,
                 name: "Велосипед",
-                image: "images/Велосипед.png",
+                image: "images/bicycle.png",
                 description: "Вправа для косих м'язів живота.",
                 difficulty: "Середній",
                 instructions: [
