@@ -706,6 +706,24 @@ function loadState() {
         completionState = JSON.parse(saved);
     }
     
+    // Check if it's a new day - archive yesterday and reset
+    const lastDate = localStorage.getItem('lastSessionDate');
+    const today = new Date().toDateString();
+    
+    if (lastDate && lastDate !== today) {
+        // Archive yesterday's completion to history
+        const yesterdayArchive = localStorage.getItem('completionArchive');
+        let archive = yesterdayArchive ? JSON.parse(yesterdayArchive) : {};
+        
+        archive[lastDate] = completionState;
+        localStorage.setItem('completionArchive', JSON.stringify(archive));
+        
+        // Reset for new day
+        completionState = {};
+        localStorage.setItem('trainingProgress', JSON.stringify(completionState));
+    }
+    localStorage.setItem('lastSessionDate', today);
+    
     // Phase 2: Load new data
     const logs = localStorage.getItem('exerciseLogs');
     if (logs) exerciseLogs = JSON.parse(logs);
@@ -1667,6 +1685,7 @@ function getWorkoutHistory(period) {
     const exerciseDates = {};
     const allExercises = getAllExercises();
     
+    // Current day
     allExercises.forEach(ex => {
         if (completionState[ex.id] && completionState[ex.id].date) {
             const dateStr = new Date(completionState[ex.id].date).toDateString();
@@ -1681,6 +1700,29 @@ function getWorkoutHistory(period) {
             exerciseDates[dateStr].count++;
         }
     });
+    
+    // Archive history
+    const archive = localStorage.getItem('completionArchive');
+    if (archive) {
+        const archiveData = JSON.parse(archive);
+        Object.keys(archiveData).forEach(dateStr => {
+            const dayState = archiveData[dateStr];
+            allExercises.forEach(ex => {
+                if (dayState[ex.id] && dayState[ex.id].date) {
+                    const archivedDateStr = new Date(dayState[ex.id].date).toDateString();
+                    if (!exerciseDates[archivedDateStr]) {
+                        exerciseDates[archivedDateStr] = {
+                            date: dayState[ex.id].date,
+                            exercises: [],
+                            count: 0
+                        };
+                    }
+                    exerciseDates[archivedDateStr].exercises.push(ex.id);
+                    exerciseDates[archivedDateStr].count++;
+                }
+            });
+        });
+    }
     
     let workouts = Object.values(exerciseDates);
     

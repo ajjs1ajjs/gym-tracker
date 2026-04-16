@@ -1,11 +1,13 @@
 {
   "name": "gym-tracker",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Progressive Web App for workout tracking with exercise library, progress tracking, and workout plans",
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write \"**/*.{js,jsx,json,md}\""
+    "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch --passWithNoTests"
   },
   "keywords": [
     "gym",
@@ -19,7 +21,8 @@
   "license": "MIT",
   "devDependencies": {
     "eslint": "^8.56.0",
-    "prettier": "^3.1.1"
+    "prettier": "^3.1.1",
+    "jest": "^29.7.0"
   },
   "repository": {
     "type": "git",
