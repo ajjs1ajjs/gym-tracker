@@ -1,325 +1,659 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#00d4ff">
-    <meta name="description" content="Додаток для відстежування тренувань та прогресу">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="images/icon-192.png">
-    <title>GymProgress - Тренування</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Fix for select options text visibility on certain mobile OS */
-        #logbook-ex-select option, #logbook-history-select option {
-            background-color: #1e1e24; /* Dark theme fallback */
-            color: #ffffff;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="header-top">
-            <h1>💪 Тренування</h1>
-            <div class="header-actions">
-                <button class="btn-theme" id="theme-toggle" title="Змінити тему">🌙</button>
-                <button class="btn-timer" onclick="openTimerModal()">⏱ Таймер</button>
-                <button class="btn-plate" onclick="openPlateModal()">🧮 Ваги</button>
-                <button class="btn-export" onclick="exportData()">📤 Експорт</button>
-                <label class="btn-import">
-                    📥 Імпорт
-                    <input type="file" accept=".json" onchange="importData(event)" hidden>
-                </label>
-                <button class="btn-settings" onclick="openSettingsModal()">⚙️</button>
-                <button class="btn-reset" onclick="resetProgress()">Скинути</button>
-            </div>
-        </div>
-        <p class="subtitle">Обери групу м'язів та відмічай виконані вправи</p>
-        
-        <div class="stats-bar">
-            <div class="stat">
-                <span class="stat-value" id="total-exercises">0</span>
-                <span class="stat-label">Всього вправ</span>
-            </div>
-            <div class="stat">
-                <span class="stat-value" id="completed-exercises">0</span>
-                <span class="stat-label">Виконано</span>
-            </div>
-            <div class="stat">
-                <span class="stat-value" id="progress-percent">0%</span>
-                <span class="stat-label">Прогрес</span>
-            </div>
-            <div class="stat">
-                <span class="stat-value" id="total-workouts">0</span>
-                <span class="stat-label">Тренувань</span>
-            </div>
-            <div class="stat">
-                <span class="stat-value" id="total-volume">0кг</span>
-                <span class="stat-label">Тоннаж</span>
-            </div>
-        </div>
-        
-        <div class="header-tabs">
-            <button class="tab-btn active" onclick="switchTab('exercises')">Вправи</button>
-            <button class="tab-btn" onclick="switchTab('history')">Історія</button>
-            <button class="tab-btn" onclick="switchTab('plans')">Плани</button>
-            <button class="tab-btn" onclick="switchTab('body')">⚖️ Тіло</button>
-            <button class="tab-btn" onclick="switchTab('logbook')">📔 Журнал</button>
-        </div>
-    </header>
-
-    <div class="main-layout">
-        <aside class="sidebar">
-            <h3>Групи м'язів</h3>
-            <div class="muscle-groups" id="muscle-groups"></div>
-            <button class="btn-add-custom-ex" onclick="openCustomExerciseModal()">+ Створити вправу</button>
-        </aside>
-
-        <main>
-            <div class="exercises-wrapper" id="exercises-list"></div>
-        </main>
-    </div>
-
-    <div class="modal" id="exercise-modal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeModal()">&times;</span>
-            <img id="modal-image" src="" alt="">
-            <h2 id="modal-title"></h2>
-            <div class="modal-meta">
-                <span class="muscle-tag" id="modal-muscle"></span>
-                <span class="difficulty-tag" id="modal-difficulty"></span>
-            </div>
-            <p class="modal-description" id="modal-description"></p>
-            <div class="modal-instructions">
-                <h4>Як виконувати:</h4>
-                <ul id="modal-instructions"></ul>
-            </div>
-            <div class="modal-sets">
-                <h4>Підходи та повтори:</h4>
-                <p id="modal-sets"></p>
-            </div>
-            <div class="modal-progression">
-                <h4>Лог підходів (сьогодні)</h4>
-                <div id="exercise-sets-log"></div>
-                <div class="set-input-row">
-                    <input type="number" id="set-weight" placeholder="Вага (кг)" step="0.5">
-                    <input type="number" id="set-reps" placeholder="Повтори" step="1">
-                    <button onclick="logSet()">+ Додати</button>
-                </div>
-                <button class="btn-toggle-chart" onclick="toggleProgressionChart()">📈 Показати прогрес</button>
-                <div class="progression-chart-container" id="progression-chart-wrapper" style="display:none;">
-                    <canvas id="progression-chart"></canvas>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="theme-color" content="#00d4ff" />
+        <meta
+            name="description"
+            content="Додаток для відстежування тренувань та прогресу"
+        />
+        <link rel="manifest" href="manifest.json" />
+        <link rel="apple-touch-icon" href="images/icon-192.png" />
+        <title>GymProgress - Тренування</title>
+        <link rel="stylesheet" href="style.css" />
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            /* Fix for select options text visibility on certain mobile OS */
+            #logbook-ex-select option,
+            #logbook-history-select option {
+                background-color: #1e1e24; /* Dark theme fallback */
+                color: #ffffff;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="header-top">
+                <h1>💪 GymProgress</h1>
+                <div class="header-actions">
+                    <button
+                        class="btn-theme"
+                        id="theme-toggle"
+                        title="Змінити тему"
+                    >
+                        🌙
+                    </button>
+                    <button
+                        class="btn-timer"
+                        onclick="openTimerModal()"
+                        title="Таймер"
+                    >
+                        ⏱
+                    </button>
+                    <div class="dropdown">
+                        <button class="btn-settings" onclick="toggleDropdown()">
+                            🛠️
+                        </button>
+                        <div class="dropdown-content" id="header-dropdown">
+                            <button onclick="openPlateModal()">🧮 Ваги</button>
+                            <button onclick="exportData()">📤 Експорт</button>
+                            <label class="btn-import-label">
+                                📥 Імпорт
+                                <input
+                                    type="file"
+                                    accept=".json"
+                                    onchange="importData(event)"
+                                    hidden
+                                />
+                            </label>
+                            <button onclick="openSettingsModal()">
+                                ⚙️ Налаштування
+                            </button>
+                            <button class="btn-reset" onclick="resetProgress()">
+                                🔴 Скинути все
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-checkin">
-                <button id="modal-checkin-btn" onclick="toggleFromModal()">✓ Відмітити виконаним</button>
-                <p class="checkin-date" id="checkin-date"></p>
+
+            <div class="stats-bar">
+                <div class="stat-main">
+                    <span class="stat-value" id="progress-percent">0%</span>
+                    <div class="progress-container">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat">
+                        <span class="stat-value" id="completed-exercises"
+                            >0</span
+                        >
+                        <span class="stat-label">Вправ</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="total-workouts">0</span>
+                        <span class="stat-label">Сесій</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="total-volume">0кг</span>
+                        <span class="stat-label">Вага</span>
+                    </div>
+                </div>
+                <button class="btn-finish-workout" onclick="finishWorkout()">
+                    Завершити
+                </button>
+            </div>
+        </header>
+
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="switchTab('exercises')">
+                <span class="nav-icon">🏋️</span>
+                <span class="nav-label">Вправи</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('logbook')">
+                <span class="nav-icon">📔</span>
+                <span class="nav-label">Журнал</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('history')">
+                <span class="nav-icon">📅</span>
+                <span class="nav-label">Історія</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('plans')">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Плани</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('body')">
+                <span class="nav-icon">⚖️</span>
+                <span class="nav-label">Тіло</span>
+            </button>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar">
+                <h3>Групи м'язів</h3>
+                <div class="muscle-groups" id="muscle-groups"></div>
+                <button
+                    class="btn-add-custom-ex"
+                    onclick="openCustomExerciseModal()"
+                >
+                    + Створити вправу
+                </button>
+            </aside>
+
+            <main>
+                <div class="exercises-wrapper" id="exercises-list"></div>
+            </main>
+        </div>
+
+        <div class="modal" id="exercise-modal">
+            <div class="modal-content">
+                <span class="modal-close" onclick="closeModal()">&times;</span>
+                <img id="modal-image" src="" alt="" />
+                <h2 id="modal-title"></h2>
+                <div class="modal-meta">
+                    <span class="muscle-tag" id="modal-muscle"></span>
+                    <span class="difficulty-tag" id="modal-difficulty"></span>
+                </div>
+                <p class="modal-description" id="modal-description"></p>
+                <div class="modal-instructions">
+                    <h4>Як виконувати:</h4>
+                    <ul id="modal-instructions"></ul>
+                </div>
+                <div class="modal-sets">
+                    <h4>Підходи та повтори:</h4>
+                    <p id="modal-sets"></p>
+                </div>
+                <div class="modal-progression">
+                    <h4>Лог підходів (сьогодні)</h4>
+                    <div id="exercise-sets-log"></div>
+                    <div class="set-input-row">
+                        <input
+                            type="number"
+                            id="set-weight"
+                            placeholder="Вага (кг)"
+                            step="0.5"
+                        />
+                        <input
+                            type="number"
+                            id="set-reps"
+                            placeholder="Повтори"
+                            step="1"
+                        />
+                        <button onclick="logSet()">+ Додати</button>
+                    </div>
+                    <button
+                        class="btn-toggle-chart"
+                        onclick="toggleProgressionChart()"
+                    >
+                        📈 Показати прогрес
+                    </button>
+                    <div
+                        class="progression-chart-container"
+                        id="progression-chart-wrapper"
+                        style="display: none"
+                    >
+                        <canvas id="progression-chart"></canvas>
+                    </div>
+                </div>
+                <div class="modal-checkin">
+                    <button id="modal-checkin-btn" onclick="toggleFromModal()">
+                        ✓ Відмітити виконаним
+                    </button>
+                    <p class="checkin-date" id="checkin-date"></p>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="modal" id="timer-modal">
-        <div class="modal-content timer-modal-content">
-            <span class="modal-close" onclick="closeTimerModal()">&times;</span>
-            <h2>⏱ Таймер відпочинку</h2>
-            <div class="timer-display" id="timer-display">01:30</div>
-            <div class="timer-presets">
-                <button class="timer-preset" onclick="setTimer(30)">30с</button>
-                <button class="timer-preset" onclick="setTimer(60)">1хв</button>
-                <button class="timer-preset active" onclick="setTimer(90)">1.5хв</button>
-                <button class="timer-preset" onclick="setTimer(120)">2хв</button>
-                <button class="timer-preset" onclick="setTimer(180)">3хв</button>
-            </div>
-            <div class="timer-controls">
-                <button class="timer-btn start" id="timer-start-btn" onclick="startTimer()">▶ Старт</button>
-                <button class="timer-btn pause" id="timer-pause-btn" onclick="pauseTimer()" style="display:none;">⏸ Пауза</button>
-                <button class="timer-btn reset" onclick="resetTimer()">↻ Скинути</button>
+        <div class="modal" id="timer-modal">
+            <div class="modal-content timer-modal-content">
+                <span class="modal-close" onclick="closeTimerModal()"
+                    >&times;</span
+                >
+                <h2>⏱ Таймер відпочинку</h2>
+                <div class="timer-display" id="timer-display">01:30</div>
+                <div class="timer-presets">
+                    <button class="timer-preset" onclick="setTimer(30)">
+                        30с
+                    </button>
+                    <button class="timer-preset" onclick="setTimer(60)">
+                        1хв
+                    </button>
+                    <button class="timer-preset active" onclick="setTimer(90)">
+                        1.5хв
+                    </button>
+                    <button class="timer-preset" onclick="setTimer(120)">
+                        2хв
+                    </button>
+                    <button class="timer-preset" onclick="setTimer(180)">
+                        3хв
+                    </button>
+                </div>
+                <div class="timer-controls">
+                    <button
+                        class="timer-btn start"
+                        id="timer-start-btn"
+                        onclick="startTimer()"
+                    >
+                        ▶ Старт
+                    </button>
+                    <button
+                        class="timer-btn pause"
+                        id="timer-pause-btn"
+                        onclick="pauseTimer()"
+                        style="display: none"
+                    >
+                        ⏸ Пауза
+                    </button>
+                    <button class="timer-btn reset" onclick="resetTimer()">
+                        ↻ Скинути
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <section class="history-section" id="history-section" style="display:none;">
-        <div class="section-container">
-            <h2>📅 Історія тренувань</h2>
-            <div class="history-filters">
-                <select id="history-period" onchange="filterHistory()">
-                    <option value="all">Весь час</option>
-                    <option value="week">Цей тиждень</option>
-                    <option value="month">Цей місяць</option>
-                </select>
+        <section
+            class="history-section"
+            id="history-section"
+            style="display: none"
+        >
+            <div class="section-container">
+                <h2>📅 Історія тренувань</h2>
+                <div class="history-filters">
+                    <select id="history-period" onchange="filterHistory()">
+                        <option value="all">Весь час</option>
+                        <option value="week">Цей тиждень</option>
+                        <option value="month">Цей місяць</option>
+                    </select>
+                </div>
+                <div class="history-chart-container">
+                    <canvas id="history-chart"></canvas>
+                </div>
+                <h3>🔥 Графік активності</h3>
+                <div class="heatmap-container" id="activity-heatmap"></div>
+                <div class="history-list" id="history-list"></div>
             </div>
-            <div class="history-chart-container">
-                <canvas id="history-chart"></canvas>
-            </div>
-            <h3>🔥 Графік активності</h3>
-            <div class="heatmap-container" id="activity-heatmap"></div>
-            <div class="history-list" id="history-list"></div>
-        </div>
-    </section>
+        </section>
 
-    <section class="plans-section" id="plans-section" style="display:none;">
-        <div class="section-container">
-            <h2>📋 Плани тренувань</h2>
-            <button class="btn-add-plan" onclick="openPlanModal()">+ Новий план</button>
-            <div class="plans-list" id="plans-list"></div>
-        </div>
-    </section>
+        <section class="plans-section" id="plans-section" style="display: none">
+            <div class="section-container">
+                <h2>📋 Плани тренувань</h2>
+                <button class="btn-add-plan" onclick="openPlanModal()">
+                    + Новий план
+                </button>
+                <div class="plans-list" id="plans-list"></div>
+            </div>
+        </section>
 
-    <section class="body-section" id="body-section" style="display:none;">
-        <div class="section-container">
-            <h2>⚖️ Вага тіла та виміри</h2>
-            <div class="body-input-row">
-                <input type="number" id="body-weight-input" placeholder="Сьогоднішня вага (кг)" step="0.1">
-                <button class="btn-save-weight" onclick="saveBodyWeight()">Зберегти (Кожен день)</button>
+        <section class="body-section" id="body-section" style="display: none">
+            <div class="section-container">
+                <h2>⚖️ Вага тіла та виміри</h2>
+                <div class="body-input-row">
+                    <input
+                        type="number"
+                        id="body-weight-input"
+                        placeholder="Сьогоднішня вага (кг)"
+                        step="0.1"
+                    />
+                    <button class="btn-save-weight" onclick="saveBodyWeight()">
+                        Зберегти (Кожен день)
+                    </button>
+                </div>
+                <div class="body-chart-container">
+                    <canvas id="body-chart"></canvas>
+                </div>
+                <div class="body-history-list" id="body-history-list"></div>
             </div>
-            <div class="body-chart-container">
-                <canvas id="body-chart"></canvas>
-            </div>
-            <div class="body-history-list" id="body-history-list"></div>
-        </div>
-    </section>
+        </section>
 
-    <section class="logbook-section" id="logbook-section" style="display:none;">
-        <div class="section-container">
-            <h2>📔 Журнал тренувань</h2>
-            
-            <div class="header-tabs" style="margin-bottom: 20px;">
-                 <button class="tab-btn active" id="logbook-tab-log" onclick="switchLogbookTab('log')">Запис підходів</button>
-                 <button class="tab-btn" id="logbook-tab-history" onclick="switchLogbookTab('history')">Історія журналу</button>
-            </div>
-            
-            <div id="logbook-view-log">
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label>Назва нової вправи:</label>
-                    <div style="display:flex; gap: 10px;">
-                        <input type="text" id="logbook-custom-ex" placeholder="Наприклад: Підтягування з вагою" style="flex:1; padding:10px; border-radius:5px; border:1px solid var(--border); background:var(--card-bg); color:var(--text-primary);">
-                        <button class="btn-save-plan" onclick="createLogbookCustomExercise()" style="width:auto; margin-top:0;">Створити</button>
+        <section
+            class="logbook-section"
+            id="logbook-section"
+            style="display: none"
+        >
+            <div class="section-container">
+                <h2>📔 Журнал тренувань</h2>
+
+                <div class="header-tabs" style="margin-bottom: 20px">
+                    <button
+                        class="tab-btn active"
+                        id="logbook-tab-log"
+                        onclick="switchLogbookTab('log')"
+                    >
+                        Запис підходів
+                    </button>
+                    <button
+                        class="tab-btn"
+                        id="logbook-tab-history"
+                        onclick="switchLogbookTab('history')"
+                    >
+                        Історія журналу
+                    </button>
+                </div>
+
+                <div id="logbook-view-log">
+                    <div class="form-group" style="margin-bottom: 20px">
+                        <label>Назва нової вправи:</label>
+                        <div style="display: flex; gap: 10px">
+                            <input
+                                type="text"
+                                id="logbook-custom-ex"
+                                placeholder="Наприклад: Підтягування з вагою"
+                                style="
+                                    flex: 1;
+                                    padding: 10px;
+                                    border-radius: 5px;
+                                    border: 1px solid var(--border);
+                                    background: var(--card-bg);
+                                    color: var(--text-primary);
+                                "
+                            />
+                            <button
+                                class="btn-save-plan"
+                                onclick="createLogbookCustomExercise()"
+                                style="width: auto; margin-top: 0"
+                            >
+                                Створити
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr
+                        style="
+                            border: none;
+                            border-top: 1px solid var(--border, #333);
+                            margin: 25px 0;
+                        "
+                    />
+
+                    <div class="form-group">
+                        <label>Оберіть вправу для запису:</label>
+                        <div
+                            style="
+                                display: flex;
+                                gap: 10px;
+                                align-items: center;
+                            "
+                        >
+                            <select
+                                id="logbook-ex-select"
+                                style="
+                                    flex: 1;
+                                    padding: 10px;
+                                    border-radius: 5px;
+                                    background: var(--card-bg);
+                                    color: var(--text-primary);
+                                    border: 1px solid var(--border);
+                                "
+                            ></select>
+                            <button
+                                id="btn-delete-logbook-ex"
+                                style="
+                                    width: auto;
+                                    padding: 10px 15px;
+                                    border-radius: 5px;
+                                    background: rgba(239, 68, 68, 0.1);
+                                    color: #ef4444;
+                                    border: 1px solid #ef4444;
+                                    cursor: pointer;
+                                "
+                                title="Видалити обрану вправу"
+                            >
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+
+                    <div
+                        id="logbook-sets-container"
+                        style="
+                            margin-top: 15px;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 10px;
+                        "
+                    ></div>
+
+                    <div class="set-input-row" style="margin-top: 15px">
+                        <input
+                            type="number"
+                            id="logbook-weight"
+                            placeholder="Вага (кг)"
+                            step="0.5"
+                        />
+                        <input
+                            type="number"
+                            id="logbook-reps"
+                            placeholder="Повтори"
+                            step="1"
+                        />
+                        <button id="btn-add-logbook-set">+ Додати</button>
+                    </div>
+
+                    <button
+                        id="btn-save-logbook"
+                        class="btn-save-plan"
+                        style="margin-top: 20px; width: 100%"
+                    >
+                        Зберегти результати
+                    </button>
+                    <div
+                        id="logbook-toast"
+                        style="
+                            display: none;
+                            text-align: center;
+                            color: #28a745;
+                            font-weight: bold;
+                            margin-top: 10px;
+                        "
+                    >
+                        Успішно збережено
                     </div>
                 </div>
 
-                <hr style="border:none; border-top:1px solid var(--border, #333); margin: 25px 0;">
-
-                <div class="form-group">
-                    <label>Оберіть вправу для запису:</label>
-                    <div style="display:flex; gap: 10px; align-items:center;">
-                        <select id="logbook-ex-select" style="flex:1; padding:10px; border-radius:5px; background:var(--card-bg); color:var(--text-primary); border:1px solid var(--border);"></select>
-                        <button id="btn-delete-logbook-ex" style="width:auto; padding:10px 15px; border-radius:5px; background:rgba(239, 68, 68, 0.1); color:#ef4444; border:1px solid #ef4444; cursor:pointer;" title="Видалити обрану вправу">🗑️</button>
+                <div id="logbook-view-history" style="display: none">
+                    <div class="form-group" style="margin-bottom: 20px">
+                        <label>Оберіть вправу для історії:</label>
+                        <select
+                            id="logbook-history-select"
+                            style="
+                                width: 100%;
+                                padding: 10px;
+                                border-radius: 5px;
+                                background: var(--card-bg);
+                                color: var(--text-primary);
+                                border: 1px solid var(--border);
+                            "
+                        ></select>
                     </div>
-                </div>
 
-                <div id="logbook-sets-container" style="margin-top: 15px; display:flex; flex-direction:column; gap:10px;"></div>
-                
-                <div class="set-input-row" style="margin-top: 15px;">
-                    <input type="number" id="logbook-weight" placeholder="Вага (кг)" step="0.5">
-                    <input type="number" id="logbook-reps" placeholder="Повтори" step="1">
-                    <button id="btn-add-logbook-set">+ Додати</button>
+                    <div class="history-list" id="logbook-history-list"></div>
                 </div>
-                
-                <button id="btn-save-logbook" class="btn-save-plan" style="margin-top: 20px; width: 100%;">Зберегти результати</button>
-                <div id="logbook-toast" style="display:none; text-align:center; color:#28a745; font-weight:bold; margin-top:10px;">Успішно збережено</div>
             </div>
+        </section>
 
-            <div id="logbook-view-history" style="display:none;">
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label>Оберіть вправу для історії:</label>
-                    <select id="logbook-history-select" style="width:100%; padding:10px; border-radius:5px; background:var(--card-bg); color:var(--text-primary); border:1px solid var(--border);"></select>
+        <div class="modal" id="plan-modal">
+            <div class="modal-content">
+                <span class="modal-close" onclick="closePlanModal()"
+                    >&times;</span
+                >
+                <h2 id="plan-modal-title">Новий план тренувань</h2>
+                <div class="plan-form">
+                    <div class="form-group">
+                        <label>Назва плану:</label>
+                        <input
+                            type="text"
+                            id="plan-name"
+                            placeholder="Назва плану"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label>Оберіть вправи:</label>
+                        <div
+                            class="plan-exercises-select"
+                            id="plan-exercises-select"
+                        ></div>
+                    </div>
+                    <button class="btn-save-plan" onclick="savePlan()">
+                        Зберегти план
+                    </button>
                 </div>
-                
-                <div class="history-list" id="logbook-history-list"></div>
             </div>
         </div>
-    </section>
 
-    <div class="modal" id="plan-modal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closePlanModal()">&times;</span>
-            <h2 id="plan-modal-title">Новий план тренувань</h2>
-            <div class="plan-form">
+        <div class="modal" id="plate-modal">
+            <div class="modal-content plate-modal-content">
+                <span class="modal-close" onclick="closePlateModal()"
+                    >&times;</span
+                >
+                <h2>🧮 Калькулятор млинців</h2>
                 <div class="form-group">
-                    <label>Назва плану:</label>
-                    <input type="text" id="plan-name" placeholder="Назва плану">
+                    <label>Вага на штанзі (кг):</label>
+                    <input
+                        type="number"
+                        id="plate-weight-input"
+                        value="100"
+                        step="2.5"
+                        oninput="calculatePlates()"
+                    />
+                </div>
+                <div class="plate-visualizer" id="plate-visualizer"></div>
+                <div class="plate-results" id="plate-results"></div>
+            </div>
+        </div>
+
+        <div class="modal" id="settings-modal">
+            <div class="modal-content">
+                <span class="modal-close" onclick="closeSettingsModal()"
+                    >&times;</span
+                >
+                <h2>⚙️ Налаштування синхронізації</h2>
+                <p>Використовуйте GitHub Gist для збереження даних у хмарі.</p>
+                <div class="form-group">
+                    <label>GitHub Personal Access Token:</label>
+                    <input
+                        type="password"
+                        id="github-token"
+                        placeholder="ghp_xxxxxxxxxxxx"
+                    />
                 </div>
                 <div class="form-group">
-                    <label>Оберіть вправи:</label>
-                    <div class="plan-exercises-select" id="plan-exercises-select"></div>
+                    <label>Gist ID (опціонально):</label>
+                    <input
+                        type="text"
+                        id="gist-id"
+                        placeholder="Залиште пустим для нової синхронізації"
+                    />
                 </div>
-                <button class="btn-save-plan" onclick="savePlan()">Зберегти план</button>
+                <div
+                    class="form-group"
+                    style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    "
+                >
+                    <label style="margin: 0">Автостарт таймера:</label>
+                    <input
+                        type="checkbox"
+                        id="smart-timer-toggle"
+                        style="width: 25px; height: 25px"
+                        checked
+                    />
+                </div>
+                <div class="settings-actions">
+                    <button class="btn-save-settings" onclick="saveSettings()">
+                        Зберегти налаштування
+                    </button>
+                    <button class="btn-sync" onclick="syncToCloud()">
+                        ☁️ Синхронізувати зараз
+                    </button>
+                    <button
+                        class="btn-sync"
+                        style="background: #28a745; margin-left: 10px"
+                        onclick="fetchFromCloud()"
+                    >
+                        📥 Завантажити з хмари
+                    </button>
+                </div>
+                <div
+                    style="
+                        margin-top: 20px;
+                        border-top: 1px solid var(--border);
+                        padding-top: 20px;
+                        display: flex;
+                        gap: 10px;
+                    "
+                >
+                    <button
+                        class="btn-plate"
+                        style="flex: 1"
+                        onclick="exportData()"
+                    >
+                        💾 Експорт JSON
+                    </button>
+                    <button
+                        class="btn-plate"
+                        style="
+                            flex: 1;
+                            background: var(--success);
+                            color: white;
+                        "
+                        onclick="exportToCSV()"
+                    >
+                        📊 Експорт Excel/CSV
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="modal" id="plate-modal">
-        <div class="modal-content plate-modal-content">
-            <span class="modal-close" onclick="closePlateModal()">&times;</span>
-            <h2>🧮 Калькулятор млинців</h2>
-            <div class="form-group">
-                <label>Вага на штанзі (кг):</label>
-                <input type="number" id="plate-weight-input" value="100" step="2.5" oninput="calculatePlates()">
+        <div class="modal" id="custom-exercise-modal">
+            <div class="modal-content">
+                <span class="modal-close" onclick="closeCustomExerciseModal()"
+                    >&times;</span
+                >
+                <h2>➕ Створити вправу</h2>
+                <div class="form-group">
+                    <label>Назва вправи:</label>
+                    <input
+                        type="text"
+                        id="ce-name"
+                        placeholder="Наприклад: Підйом на біцепс"
+                    />
+                </div>
+                <div class="form-group">
+                    <label>Група м'язів:</label>
+                    <select
+                        id="ce-muscle"
+                        style="
+                            width: 100%;
+                            padding: 10px;
+                            border-radius: 5px;
+                            background: var(--card-bg);
+                            color: var(--text-primary);
+                        "
+                    >
+                        <option value="Груди">Груди</option>
+                        <option value="Спина">Спина</option>
+                        <option value="Ноги">Ноги</option>
+                        <option value="Плечі">Плечі</option>
+                        <option value="Руки">Руки</option>
+                        <option value="Прес">Прес</option>
+                        <option value="Кардіо">Кардіо</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Опис (опціонально):</label>
+                    <textarea
+                        id="ce-desc"
+                        rows="3"
+                        style="
+                            width: 100%;
+                            padding: 10px;
+                            border-radius: 5px;
+                            background: var(--card-bg);
+                            color: var(--text-primary);
+                        "
+                    ></textarea>
+                </div>
+                <button class="btn-save-plan" onclick="saveCustomExercise()">
+                    Зберегти вправу
+                </button>
             </div>
-            <div class="plate-visualizer" id="plate-visualizer"></div>
-            <div class="plate-results" id="plate-results"></div>
         </div>
-    </div>
 
-    <div class="modal" id="settings-modal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeSettingsModal()">&times;</span>
-            <h2>⚙️ Налаштування синхронізації</h2>
-            <p>Використовуйте GitHub Gist для збереження даних у хмарі.</p>
-            <div class="form-group">
-                <label>GitHub Personal Access Token:</label>
-                <input type="password" id="github-token" placeholder="ghp_xxxxxxxxxxxx">
-            </div>
-            <div class="form-group">
-                <label>Gist ID (опціонально):</label>
-                <input type="text" id="gist-id" placeholder="Залиште пустим для нової синхронізації">
-            </div>
-            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
-                <label style="margin:0;">Автостарт таймера:</label>
-                <input type="checkbox" id="smart-timer-toggle" style="width:25px; height:25px;" checked>
-            </div>
-            <div class="settings-actions">
-                <button class="btn-save-settings" onclick="saveSettings()">Зберегти налаштування</button>
-                <button class="btn-sync" onclick="syncToCloud()">☁️ Синхронізувати зараз</button>
-                <button class="btn-sync" style="background:#28a745; margin-left:10px;" onclick="fetchFromCloud()">📥 Завантажити з хмари</button>
-            </div>
-            <div style="margin-top:20px; border-top:1px solid var(--border); padding-top:20px; display:flex; gap:10px;">
-                <button class="btn-plate" style="flex:1;" onclick="exportData()">💾 Експорт JSON</button>
-                <button class="btn-plate" style="flex:1; background:var(--success); color:white;" onclick="exportToCSV()">📊 Експорт Excel/CSV</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="custom-exercise-modal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeCustomExerciseModal()">&times;</span>
-            <h2>➕ Створити вправу</h2>
-            <div class="form-group">
-                <label>Назва вправи:</label>
-                <input type="text" id="ce-name" placeholder="Наприклад: Підйом на біцепс">
-            </div>
-            <div class="form-group">
-                <label>Група м'язів:</label>
-                <select id="ce-muscle" style="width:100%; padding:10px; border-radius:5px; background:var(--card-bg); color:var(--text-primary);">
-                    <option value="Груди">Груди</option>
-                    <option value="Спина">Спина</option>
-                    <option value="Ноги">Ноги</option>
-                    <option value="Плечі">Плечі</option>
-                    <option value="Руки">Руки</option>
-                    <option value="Прес">Прес</option>
-                    <option value="Кардіо">Кардіо</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Опис (опціонально):</label>
-                <textarea id="ce-desc" rows="3" style="width:100%; padding:10px; border-radius:5px; background:var(--card-bg); color:var(--text-primary);"></textarea>
-            </div>
-            <button class="btn-save-plan" onclick="saveCustomExercise()">Зберегти вправу</button>
-        </div>
-    </div>
-
-    <script src="app.js?v=20260318-2"></script>
-</body>
+        <script src="app.js?v=20260318-2"></script>
+    </body>
 </html>
