@@ -1,15 +1,15 @@
 const trainingData = [
   {
     id: "chest",
-    name: "Грудь",
+    name: "Груди",
     icon: "💪",
     exercises: [
       {
         id: 1,
         name: "Жим штанги лежачи",
-        image: "images/bench-press.png",
+        image: "images/bench-press.webp",
         description:
-          "Базовий комплексний вправ для розвитку грудних м'язів. Виконується на горизонтальній лаві.",
+          "Базова комплексна вправа для розвитку грудних м'язів. Виконується на горизонтальній лаві.",
         difficulty: "Середній",
         instructions: [
           "Ляжте на лаву, ноги міцно на підлозі",
@@ -24,7 +24,7 @@ const trainingData = [
       {
         id: 2,
         name: "Жим в тренажері",
-        image: "images/chest-press-machine.png",
+        image: "images/chest-press-machine.webp",
         description:
           "Безпечна вправа для грудей в тренажері. Підходить для початківців.",
         difficulty: "Легкий",
@@ -40,7 +40,7 @@ const trainingData = [
       {
         id: 3,
         name: "Бабочка",
-        image: "images/butterfly.png",
+        image: "images/butterfly.webp",
         description: "Ізоляційна вправа для грудних м'язів у тренажері.",
         difficulty: "Легкий",
         instructions: [
@@ -55,7 +55,7 @@ const trainingData = [
       {
         id: 4,
         name: "Віджимання на брусах",
-        image: "images/dips.png",
+        image: "images/dips.webp",
         description:
           "Вправа для нижньої частини грудей та триголового м'яза плеча.",
         difficulty: "Середній",
@@ -71,7 +71,7 @@ const trainingData = [
       {
         id: 5,
         name: "Розведення гантелей",
-        image: "images/dumbbell-fly.png",
+        image: "images/dumbbell-fly.webp",
         description: "Ізоляційна вправа для розтягування грудних м'язів.",
         difficulty: "Легкий",
         instructions: [
@@ -94,7 +94,7 @@ const trainingData = [
       {
         id: 6,
         name: "Тяга верхнього блоку",
-        image: "images/lat-pulldown.png",
+        image: "images/lat-pulldown.webp",
         description: "Альтернатива підтягуванням для широчайших м'язів спини.",
         difficulty: "Легкий",
         instructions: [
@@ -109,7 +109,7 @@ const trainingData = [
       {
         id: 7,
         name: "Тяга нижнього блоку",
-        image: "images/cable-row.png",
+        image: "images/cable-row.webp",
         description: "Вправа для розвитку широчайших м'язів знизу.",
         difficulty: "Середній",
         instructions: [
@@ -124,7 +124,7 @@ const trainingData = [
       {
         id: 8,
         name: "Підтягування",
-        image: "images/pullups.png",
+        image: "images/pullups.webp",
         description: "Класична базова вправа для широчайших м'язів спини.",
         difficulty: "Середній",
         instructions: [
@@ -139,7 +139,7 @@ const trainingData = [
       {
         id: 9,
         name: "Тяга штанги в нахилі",
-        image: "images/barbell-row.png",
+        image: "images/barbell-row.webp",
         description: "Ефективна вправа для товщини спини.",
         difficulty: "Середній",
         instructions: [
@@ -154,9 +154,9 @@ const trainingData = [
       {
         id: 31,
         name: "Станова тяга",
-        image: "images/deadlift.png",
+        image: "images/deadlift.webp",
         description:
-          "Базова вправа для задньої ланцюга: спина, сідниці, задня поверхня стегна.",
+          "Базова вправа для заднього ланцюга: спина, сідниці, задня поверхня стегна.",
         difficulty: "Складний",
         instructions: [
           "Станьте біля штанги, ноги на ширині плечей",
@@ -178,7 +178,7 @@ const trainingData = [
       {
         id: 10,
         name: "Згинання рук зі штангою",
-        image: "images/barbell-curl.png",
+        image: "images/barbell-curl.webp",
         description: "Класична вправа для біцепса.",
         difficulty: "Легкий",
         instructions: [
@@ -193,7 +193,7 @@ const trainingData = [
       {
         id: 11,
         name: "Згинання рук з гантелями",
-        image: "images/dumbbell-curl.png",
+        image: "images/dumbbell-curl.webp",
         description: "Вправа для біцепса з гантелями.",
         difficulty: "Легкий",
         instructions: [
@@ -208,7 +208,7 @@ const trainingData = [
       {
         id: 12,
         name: "Біцепс в тренажері",
-        image: "images/biceps-machine.png",
+        image: "images/biceps-machine.webp",
         description: "Ізоляційна вправа для біцепса в тренажері.",
         difficulty: "Легкий",
         instructions: [
@@ -230,7 +230,7 @@ const trainingData = [
       {
         id: 13,
         name: "Тріцепс в кросовері",
-        image: "images/triceps-pulley.png",
+        image: "images/triceps-pulley.webp",
         description: "Вправа для трицепса з верхнім блоком.",
         difficulty: "Легкий",
         instructions: [
@@ -246,7 +246,7 @@ const trainingData = [
       {
         id: 14,
         name: "Розгинання на блоці",
-        image: "images/triceps-extension.png",
+        image: "images/triceps-extension.webp",
         description: "Вправа для трицепса на верхньому блоці.",
         difficulty: "Легкий",
         instructions: [
@@ -261,7 +261,7 @@ const trainingData = [
       {
         id: 15,
         name: "Французький жим",
-        image: "images/french-press.png",
+        image: "images/french-press.webp",
         description: "Ефективна вправа для трицепса.",
         difficulty: "Середній",
         instructions: [
@@ -282,8 +282,8 @@ const trainingData = [
     exercises: [
       {
         id: 16,
-        name: "Приседання зі штангою",
-        image: "images/squat.png",
+        name: "Присідання зі штангою",
+        image: "images/squat.webp",
         description: "Королева вправ для ніг. Розвиває квадрицепси та сідниці.",
         difficulty: "Складний",
         instructions: [
@@ -298,7 +298,7 @@ const trainingData = [
       {
         id: 17,
         name: "Жим ногами",
-        image: "images/leg-press.png",
+        image: "images/leg-press.webp",
         description: "Безпечна альтернатива присіданням.",
         difficulty: "Середній",
         instructions: [
@@ -313,7 +313,7 @@ const trainingData = [
       {
         id: 18,
         name: "Розгинання ніг в тренажері",
-        image: "images/leg-extension.png",
+        image: "images/leg-extension.webp",
         description: "Вправа для квадрицепсів.",
         difficulty: "Легкий",
         instructions: [
@@ -328,7 +328,7 @@ const trainingData = [
       {
         id: 32,
         name: "Згинання ніг в тренажері",
-        image: "images/leg-curl.png",
+        image: "images/leg-curl.webp",
         description: "Вправа для задньої поверхні стегна (біцепс стегна).",
         difficulty: "Легкий",
         instructions: [
@@ -343,7 +343,7 @@ const trainingData = [
       {
         id: 19,
         name: "Випади",
-        image: "images/lunges.png",
+        image: "images/lunges.webp",
         description: "Вправа для квадрицепсів та сідниць.",
         difficulty: "Середній",
         instructions: [
@@ -358,7 +358,7 @@ const trainingData = [
       {
         id: 20,
         name: "Підйоми на носки",
-        image: "images/calf-raise.png",
+        image: "images/calf-raise.webp",
         description: "Вправа для литкових м'язів.",
         difficulty: "Легкий",
         instructions: [
@@ -380,7 +380,7 @@ const trainingData = [
       {
         id: 21,
         name: "Розведення в боки",
-        image: "images/lateral-raise.png",
+        image: "images/lateral-raise.webp",
         description: "Ізоляційна вправа для середньої частини дельт.",
         difficulty: "Легкий",
         instructions: [
@@ -395,7 +395,7 @@ const trainingData = [
       {
         id: 22,
         name: "Махи з гантелями",
-        image: "images/front-raise.png",
+        image: "images/front-raise.webp",
         description: "Вправа для дельтовидних м'язів.",
         difficulty: "Легкий",
         instructions: [
@@ -410,7 +410,7 @@ const trainingData = [
       {
         id: 23,
         name: "Жим гантелей над головою",
-        image: "images/overhead-press.png",
+        image: "images/overhead-press.webp",
         description: "Базовий вправа для розвитку дельтовидних м'язів.",
         difficulty: "Середній",
         instructions: [
@@ -432,7 +432,7 @@ const trainingData = [
       {
         id: 24,
         name: "Трапеції з гантелями",
-        image: "images/shrugs.png",
+        image: "images/shrugs.webp",
         description: "Вправа для розвитку трапецієвидних м'язів.",
         difficulty: "Легкий",
         instructions: [
@@ -447,7 +447,7 @@ const trainingData = [
       {
         id: 25,
         name: "Тяга до підборіддя",
-        image: "images/face-pull.png",
+        image: "images/face-pull.webp",
         description: "Вправа для трапецій та дельт.",
         difficulty: "Середній",
         instructions: [
@@ -469,7 +469,7 @@ const trainingData = [
       {
         id: 26,
         name: "Передпліччя в кросовері",
-        image: "images/forearm-curl.png",
+        image: "images/forearm-curl.webp",
         description: "Вправа для передпліччя в кросовері.",
         difficulty: "Легкий",
         instructions: [
@@ -485,13 +485,13 @@ const trainingData = [
   },
   {
     id: "abs",
-    name: "Пресс",
+    name: "Прес",
     icon: "🔥",
     exercises: [
       {
         id: 27,
         name: "Скручування",
-        image: "images/crunches.png",
+        image: "images/crunches.webp",
         description: "Класична вправа для прямого м'яза живота.",
         difficulty: "Легкий",
         instructions: [
@@ -506,7 +506,7 @@ const trainingData = [
       {
         id: 28,
         name: "Планка",
-        image: "images/plank.png",
+        image: "images/plank.webp",
         description: "Статична вправа для зміцнення кора.",
         difficulty: "Середній",
         instructions: [
@@ -521,11 +521,11 @@ const trainingData = [
       {
         id: 29,
         name: "Підйоми ніг лежачи",
-        image: "images/leg-raise.png",
+        image: "images/leg-raise.webp",
         description: "Вправа для нижнього преса.",
         difficulty: "Середній",
         instructions: [
-          "Ляжте на спину, руки під сідницями",
+          "Ляжте на спину, руки под сідницями",
           "Піднімайте ноги вгору",
           "Опускайте ноги повільно, не торкаючись підлоги",
         ],
@@ -535,7 +535,7 @@ const trainingData = [
       {
         id: 30,
         name: "Велосипед",
-        image: "images/bicycle.png",
+        image: "images/bicycle.webp",
         description: "Вправа для косих м'язів живота.",
         difficulty: "Середній",
         instructions: [
@@ -565,11 +565,6 @@ let customExercises = [];
 let wakeLock = null;
 let progressionChart = null;
 let bodyChart = null;
-
-// Logbook Global State
-let logbookExercises = []; // [{ id, name }]
-let logbookSessions = []; // { id, timestamp, exerciseId, sets: [{ weight, reps }] }
-let logbookActiveSets = []; // temporary array for the current unsaved session
 
 // Premium Helpers (Audio & Vibrate)
 let audioCtx = null;
@@ -695,6 +690,25 @@ function releaseWakeLock() {
   }
 }
 
+function getActiveTab() {
+  const activeBtn = document.querySelector(".nav-item.active");
+  if (!activeBtn) return null;
+  const onclickAttr = activeBtn.getAttribute("onclick") || "";
+  const match = onclickAttr.match(/switchTab\('([^']+)'\)/);
+  return match ? match[1] : null;
+}
+
+document.addEventListener("visibilitychange", async () => {
+  if (document.visibilityState === "visible") {
+    const activeTab = getActiveTab();
+    if (activeTab === "exercises" || activeTab === "logbook") {
+      await requestWakeLock();
+    }
+  } else {
+    releaseWakeLock();
+  }
+});
+
 // Theme Logic
 function initTheme() {
   const saved = localStorage.getItem("theme");
@@ -750,12 +764,8 @@ function loadState() {
     mergeCustomExercises();
   }
 
-  // Logbook independent state
-  const lbEx = localStorage.getItem("logbookExercises");
-  if (lbEx) logbookExercises = JSON.parse(lbEx);
-
-  const lbSess = localStorage.getItem("logbookSessions");
-  if (lbSess) logbookSessions = JSON.parse(lbSess);
+  // Migrate legacy logbook database
+  migrateLegacyLogbook();
 }
 
 function saveState() {
@@ -763,8 +773,6 @@ function saveState() {
   localStorage.setItem("exerciseLogs", JSON.stringify(exerciseLogs));
   localStorage.setItem("bodyWeightHistory", JSON.stringify(bodyWeightHistory));
   localStorage.setItem("customExercises", JSON.stringify(customExercises));
-  localStorage.setItem("logbookExercises", JSON.stringify(logbookExercises));
-  localStorage.setItem("logbookSessions", JSON.stringify(logbookSessions));
 }
 
 function mergeCustomExercises() {
@@ -775,6 +783,74 @@ function mergeCustomExercises() {
       group.exercises.push(ce);
     }
   });
+}
+
+function migrateLegacyLogbook() {
+  const rawData = localStorage.getItem("my_custom_logbook");
+  if (!rawData) return;
+  try {
+    const data = JSON.parse(rawData);
+    const legacyExercises = data.exercises || [];
+    const legacySessions = data.sessions || [];
+    const legacyIdMap = {};
+
+    legacyExercises.forEach((ex) => {
+      const existingEx = getAllExercises().find(
+        (e) => e.name.toLowerCase().trim() === ex.name.toLowerCase().trim()
+      );
+      if (existingEx) {
+        legacyIdMap[ex.id] = existingEx.id;
+      } else {
+        const newEx = {
+          id: ex.id,
+          name: ex.name,
+          muscle: "Груди",
+          muscleGroup: "Груди",
+          difficulty: "Середній",
+          description: "Користувацька вправа з Журналу",
+          instructions: ["Користувацька вправа"],
+          sets: "3 x 10",
+          image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=300&auto=format&fit=crop"
+        };
+        customExercises.push(newEx);
+        legacyIdMap[ex.id] = ex.id;
+      }
+    });
+
+    // Re-merge custom exercises to update trainingData
+    mergeCustomExercises();
+
+    legacySessions.forEach((sess) => {
+      const targetExId = legacyIdMap[sess.exerciseId] || sess.exerciseId;
+      if (!exerciseLogs[targetExId]) {
+        exerciseLogs[targetExId] = [];
+      }
+      if (sess.sets && Array.isArray(sess.sets)) {
+        sess.sets.forEach((set) => {
+          // Check if this set already exists to prevent duplication
+          const setTime = new Date(sess.timestamp).toISOString();
+          const alreadyExists = exerciseLogs[targetExId].some(
+            (logged) => logged.date === setTime && logged.weight === parseFloat(set.weight) && logged.reps === parseInt(set.reps)
+          );
+          if (!alreadyExists) {
+            exerciseLogs[targetExId].push({
+              date: setTime,
+              weight: parseFloat(set.weight),
+              reps: parseInt(set.reps)
+            });
+          }
+        });
+      }
+    });
+
+    // Backup and clean up
+    localStorage.setItem("my_custom_logbook_backup", rawData);
+    localStorage.removeItem("my_custom_logbook");
+    saveState();
+    console.log("Legacy logbook migrated successfully!");
+  } catch (e) {
+    console.error("Error migrating legacy logbook:", e);
+  }
 }
 
 function formatDate(timestamp) {
@@ -1677,15 +1753,16 @@ function importData(event) {
 function openTimerModal() {
   document.getElementById("timer-modal").style.display = "flex";
   vibrate(30);
-  resetTimer();
+  if (!timerRunning) {
+    resetTimer();
+  } else {
+    updateTimerDisplay();
+    document.getElementById("timer-start-btn").style.display = "none";
+    document.getElementById("timer-pause-btn").style.display = "inline-block";
+  }
 }
 
 function closeTimerModal() {
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
-  timerRunning = false;
   document.getElementById("timer-modal").style.display = "none";
   vibrate(20);
 }
@@ -1697,14 +1774,29 @@ function setTimer(seconds) {
   document
     .querySelectorAll(".timer-preset")
     .forEach((btn) => btn.classList.remove("active"));
-  event.target.classList.add("active");
+  if (window.event && window.event.target) {
+    window.event.target.classList.add("active");
+  }
 }
 
 function updateTimerDisplay() {
   const mins = Math.floor(timerSeconds / 60);
   const secs = timerSeconds % 60;
-  document.getElementById("timer-display").textContent =
-    `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  const timeStr = `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  
+  const modalDisplay = document.getElementById("timer-display");
+  if (modalDisplay) {
+    modalDisplay.textContent = timeStr;
+  }
+  
+  const headerBtn = document.getElementById("header-timer-btn");
+  if (headerBtn) {
+    if (timerRunning && timerSeconds > 0) {
+      headerBtn.textContent = `⏱ ${timeStr}`;
+    } else {
+      headerBtn.textContent = `⏱`;
+    }
+  }
 }
 
 function startTimer() {
@@ -1712,6 +1804,7 @@ function startTimer() {
   timerRunning = true;
   document.getElementById("timer-start-btn").style.display = "none";
   document.getElementById("timer-pause-btn").style.display = "inline-block";
+  updateTimerDisplay();
 
   timerInterval = setInterval(() => {
     if (timerSeconds > 0) {
@@ -1729,6 +1822,7 @@ function startTimer() {
 
       document.getElementById("timer-start-btn").style.display = "inline-block";
       document.getElementById("timer-pause-btn").style.display = "none";
+      updateTimerDisplay();
     }
   }, 1000);
 }
@@ -1741,6 +1835,7 @@ function pauseTimer() {
   timerRunning = false;
   document.getElementById("timer-start-btn").style.display = "inline-block";
   document.getElementById("timer-pause-btn").style.display = "none";
+  updateTimerDisplay();
 }
 
 function resetTimer() {
@@ -2082,34 +2177,10 @@ function switchLogbookTab(tabId) {
 }
 
 const LogbookModule = {
-  exercises: [],
-  sessions: [],
   activeSets: [],
 
   init() {
-    this.load();
     this.bindEvents();
-  },
-
-  load() {
-    const rawData = localStorage.getItem("my_custom_logbook");
-    if (rawData) {
-      try {
-        const data = JSON.parse(rawData);
-        this.exercises = data.exercises || [];
-        this.sessions = data.sessions || [];
-      } catch (e) {
-        console.error("Logbook parsing error", e);
-      }
-    }
-  },
-
-  save() {
-    const data = {
-      exercises: this.exercises,
-      sessions: this.sessions,
-    };
-    localStorage.setItem("my_custom_logbook", JSON.stringify(data));
   },
 
   bindEvents() {
@@ -2140,14 +2211,20 @@ const LogbookModule = {
 
         if (!exerciseId || this.activeSets.length === 0) return;
 
-        this.sessions.push({
-          id: "lbsess_" + Date.now(),
-          timestamp: Date.now(),
-          exerciseId: exerciseId,
-          sets: [...this.activeSets],
+        if (!exerciseLogs[exerciseId]) {
+          exerciseLogs[exerciseId] = [];
+        }
+
+        const now = new Date().toISOString();
+        this.activeSets.forEach((set) => {
+          exerciseLogs[exerciseId].push({
+            date: now,
+            weight: set.weight,
+            reps: set.reps,
+          });
         });
 
-        this.save();
+        saveState();
         this.activeSets = [];
         this.renderSets();
 
@@ -2157,6 +2234,12 @@ const LogbookModule = {
           setTimeout(() => {
             toast.style.display = "none";
           }, 2000);
+        }
+
+        // Update other views if necessary
+        if (typeof updateStats === "function") updateStats();
+        if (typeof renderExerciseSetsLog === "function" && String(selectedExerciseId) === String(exerciseId)) {
+          renderExerciseSetsLog(exerciseId);
         }
       });
     }
@@ -2212,37 +2295,78 @@ const LogbookModule = {
     const exId = select?.value;
     if (!exId) return;
 
-    const ex = this.exercises.find((e) => e.id === exId);
+    const allEx = getAllExercises();
+    const ex = allEx.find((e) => String(e.id) === String(exId));
     if (!ex) return;
+
+    const isCustom = customExercises.some((e) => String(e.id) === String(exId));
+    if (!isCustom) {
+      alert("Вбудовані вправи не можна видалити.");
+      return;
+    }
 
     if (
       confirm(
         `Ви впевнені, що хочете видалити вправу "${ex.name}"? Її минулі записи в історії збережуться.`,
       )
     ) {
-      this.exercises = this.exercises.filter((e) => e.id !== exId);
-      this.save();
+      customExercises = customExercises.filter((e) => String(e.id) !== String(exId));
+      
+      trainingData.forEach((group) => {
+        group.exercises = group.exercises.filter((e) => String(e.id) !== String(exId));
+      });
+
+      saveState();
 
       this.activeSets = [];
       this.renderSets();
       this.loadSelect();
 
-      // if history dropdown happens to be on it, clear it
       const histSelect = document.getElementById("logbook-history-select");
-      if (histSelect && histSelect.value === exId) {
+      if (histSelect && String(histSelect.value) === String(exId)) {
         histSelect.value = "";
         this.renderHistory();
+      }
+
+      if (typeof renderExercises === "function") renderExercises();
+      if (typeof renderMuscleGroups === "function") renderMuscleGroups();
+      if (typeof updateStats === "function") updateStats();
+    }
+  },
+
+  deleteSet(exerciseId, originalIndex) {
+    if (confirm("Ви впевнені, що хочете видалити цей підхід?")) {
+      if (exerciseLogs[exerciseId] && exerciseLogs[exerciseId][originalIndex]) {
+        exerciseLogs[exerciseId].splice(originalIndex, 1);
+        saveState();
+        this.renderHistory();
+        if (typeof updateStats === "function") updateStats();
+        if (typeof renderExerciseSetsLog === "function" && String(selectedExerciseId) === String(exerciseId)) {
+          renderExerciseSetsLog(exerciseId);
+        }
       }
     }
   },
 
-  deleteSession(sessionId) {
-    if (
-      confirm("Ви впевнені, що хочете видалити цей запис тренування з історії?")
-    ) {
-      this.sessions = this.sessions.filter((s) => s.id !== sessionId);
-      this.save();
-      this.renderHistory();
+  deleteDaySession(exerciseId, dateStr) {
+    if (confirm(`Ви впевнені, що хочете видалити всі підходи за ${dateStr}?`)) {
+      if (exerciseLogs[exerciseId]) {
+        exerciseLogs[exerciseId] = exerciseLogs[exerciseId].filter((set) => {
+          const d = new Date(set.date);
+          const dayKey = d.toLocaleDateString("uk-UA", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          });
+          return dayKey !== dateStr;
+        });
+        saveState();
+        this.renderHistory();
+        if (typeof updateStats === "function") updateStats();
+        if (typeof renderExerciseSetsLog === "function" && String(selectedExerciseId) === String(exerciseId)) {
+          renderExerciseSetsLog(exerciseId);
+        }
+      }
     }
   },
 
@@ -2255,9 +2379,17 @@ const LogbookModule = {
     const newEx = {
       id: "lb_" + Date.now(),
       name: title,
+      muscle: "Груди",
+      muscleGroup: "Груди",
+      difficulty: "Середній",
+      description: "Користувацька вправа з Журналу",
+      instructions: ["Користувацька вправа"],
+      sets: "3 x 10",
+      image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=300&auto=format&fit=crop",
     };
-    this.exercises.push(newEx);
-    this.save();
+    customExercises.push(newEx);
+    mergeCustomExercises();
+    saveState();
 
     input.value = "";
     this.loadSelect();
@@ -2273,23 +2405,29 @@ const LogbookModule = {
     const selectLog = document.getElementById("logbook-ex-select");
     const selectHist = document.getElementById("logbook-history-select");
 
-    const optionsBase = this.exercises
+    const allEx = getAllExercises();
+    const sortedEx = [...allEx].sort((a, b) => a.name.localeCompare(b.name, "uk-UA"));
+
+    const optionsBase = sortedEx
       .map((ex) => `<option value="${ex.id}">${ex.name}</option>`)
       .join("");
 
     if (selectLog) {
+      const currentVal = selectLog.value;
       selectLog.innerHTML =
         '<option value="" disabled selected>Оберіть вправу</option>' +
         optionsBase;
+      if (currentVal && sortedEx.some((e) => String(e.id) === String(currentVal))) {
+        selectLog.value = currentVal;
+      }
     }
 
     if (selectHist) {
-      // Keep current value if one is already selected
       const currentVal = selectHist.value;
       selectHist.innerHTML =
         '<option value="" disabled selected>Оберіть вправу для перегляду</option>' +
         optionsBase;
-      if (currentVal && this.exercises.find((e) => e.id === currentVal)) {
+      if (currentVal && sortedEx.some((e) => String(e.id) === String(currentVal))) {
         selectHist.value = currentVal;
       }
     }
@@ -2308,39 +2446,55 @@ const LogbookModule = {
       return;
     }
 
-    const filteredSessions = this.sessions.filter(
-      (s) => s.exerciseId === selectedId,
-    );
+    const sets = exerciseLogs[selectedId] || [];
 
-    if (filteredSessions.length === 0) {
+    if (sets.length === 0) {
       list.innerHTML =
         '<p style="color:var(--text-secondary); text-align:center;">Історія порожня для цієї вправи.</p>';
       return;
     }
 
-    const sorted = [...filteredSessions].sort(
-      (a, b) => b.timestamp - a.timestamp,
-    );
+    const groups = {};
+    sets.forEach((set, idx) => {
+      const d = new Date(set.date);
+      const dateStr = d.toLocaleDateString("uk-UA", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+      if (!groups[dateStr]) {
+        groups[dateStr] = [];
+      }
+      groups[dateStr].push({ ...set, originalIndex: idx });
+    });
 
-    list.innerHTML = sorted
-      .map((sess) => {
-        const ex = this.exercises.find((e) => e.id === sess.exerciseId) || {
-          name: "Видалена вправа",
-        };
-        const dateStr = new Date(sess.timestamp).toLocaleString("uk-UA", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+    const sortedDates = Object.keys(groups).sort((a, b) => {
+      const parseDate = (str) => {
+        const parts = str.split(".");
+        return new Date(parts[2], parts[1] - 1, parts[0]);
+      };
+      return parseDate(b) - parseDate(a);
+    });
 
-        const setsHtml = sess.sets
+    const allEx = getAllExercises();
+    const ex = allEx.find((e) => String(e.id) === String(selectedId)) || {
+      name: "Видалена вправа",
+    };
+
+    list.innerHTML = sortedDates
+      .map((dateStr) => {
+        const daySets = groups[dateStr];
+        const sortedDaySets = [...daySets].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        const setsHtml = sortedDaySets
           .map(
-            (s, idx) => `
-                <div style="margin-top: 5px; font-size: 0.95rem;">
-                    <span style="color:var(--text-secondary);">Підхід ${idx + 1}:</span>
-                    <b>${s.weight} кг х ${s.reps}</b>
+            (s, index) => `
+                <div style="margin-top: 5px; font-size: 0.95rem; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <span style="color:var(--text-secondary);">Підхід ${index + 1}:</span>
+                        <b>${s.weight} кг х ${s.reps}</b>
+                    </div>
+                    <button onclick="LogbookModule.deleteSet('${selectedId}', ${s.originalIndex})" style="background:transparent; border:none; color:#ff4444; font-size:14px; cursor:pointer;" title="Видалити підхід">✕</button>
                 </div>
             `,
           )
@@ -2348,11 +2502,11 @@ const LogbookModule = {
 
         return `
                 <div class="history-card" style="background:var(--card-bg); padding:15px; border-radius:10px; border:1px solid var(--border); margin-bottom:15px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 8px; align-items:center;">
                         <span style="color:var(--theme-color, #00d4ff); font-weight:bold;">${ex.name}</span>
                         <div style="display:flex; align-items:center; gap:10px;">
                             <span style="color:var(--text-secondary); font-size:0.85rem;">${dateStr}</span>
-                            <button onclick="LogbookModule.deleteSession('${sess.id}')" style="background:transparent; border:none; cursor:pointer; color:#ef4444; font-size:1.1rem;" title="Видалити запис">🗑️</button>
+                            <button onclick="LogbookModule.deleteDaySession('${selectedId}', '${dateStr}')" style="background:transparent; border:none; cursor:pointer; color:#ef4444; font-size:1.1rem;" title="Видалити весь день">🗑️</button>
                         </div>
                     </div>
                     ${setsHtml}
@@ -2362,6 +2516,8 @@ const LogbookModule = {
       .join("");
   },
 };
+
+window.LogbookModule = LogbookModule;
 
 document.addEventListener("DOMContentLoaded", () => {
   LogbookModule.init();
