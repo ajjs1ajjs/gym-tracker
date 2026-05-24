@@ -1,0 +1,391 @@
+import {
+  exerciseLogs,
+  customExercises,
+  selectedExerciseId,
+  getAllExercises,
+  mergeCustomExercises,
+  saveState,
+} from "./data.js";
+import { trainingData } from "./exercises.js";
+import {
+  renderExerciseSetsLog,
+  updateStats,
+  renderExercises,
+  renderMuscleGroups,
+} from "./ui.js";
+
+const LogbookModule = {
+  activeSets: [],
+
+  init() {
+    this.bindEvents();
+  },
+
+  bindEvents() {
+    const btnAdd = document.getElementById("btn-add-logbook-set");
+    if (btnAdd) {
+      btnAdd.addEventListener("click", (e) => {
+        e.preventDefault();
+        const wInput = document.getElementById("logbook-weight");
+        const rInput = document.getElementById("logbook-reps");
+        const w = parseFloat(wInput.value);
+        const r = parseInt(rInput.value);
+        if (isNaN(w) || isNaN(r)) return;
+
+        this.activeSets.push({ weight: w, reps: r });
+        wInput.value = "";
+        rInput.value = "";
+        this.renderSets();
+      });
+    }
+
+    const btnSave = document.getElementById("btn-save-logbook");
+    if (btnSave) {
+      btnSave.addEventListener("click", (e) => {
+        e.preventDefault();
+        const select = document.getElementById("logbook-ex-select");
+        const exerciseId = select?.value;
+
+        if (!exerciseId || this.activeSets.length === 0) return;
+
+        if (!exerciseLogs[exerciseId]) {
+          exerciseLogs[exerciseId] = [];
+        }
+
+        const now = new Date().toISOString();
+        this.activeSets.forEach((set) => {
+          exerciseLogs[exerciseId].push({
+            date: now,
+            weight: set.weight,
+            reps: set.reps,
+          });
+        });
+
+        saveState();
+        this.activeSets = [];
+        this.renderSets();
+
+        const toast = document.getElementById("logbook-toast");
+        if (toast) {
+          toast.style.display = "block";
+          setTimeout(() => {
+            toast.style.display = "none";
+          }, 2000);
+        }
+
+        updateStats();
+        if (String(selectedExerciseId) === String(exerciseId)) {
+          renderExerciseSetsLog(exerciseId);
+        }
+      });
+    }
+
+    const exSelect = document.getElementById("logbook-ex-select");
+    if (exSelect) {
+      exSelect.addEventListener("change", () => {
+        this.activeSets = [];
+        this.renderSets();
+      });
+    }
+
+    const histSelect = document.getElementById("logbook-history-select");
+    if (histSelect) {
+      histSelect.addEventListener("change", () => {
+        this.renderHistory();
+      });
+    }
+
+    const btnDelEx = document.getElementById("btn-delete-logbook-ex");
+    if (btnDelEx) {
+      btnDelEx.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.deleteExercise();
+      });
+    }
+  },
+
+  renderSets() {
+    const container = document.getElementById("logbook-sets-container");
+    if (!container) return;
+
+    container.innerHTML = this.activeSets
+      .map(
+        (s, idx) => `
+            <div style="display:flex; justify-content:space-between; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; align-items:center;">
+                <span>Підхід ${idx + 1}</span>
+                <span style="color: var(--theme-color, #00d4ff); font-weight: bold;">${s.weight} кг × ${s.reps}</span>
+                <button class="lb-remove-set" data-idx="${idx}" style="background:transparent; border:none; color:#ff4444; font-size:16px; cursor:pointer;">✕</button>
+            </div>
+        `,
+      )
+      .join("");
+
+    container.querySelectorAll(".lb-remove-set").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this.removeSet(parseInt(btn.dataset.idx));
+      });
+    });
+  },
+
+  removeSet(idx) {
+    this.activeSets.splice(idx, 1);
+    this.renderSets();
+  },
+
+  deleteExercise() {
+    const select = document.getElementById("logbook-ex-select");
+    const exId = select?.value;
+    if (!exId) return;
+
+    const allEx = getAllExercises();
+    const ex = allEx.find((e) => String(e.id) === String(exId));
+    if (!ex) return;
+
+    const isCustom = customExercises.some((e) => String(e.id) === String(exId));
+    if (!isCustom) {
+      alert("Вбудовані вправи не можна видалити.");
+      return;
+    }
+
+    if (
+      confirm(
+        `Ви впевнені, що хочете видалити вправу "${ex.name}"? Її минулі записи в історії збережуться.`,
+      )
+    ) {
+      customExercises.splice(
+        customExercises.findIndex((e) => String(e.id) === String(exId)),
+        1,
+      );
+
+      trainingData.forEach((group) => {
+        group.exercises = group.exercises.filter(
+          (e) => String(e.id) !== String(exId),
+        );
+      });
+
+      saveState();
+      this.activeSets = [];
+      this.renderSets();
+      this.loadSelect();
+
+      const histSelect = document.getElementById("logbook-history-select");
+      if (histSelect && String(histSelect.value) === String(exId)) {
+        histSelect.value = "";
+        this.renderHistory();
+      }
+
+      renderExercises();
+      renderMuscleGroups();
+      updateStats();
+    }
+  },
+
+  deleteSet(exerciseId, originalIndex) {
+    if (confirm("Ви впевнені, що хочете видалити цей підхід?")) {
+      if (exerciseLogs[exerciseId] && exerciseLogs[exerciseId][originalIndex]) {
+        exerciseLogs[exerciseId].splice(originalIndex, 1);
+        saveState();
+        this.renderHistory();
+        updateStats();
+        if (String(selectedExerciseId) === String(exerciseId)) {
+          renderExerciseSetsLog(exerciseId);
+        }
+      }
+    }
+  },
+
+  deleteDaySession(exerciseId, dateStr) {
+    if (
+      confirm(`Ви впевнені, що хочете видалити всі підходи за ${dateStr}?`)
+    ) {
+      if (exerciseLogs[exerciseId]) {
+        exerciseLogs[exerciseId] = exerciseLogs[exerciseId].filter((set) => {
+          const d = new Date(set.date);
+          const dayKey = d.toLocaleDateString("uk-UA", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          });
+          return dayKey !== dateStr;
+        });
+        saveState();
+        this.renderHistory();
+        updateStats();
+        if (String(selectedExerciseId) === String(exerciseId)) {
+          renderExerciseSetsLog(exerciseId);
+        }
+      }
+    }
+  },
+
+  createExercise() {
+    const input = document.getElementById("logbook-custom-ex");
+    if (!input) return;
+    const title = input.value.trim();
+    if (!title) return;
+
+    const newEx = {
+      id: "lb_" + Date.now(),
+      name: title,
+      muscle: "Груди",
+      muscleGroup: "Груди",
+      difficulty: "Середній",
+      description: "Користувацька вправа з Журналу",
+      instructions: ["Користувацька вправа"],
+      sets: "3 x 10",
+      image:
+        "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=300&auto=format&fit=crop",
+    };
+    customExercises.push(newEx);
+    mergeCustomExercises();
+    saveState();
+
+    input.value = "";
+    this.loadSelect();
+
+    const select = document.getElementById("logbook-ex-select");
+    if (select) select.value = newEx.id;
+
+    this.activeSets = [];
+    this.renderSets();
+  },
+
+  loadSelect() {
+    const selectLog = document.getElementById("logbook-ex-select");
+    const selectHist = document.getElementById("logbook-history-select");
+
+    const allEx = getAllExercises();
+    const sortedEx = [...allEx].sort((a, b) =>
+      a.name.localeCompare(b.name, "uk-UA"),
+    );
+
+    const optionsBase = sortedEx
+      .map((ex) => `<option value="${ex.id}">${ex.name}</option>`)
+      .join("");
+
+    if (selectLog) {
+      const currentVal = selectLog.value;
+      selectLog.innerHTML =
+        '<option value="" disabled selected>Оберіть вправу</option>' +
+        optionsBase;
+      if (
+        currentVal &&
+        sortedEx.some((e) => String(e.id) === String(currentVal))
+      ) {
+        selectLog.value = currentVal;
+      }
+    }
+
+    if (selectHist) {
+      const currentVal = selectHist.value;
+      selectHist.innerHTML =
+        '<option value="" disabled selected>Оберіть вправу для перегляду</option>' +
+        optionsBase;
+      if (
+        currentVal &&
+        sortedEx.some((e) => String(e.id) === String(currentVal))
+      ) {
+        selectHist.value = currentVal;
+      }
+    }
+  },
+
+  renderHistory() {
+    const list = document.getElementById("logbook-history-list");
+    const selectHist = document.getElementById("logbook-history-select");
+    if (!list) return;
+
+    const selectedId = selectHist?.value;
+
+    if (!selectedId) {
+      list.innerHTML =
+        '<p style="color:var(--text-secondary); text-align:center;">Оберіть вправу зі списку вище, щоб побачити історію.</p>';
+      return;
+    }
+
+    const sets = exerciseLogs[selectedId] || [];
+
+    if (sets.length === 0) {
+      list.innerHTML =
+        '<p style="color:var(--text-secondary); text-align:center;">Історія порожня для цієї вправи.</p>';
+      return;
+    }
+
+    const groups = {};
+    sets.forEach((set, idx) => {
+      const d = new Date(set.date);
+      const dateStr = d.toLocaleDateString("uk-UA", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+      if (!groups[dateStr]) {
+        groups[dateStr] = [];
+      }
+      groups[dateStr].push({ ...set, originalIndex: idx });
+    });
+
+    const sortedDates = Object.keys(groups).sort((a, b) => {
+      const parseDate = (str) => {
+        const parts = str.split(".");
+        return new Date(parts[2], parts[1] - 1, parts[0]);
+      };
+      return parseDate(b) - parseDate(a);
+    });
+
+    const allEx = getAllExercises();
+    const ex = allEx.find((e) => String(e.id) === String(selectedId)) || {
+      name: "Видалена вправа",
+    };
+
+    list.innerHTML = sortedDates
+      .map((dateStr) => {
+        const daySets = groups[dateStr];
+        const sortedDaySets = [...daySets].sort(
+          (a, b) => new Date(a.date) - new Date(b.date),
+        );
+
+        const setsHtml = sortedDaySets
+          .map(
+            (s, index) => `
+                <div style="margin-top: 5px; font-size: 0.95rem; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <span style="color:var(--text-secondary);">Підхід ${index + 1}:</span>
+                        <b>${s.weight} кг х ${s.reps}</b>
+                    </div>
+                    <button class="lb-del-set" data-ex="${selectedId}" data-idx="${s.originalIndex}" style="background:transparent; border:none; color:#ff4444; font-size:14px; cursor:pointer;" title="Видалити підхід">✕</button>
+                </div>
+            `,
+          )
+          .join("");
+
+        return `
+            <div class="history-card" style="background:var(--card-bg); padding:15px; border-radius:10px; border:1px solid var(--border); margin-bottom:15px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 8px; align-items:center;">
+                    <span style="color:var(--theme-color, #00d4ff); font-weight:bold;">${ex.name}</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="color:var(--text-secondary); font-size:0.85rem;">${dateStr}</span>
+                        <button class="lb-del-day" data-ex="${selectedId}" data-day="${dateStr}" style="background:transparent; border:none; cursor:pointer; color:#ef4444; font-size:1.1rem;" title="Видалити весь день">🗑️</button>
+                    </div>
+                </div>
+                ${setsHtml}
+            </div>
+        `;
+      })
+      .join("");
+
+    list.querySelectorAll(".lb-del-set").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this.deleteSet(btn.dataset.ex, parseInt(btn.dataset.idx));
+      });
+    });
+
+    list.querySelectorAll(".lb-del-day").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this.deleteDaySession(btn.dataset.ex, btn.dataset.day);
+      });
+    });
+  },
+};
+
+export default LogbookModule;

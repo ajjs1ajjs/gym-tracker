@@ -67,12 +67,25 @@
 
 ```
 gym-tracker/
-├── index.html       # Головна сторінка та UI
-├── app.js           # Вся бізнес-логіка (Stage 1-3)
-├── style.css        # Дизайн система та теми
-├── manifest.json    # Конфігурація PWA
-├── sw.js            # Service Worker для офлайну
-└── images/          # Бібліотека вправ
+├── index.html          # Головна сторінка та UI
+├── style.css           # Дизайн система та теми
+├── manifest.json       # Конфігурація PWA
+├── sw.js               # Service Worker для офлайну
+├── js/                 # Модульна JS архітектура
+│   ├── main.js         # Вхідна точка, event delegation
+│   ├── exercises.js    # Бібліотека вправ (дані)
+│   ├── data.js         # Стан програми, localStorage
+│   ├── ui.js           # Рендеринг та UI-логіка
+│   ├── utils.js        # Допоміжні функції
+│   ├── timer.js        # Таймер відпочинку
+│   ├── logbook.js      # Журнал тренувань
+│   ├── sync.js         # GitHub Gist синхронізація
+│   └── stats.js        # Вага тіла та виміри
+├── __tests__/          # Jest тести
+│   ├── utils.test.js
+│   ├── exercises.test.js
+│   └── data.test.js
+└── images/             # Бібліотека вправ
 ```
 
 ---

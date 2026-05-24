@@ -38,31 +38,25 @@
                     <button
                         class="btn-timer"
                         id="header-timer-btn"
-                        onclick="openTimerModal()"
                         title="Таймер"
                     >
                         ⏱
                     </button>
                     <div class="dropdown">
-                        <button class="btn-settings" onclick="toggleDropdown()">
+                        <button class="btn-settings">
                             🛠️
                         </button>
                         <div class="dropdown-content" id="header-dropdown">
-                            <button onclick="openPlateModal()">🧮 Ваги</button>
-                            <button onclick="exportData()">📤 Експорт</button>
+                            <button data-action="plate">🧮 Ваги</button>
+                            <button data-action="export">📤 Експорт</button>
                             <label class="btn-import-label">
                                 📥 Імпорт
-                                <input
-                                    type="file"
-                                    accept=".json"
-                                    onchange="importData(event)"
-                                    hidden
-                                />
+                                <input type="file" accept=".json" hidden />
                             </label>
-                            <button onclick="openSettingsModal()">
+                            <button data-action="settings">
                                 ⚙️ Налаштування
                             </button>
-                            <button class="btn-reset" onclick="resetProgress()">
+                            <button class="btn-reset" data-action="reset">
                                 🔴 Скинути все
                             </button>
                         </div>
@@ -93,30 +87,30 @@
                         <span class="stat-label">Вага</span>
                     </div>
                 </div>
-                <button class="btn-finish-workout" onclick="finishWorkout()">
+                <button class="btn-finish-workout" id="finish-workout-btn">
                     Завершити
                 </button>
             </div>
         </header>
 
         <nav class="bottom-nav">
-            <button class="nav-item active" onclick="switchTab('exercises')">
+            <button class="nav-item active" data-tab="exercises">
                 <span class="nav-icon">🏋️</span>
                 <span class="nav-label">Вправи</span>
             </button>
-            <button class="nav-item" onclick="switchTab('logbook')">
+            <button class="nav-item" data-tab="logbook">
                 <span class="nav-icon">📔</span>
                 <span class="nav-label">Журнал</span>
             </button>
-            <button class="nav-item" onclick="switchTab('history')">
+            <button class="nav-item" data-tab="history">
                 <span class="nav-icon">📅</span>
                 <span class="nav-label">Історія</span>
             </button>
-            <button class="nav-item" onclick="switchTab('plans')">
+            <button class="nav-item" data-tab="plans">
                 <span class="nav-icon">📋</span>
                 <span class="nav-label">Плани</span>
             </button>
-            <button class="nav-item" onclick="switchTab('body')">
+            <button class="nav-item" data-tab="body">
                 <span class="nav-icon">⚖️</span>
                 <span class="nav-label">Тіло</span>
             </button>
@@ -128,7 +122,7 @@
                 <div class="muscle-groups" id="muscle-groups"></div>
                 <button
                     class="btn-add-custom-ex"
-                    onclick="openCustomExerciseModal()"
+                    id="open-custom-ex-btn"
                 >
                     + Створити вправу
                 </button>
@@ -141,7 +135,7 @@
 
         <div class="modal" id="exercise-modal">
             <div class="modal-content">
-                <span class="modal-close" onclick="closeModal()">&times;</span>
+                <span class="modal-close" id="modal-close-btn">&times;</span>
                 <img id="modal-image" src="" alt="" />
                 <h2 id="modal-title"></h2>
                 <div class="modal-meta">
@@ -173,11 +167,11 @@
                             placeholder="Повтори"
                             step="1"
                         />
-                        <button onclick="logSet()">+ Додати</button>
+                        <button id="set-log-btn">+ Додати</button>
                     </div>
                     <button
                         class="btn-toggle-chart"
-                        onclick="toggleProgressionChart()"
+                        id="progression-toggle-btn"
                     >
                         📈 Показати прогрес
                     </button>
@@ -190,7 +184,7 @@
                     </div>
                 </div>
                 <div class="modal-checkin">
-                    <button id="modal-checkin-btn" onclick="toggleFromModal()">
+                    <button id="modal-checkin-btn">
                         ✓ Відмітити виконаним
                     </button>
                     <p class="checkin-date" id="checkin-date"></p>
@@ -200,47 +194,20 @@
 
         <div class="modal" id="timer-modal">
             <div class="modal-content timer-modal-content">
-                <span class="modal-close" onclick="closeTimerModal()"
-                    >&times;</span
-                >
+                <span class="modal-close" id="timer-modal-close">&times;</span>
                 <h2>⏱ Таймер відпочинку</h2>
                 <div class="timer-display" id="timer-display">01:30</div>
                 <div class="timer-presets">
-                    <button class="timer-preset" onclick="setTimer(30, event)">
-                         30с
-                     </button>
-                     <button class="timer-preset" onclick="setTimer(60, event)">
-                         1хв
-                     </button>
-                     <button class="timer-preset active" onclick="setTimer(90, event)">
-                         1.5хв
-                     </button>
-                     <button class="timer-preset" onclick="setTimer(120, event)">
-                         2хв
-                     </button>
-                     <button class="timer-preset" onclick="setTimer(180, event)">
-                         3хв
-                     </button>
+                    <button class="timer-preset" data-seconds="30">30с</button>
+                    <button class="timer-preset" data-seconds="60">1хв</button>
+                    <button class="timer-preset active" data-seconds="90">1.5хв</button>
+                    <button class="timer-preset" data-seconds="120">2хв</button>
+                    <button class="timer-preset" data-seconds="180">3хв</button>
                 </div>
                 <div class="timer-controls">
-                    <button
-                        class="timer-btn start"
-                        id="timer-start-btn"
-                        onclick="startTimer()"
-                    >
-                        ▶ Старт
-                    </button>
-                    <button
-                        class="timer-btn pause"
-                        id="timer-pause-btn"
-                        onclick="pauseTimer()"
-                        style="display: none"
-                    >
-                        ⏸ Пауза
-                    </button>
-                    <button class="timer-btn reset" onclick="resetTimer()">
-                        ↻ Скинути
-                    </button>
+                    <button class="timer-btn start" id="timer-start-btn">▶ Старт</button>
+                    <button class="timer-btn pause" id="timer-pause-btn" style="display: none">⏸ Пауза</button>
+                    <button class="timer-btn reset" id="timer-reset-btn">↻ Скинути</button>
                 </div>
             </div>
         </div>
@@ -253,7 +220,7 @@
             <div class="section-container">
                 <h2>📅 Історія тренувань</h2>
                 <div class="history-filters">
-                    <select id="history-period" onchange="filterHistory()">
+                    <select id="history-period">
                         <option value="all">Весь час</option>
                         <option value="week">Цей тиждень</option>
                         <option value="month">Цей місяць</option>
@@ -271,7 +238,7 @@
         <section class="plans-section" id="plans-section" style="display: none">
             <div class="section-container">
                 <h2>📋 Плани тренувань</h2>
-                <button class="btn-add-plan" onclick="openPlanModal()">
+                <button class="btn-add-plan" data-action="add-plan">
                     + Новий план
                 </button>
                 <div class="plans-list" id="plans-list"></div>
@@ -288,7 +255,7 @@
                         placeholder="Сьогоднішня вага (кг)"
                         step="0.1"
                     />
-                    <button class="btn-save-weight" onclick="saveBodyWeight()">
+                    <button class="btn-save-weight" data-action="save-body-weight">
                         Зберегти (Кожен день)
                     </button>
                 </div>
@@ -311,14 +278,14 @@
                     <button
                         class="tab-btn active"
                         id="logbook-tab-log"
-                        onclick="switchLogbookTab('log')"
+                        data-logbook-tab="log"
                     >
                         Запис підходів
                     </button>
                     <button
                         class="tab-btn"
                         id="logbook-tab-history"
-                        onclick="switchLogbookTab('history')"
+                        data-logbook-tab="history"
                     >
                         Історія журналу
                     </button>
@@ -343,7 +310,7 @@
                             />
                             <button
                                 class="btn-save-plan"
-                                onclick="createLogbookCustomExercise()"
+                                data-action="create-logbook-ex"
                                 style="width: auto; margin-top: 0"
                             >
                                 Створити
@@ -467,9 +434,7 @@
 
         <div class="modal" id="plan-modal">
             <div class="modal-content">
-                <span class="modal-close" onclick="closePlanModal()"
-                    >&times;</span
-                >
+                <span class="modal-close" id="plan-modal-close">&times;</span>
                 <h2 id="plan-modal-title">Новий план тренувань</h2>
                 <div class="plan-form">
                     <div class="form-group">
@@ -487,7 +452,7 @@
                             id="plan-exercises-select"
                         ></div>
                     </div>
-                    <button class="btn-save-plan" onclick="savePlan()">
+                    <button class="btn-save-plan" id="plan-save-btn">
                         Зберегти план
                     </button>
                 </div>
@@ -496,9 +461,7 @@
 
         <div class="modal" id="plate-modal">
             <div class="modal-content plate-modal-content">
-                <span class="modal-close" onclick="closePlateModal()"
-                    >&times;</span
-                >
+                <span class="modal-close" id="plate-modal-close">&times;</span>
                 <h2>🧮 Калькулятор млинців</h2>
                 <div class="form-group">
                     <label>Вага на штанзі (кг):</label>
@@ -507,7 +470,6 @@
                         id="plate-weight-input"
                         value="100"
                         step="2.5"
-                        oninput="calculatePlates()"
                     />
                 </div>
                 <div class="plate-visualizer" id="plate-visualizer"></div>
@@ -517,9 +479,7 @@
 
         <div class="modal" id="settings-modal">
             <div class="modal-content">
-                <span class="modal-close" onclick="closeSettingsModal()"
-                    >&times;</span
-                >
+                <span class="modal-close" id="settings-modal-close">&times;</span>
                 <h2>⚙️ Налаштування синхронізації</h2>
                 <p>Використовуйте GitHub Gist для збереження даних у хмарі.</p>
                 <div class="form-group">
@@ -555,16 +515,16 @@
                     />
                 </div>
                 <div class="settings-actions">
-                    <button class="btn-save-settings" onclick="saveSettings()">
+                    <button class="btn-save-settings" data-action="save-settings">
                         Зберегти налаштування
                     </button>
-                    <button class="btn-sync" onclick="syncToCloud()">
+                    <button class="btn-sync" data-action="sync-upload">
                         ☁️ Синхронізувати зараз
                     </button>
                     <button
                         class="btn-sync"
                         style="background: #28a745; margin-left: 10px"
-                        onclick="fetchFromCloud()"
+                        data-action="sync-download"
                     >
                         📥 Завантажити з хмари
                     </button>
@@ -581,7 +541,7 @@
                     <button
                         class="btn-plate"
                         style="flex: 1"
-                        onclick="exportData()"
+                        data-action="export"
                     >
                         💾 Експорт JSON
                     </button>
@@ -592,7 +552,7 @@
                             background: var(--success);
                             color: white;
                         "
-                        onclick="exportToCSV()"
+                        data-action="export-csv"
                     >
                         📊 Експорт Excel/CSV
                     </button>
@@ -602,9 +562,7 @@
 
         <div class="modal" id="custom-exercise-modal">
             <div class="modal-content">
-                <span class="modal-close" onclick="closeCustomExerciseModal()"
-                    >&times;</span
-                >
+                <span class="modal-close" id="custom-ex-modal-close">&times;</span>
                 <h2>➕ Створити вправу</h2>
                 <div class="form-group">
                     <label>Назва вправи:</label>
@@ -649,12 +607,12 @@
                         "
                     ></textarea>
                 </div>
-                <button class="btn-save-plan" onclick="saveCustomExercise()">
+                <button class="btn-save-plan" data-action="save-custom-ex">
                     Зберегти вправу
                 </button>
             </div>
         </div>
 
-        <script src="app.js?v=20260318-2"></script>
+        <script type="module" src="js/main.js"></script>
     </body>
 </html>
