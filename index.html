@@ -24,6 +24,12 @@
         </style>
     </head>
     <body>
+        <div id="toast-container"></div>
+        <div id="update-banner" class="update-banner hidden">
+            <span>📦 Доступне оновлення</span>
+            <button id="update-btn">Оновити</button>
+            <button id="update-dismiss-btn" class="btn-close">&times;</button>
+        </div>
         <header>
             <div class="header-top">
                 <h1>💪 GymProgress</h1>
@@ -42,6 +48,7 @@
                     >
                         ⏱
                     </button>
+                    <span id="offline-indicator" class="offline-indicator hidden" title="Немає з'єднання">📡</span>
                     <div class="dropdown">
                         <button class="btn-settings">
                             🛠️
@@ -613,6 +620,6 @@
             </div>
         </div>
 
-        <script type="module" src="js/main.js"></script>
+        <script type="module" src="dist/js/main.js"></script>
     </body>
 </html>

@@ -36,6 +36,8 @@ desktop.ini
 # Testing
 coverage/
 .nyc_output/
+cypress/videos/
+cypress/screenshots/
 
 # Logs
 logs/

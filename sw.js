@@ -1,17 +1,18 @@
-const CACHE_NAME = "gym-tracker-v2";
+const CACHE_NAME = "gym-tracker-v3";
 const urlsToCache = [
   "./",
   "./index.html",
   "./style.css",
-  "./js/main.js",
-  "./js/ui.js",
-  "./js/data.js",
-  "./js/utils.js",
-  "./js/timer.js",
-  "./js/logbook.js",
-  "./js/sync.js",
-  "./js/stats.js",
-  "./js/exercises.js",
+  "./dist/js/main.js",
+  "./dist/js/ui.js",
+  "./dist/js/data.js",
+  "./dist/js/utils.js",
+  "./dist/js/timer.js",
+  "./dist/js/logbook.js",
+  "./dist/js/sync.js",
+  "./dist/js/stats.js",
+  "./dist/js/exercises.js",
+  "./dist/js/types.js",
   "./manifest.json",
   "./images/icon-192.png",
   "./images/icon-512.png",
@@ -24,6 +25,12 @@ self.addEventListener("install", (event) => {
     }),
   );
   self.skipWaiting();
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {

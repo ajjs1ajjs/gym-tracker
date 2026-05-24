@@ -1,0 +1,8 @@
+node_modules
+src
+__tests__
+cypress
+.git
+.gitignore
+*.md
+.DS_Store
