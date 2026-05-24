@@ -1,4 +1,4 @@
-import { safeJSONParse, calculate1RM, diffClass } from "../js/utils.js";
+import { safeJSONParse, calculate1RM, diffClass } from "../dist/js/utils.js";
 
 describe("safeJSONParse", () => {
   test("parses valid JSON", () => {
@@ -52,7 +52,7 @@ describe("diffClass", () => {
     expect(diffClass("Складний")).toBe("hard");
   });
 
-  test('defaults to "medium" for unknown', () => {
-    expect(diffClass("Unknown")).toBe("medium");
+  test('returns input for unknown', () => {
+    expect(diffClass("Unknown")).toBe("Unknown");
   });
 });

@@ -9,7 +9,7 @@ import {
   saveState,
   savePlans,
 } from "./data.js";
-import { vibrate, safeJSONParse, calculate1RM, showToast } from "./utils.js";
+import { vibrate, safeJSONParse, calculate1RM, showToast, getEncryptionPassphrase, setEncryptionPassphrase, clearEncryptionPassphrase } from "./utils.js";
 import { renderMuscleGroups, renderExercises, renderPlans, updateStats } from "./ui.js";
 
 function openSettingsModal() {
@@ -19,6 +19,19 @@ function openSettingsModal() {
   const gistInput = document.getElementById("gist-id");
   if (tokenInput) tokenInput.value = localStorage.getItem("gym_github_token") || "";
   if (gistInput) gistInput.value = localStorage.getItem("gym_gist_id") || "";
+  const encryptToggle = document.getElementById("encrypt-toggle") as HTMLInputElement | null;
+  const encryptInput = document.getElementById("encrypt-passphrase") as HTMLInputElement | null;
+  const hasPassphrase = !!getEncryptionPassphrase();
+  if (encryptToggle) {
+    encryptToggle.checked = hasPassphrase;
+    encryptToggle.onchange = () => {
+      if (encryptInput) encryptInput.disabled = !encryptToggle.checked;
+    };
+  }
+  if (encryptInput) {
+    encryptInput.disabled = !hasPassphrase;
+    encryptInput.value = hasPassphrase ? "********" : "";
+  }
 }
 
 function closeSettingsModal() {
@@ -32,6 +45,20 @@ function saveSettings() {
 
   if (token) localStorage.setItem("gym_github_token", token);
   if (gistId) localStorage.setItem("gym_gist_id", gistId);
+
+  const encryptToggle = document.getElementById("encrypt-toggle") as HTMLInputElement | null;
+  const encryptInput = document.getElementById("encrypt-passphrase") as HTMLInputElement | null;
+  if (encryptToggle?.checked && encryptInput?.value && encryptInput.value !== "********") {
+    if (encryptInput.value.length < 8) {
+      showToast("Пароль має бути щонайменше 8 символів", "warning");
+      return;
+    }
+    setEncryptionPassphrase(encryptInput.value);
+    showToast("🔒 Шифрування увімкнено", "success");
+  } else if (!encryptToggle?.checked) {
+    clearEncryptionPassphrase();
+    showToast("🔓 Шифрування вимкнено", "info");
+  }
 
   showToast("Налаштування збережено!", "success");
   vibrate(50);
