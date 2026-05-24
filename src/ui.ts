@@ -694,6 +694,12 @@ function finishWorkout() {
 
     celebration();
     showToast("Тренування збережено в історію! Гарна робота! 💪", "success");
+
+    // Auto-export reminder every 10 workouts
+    const completedDays = Object.keys(archiveData).length;
+    if (completedDays % 10 === 0) {
+      showToast(`💾 Виконано ${completedDays} тренувань! Зробіть експорт.`, "info", 6000);
+    }
   }
 }
 

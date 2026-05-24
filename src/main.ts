@@ -1,4 +1,4 @@
-import { loadState, loadPlans, pruneOldLogs } from "./data.js";
+import { loadState, loadPlans, pruneOldLogs, loadEncryptedOnStartup } from "./data.js";
 import {
   updateStats,
   renderMuscleGroups,
@@ -57,6 +57,7 @@ import LogbookModule from "./logbook.js";
 function init() {
   loadState();
   loadPlans();
+  loadEncryptedOnStartup();
   pruneOldLogs(365);
   updateStats();
   renderMuscleGroups();

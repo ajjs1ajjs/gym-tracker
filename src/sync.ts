@@ -8,6 +8,8 @@ import {
   mergeCustomExercises,
   saveState,
   savePlans,
+  encryptLocalData,
+  decryptLocalData,
 } from "./data.js";
 import { vibrate, safeJSONParse, calculate1RM, showToast, getEncryptionPassphrase, setEncryptionPassphrase, clearEncryptionPassphrase } from "./utils.js";
 import { renderMuscleGroups, renderExercises, renderPlans, updateStats } from "./ui.js";
@@ -39,7 +41,7 @@ function closeSettingsModal() {
   if (modal) modal.style.display = "none";
 }
 
-function saveSettings() {
+async function saveSettings() {
   const token = document.getElementById("github-token")?.value.trim();
   const gistId = document.getElementById("gist-id")?.value.trim();
 
@@ -48,14 +50,24 @@ function saveSettings() {
 
   const encryptToggle = document.getElementById("encrypt-toggle") as HTMLInputElement | null;
   const encryptInput = document.getElementById("encrypt-passphrase") as HTMLInputElement | null;
-  if (encryptToggle?.checked && encryptInput?.value && encryptInput.value !== "********") {
-    if (encryptInput.value.length < 8) {
-      showToast("Пароль має бути щонайменше 8 символів", "warning");
+  if (encryptToggle?.checked) {
+    const passphrase = encryptInput?.value;
+    if (!passphrase || passphrase.length < 8 || passphrase === "********") {
+      showToast("Введіть пароль (мінімум 8 символів)", "warning");
       return;
     }
-    setEncryptionPassphrase(encryptInput.value);
-    showToast("🔒 Шифрування увімкнено", "success");
-  } else if (!encryptToggle?.checked) {
+    setEncryptionPassphrase(passphrase);
+    await encryptLocalData(passphrase);
+    showToast("🔒 Дані зашифровано!", "success");
+  } else {
+    if (getEncryptionPassphrase()) {
+      const passphrase = getEncryptionPassphrase()!;
+      const ok = await decryptLocalData(passphrase);
+      if (!ok) {
+        showToast("Помилка розшифрування — неправильний пароль?", "error");
+        return;
+      }
+    }
     clearEncryptionPassphrase();
     showToast("🔓 Шифрування вимкнено", "info");
   }

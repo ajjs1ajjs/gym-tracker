@@ -1,5 +1,5 @@
 import { trainingData } from "./exercises.js";
-import { safeJSONParse } from "./utils.js";
+import { safeJSONParse, encryptData, decryptData, getEncryptionPassphrase } from "./utils.js";
 import type {
   CompletionEntry,
   LogEntry,
@@ -68,6 +68,58 @@ function saveState() {
   localStorage.setItem("exerciseLogs", JSON.stringify(exerciseLogs));
   localStorage.setItem("bodyWeightHistory", JSON.stringify(bodyWeightHistory));
   localStorage.setItem("customExercises", JSON.stringify(customExercises));
+}
+
+function isEncrypted(value: string): boolean {
+  try {
+    const first = value.charCodeAt(0);
+    return first === 1;
+  } catch { return false; }
+}
+
+async function encryptLocalData(passphrase: string) {
+  const keys: [string, unknown][] = [
+    ["trainingProgress", completionState],
+    ["exerciseLogs", exerciseLogs],
+    ["bodyWeightHistory", bodyWeightHistory],
+    ["customExercises", customExercises],
+    ["workoutPlans", workoutPlans],
+  ];
+  for (const [key, data] of keys) {
+    const plain = JSON.stringify(data);
+    const enc = await encryptData(plain, passphrase);
+    localStorage.setItem(key, enc);
+  }
+}
+
+async function decryptLocalData(passphrase: string): Promise<boolean> {
+  try {
+    const keys = ["trainingProgress", "exerciseLogs", "bodyWeightHistory", "customExercises", "workoutPlans"];
+    for (const key of keys) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      if (!isEncrypted(raw)) continue;
+      const dec = await decryptData(raw, passphrase);
+      if (dec === null) return false;
+      const parsed = safeJSONParse(dec, null);
+      if (parsed === null) return false;
+      localStorage.setItem(key, dec);
+    }
+    return true;
+  } catch { return false; }
+}
+
+function loadEncryptedOnStartup() {
+  const passphrase = getEncryptionPassphrase();
+  if (!passphrase) return false;
+  const test = localStorage.getItem("trainingProgress");
+  if (!test || !isEncrypted(test)) return false;
+  decryptLocalData(passphrase).then((ok) => {
+    if (!ok) {
+      console.warn("Decryption failed on startup — wrong passphrase?");
+    }
+  });
+  return true;
 }
 
 function migrateLegacyLogbook() {
@@ -266,4 +318,7 @@ export {
   unmarkExerciseComplete,
   setSelectedMuscleGroup,
   setSelectedExerciseId,
+  encryptLocalData,
+  decryptLocalData,
+  loadEncryptedOnStartup,
 };
