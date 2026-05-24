@@ -6,7 +6,8 @@
   "scripts": {
     "build:ts": "tsc",
     "build:copy": "if not exist dist\\images mkdir dist\\images && copy /Y images\\* dist\\images\\ && copy /Y style.css dist\\ && copy /Y index.html dist\\ && copy /Y sw.js dist\\ && copy /Y manifest.json dist\\",
-    "build": "npm run build:ts && npm run build:copy",
+    "build:fix-path": "powershell -Command \"(Get-Content dist/index.html) -replace 'src=\"dist/js/', 'src=\"js/' | Set-Content dist/index.html\"",
+    "build": "npm run build:ts && npm run build:copy && npm run build:fix-path",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{js,jsx,json,md,ts}\"",
