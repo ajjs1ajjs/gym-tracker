@@ -727,10 +727,14 @@ function initTheme() {
     vibrate(30);
   });
 }
+function safeJSONParse(str, fallback = null) {
+  try { return JSON.parse(str); } catch { return fallback; }
+}
+
 function loadState() {
   const saved = localStorage.getItem("trainingProgress");
   if (saved) {
-    completionState = JSON.parse(saved);
+    completionState = safeJSONParse(saved, {});
   }
 
   // Check if it's a new day - archive yesterday and reset
@@ -740,7 +744,7 @@ function loadState() {
   if (lastDate && lastDate !== today) {
     // Archive yesterday's completion to history
     const yesterdayArchive = localStorage.getItem("completionArchive");
-    let archive = yesterdayArchive ? JSON.parse(yesterdayArchive) : {};
+    let archive = yesterdayArchive ? safeJSONParse(yesterdayArchive, {}) : {};
 
     archive[lastDate] = completionState;
     localStorage.setItem("completionArchive", JSON.stringify(archive));
@@ -753,14 +757,14 @@ function loadState() {
 
   // Phase 2: Load new data
   const logs = localStorage.getItem("exerciseLogs");
-  if (logs) exerciseLogs = JSON.parse(logs);
+  if (logs) exerciseLogs = safeJSONParse(logs, {});
 
   const bw = localStorage.getItem("bodyWeightHistory");
-  if (bw) bodyWeightHistory = JSON.parse(bw);
+  if (bw) bodyWeightHistory = safeJSONParse(bw, []);
 
   const ce = localStorage.getItem("customExercises");
   if (ce) {
-    customExercises = JSON.parse(ce);
+    customExercises = safeJSONParse(ce, []);
     mergeCustomExercises();
   }
 
@@ -779,7 +783,7 @@ function mergeCustomExercises() {
   // Add custom exercises to trainingData structure
   customExercises.forEach((ce) => {
     const group = trainingData.find((g) => g.name === ce.muscleGroup);
-    if (group && !group.exercises.some((ex) => ex.id === ce.id)) {
+    if (group && !group.exercises.some((ex) => String(ex.id) === String(ce.id))) {
       group.exercises.push(ce);
     }
   });
@@ -945,7 +949,7 @@ function finishWorkout() {
   if (confirm(`Завершити тренування? Ви виконали ${completedCount} вправ.`)) {
     const today = new Date().toDateString();
     const archive = localStorage.getItem("completionArchive");
-    let archiveData = archive ? JSON.parse(archive) : {};
+    let archiveData = archive ? safeJSONParse(archive, {}) : {};
 
     archiveData[today] = { ...completionState };
     localStorage.setItem("completionArchive", JSON.stringify(archiveData));
@@ -1693,6 +1697,23 @@ document.addEventListener("DOMContentLoaded", () => {
       closeModal();
     }
   });
+
+  // Overlay close for all other modals
+  const modalOverlays = [
+    ["timer-modal", closeTimerModal],
+    ["plate-modal", closePlateModal],
+    ["settings-modal", closeSettingsModal],
+    ["plan-modal", closePlanModal],
+    ["custom-exercise-modal", closeCustomExerciseModal],
+  ];
+  modalOverlays.forEach(([id, closeFn]) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("click", (e) => {
+        if (e.target.id === id) closeFn();
+      });
+    }
+  });
 });
 
 function exportData() {
@@ -1767,15 +1788,15 @@ function closeTimerModal() {
   vibrate(20);
 }
 
-function setTimer(seconds) {
+function setTimer(seconds, e) {
   timerDefaultSeconds = seconds;
   timerSeconds = seconds;
   updateTimerDisplay();
   document
     .querySelectorAll(".timer-preset")
     .forEach((btn) => btn.classList.remove("active"));
-  if (window.event && window.event.target) {
-    window.event.target.classList.add("active");
+  if (e && e.target) {
+    e.target.classList.add("active");
   }
 }
 
@@ -1927,7 +1948,7 @@ function getWorkoutHistory(period) {
   // Archive history
   const archive = localStorage.getItem("completionArchive");
   if (archive) {
-    const archiveData = JSON.parse(archive);
+    const archiveData = safeJSONParse(archive, {});
     Object.keys(archiveData).forEach((dateStr) => {
       const dayState = archiveData[dateStr];
       allExercises.forEach((ex) => {
@@ -2009,7 +2030,7 @@ function renderHistoryChart(workouts) {
 function loadPlans() {
   const saved = localStorage.getItem("workoutPlans");
   if (saved) {
-    workoutPlans = JSON.parse(saved);
+    workoutPlans = safeJSONParse(saved, []);
   }
 }
 
