@@ -13,14 +13,35 @@ import {
 } from "./data.js";
 import { vibrate, safeJSONParse, calculate1RM, showToast, getEncryptionPassphrase, setEncryptionPassphrase, clearEncryptionPassphrase } from "./utils.js";
 import { renderMuscleGroups, renderExercises, renderPlans, updateStats } from "./ui.js";
+import type { CompletionEntry, Exercise, WorkoutPlan, LogEntry, BodyWeightEntry } from "./types.js";
 
-function openSettingsModal() {
+const TOKEN_KEY = "gym_github_token";
+const GIST_KEY = "gym_gist_id";
+
+function getStoredToken(): string | null {
+  const raw = localStorage.getItem(TOKEN_KEY);
+  return raw || null;
+}
+
+function setStoredToken(token: string): void {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+function getStoredGistId(): string | null {
+  return localStorage.getItem(GIST_KEY);
+}
+
+function setStoredGistId(id: string): void {
+  localStorage.setItem(GIST_KEY, id);
+}
+
+function openSettingsModal(): void {
   const modal = document.getElementById("settings-modal");
   if (modal) modal.style.display = "flex";
-  const tokenInput = document.getElementById("github-token");
-  const gistInput = document.getElementById("gist-id");
-  if (tokenInput) tokenInput.value = localStorage.getItem("gym_github_token") || "";
-  if (gistInput) gistInput.value = localStorage.getItem("gym_gist_id") || "";
+  const tokenInput = document.getElementById("github-token") as HTMLInputElement;
+  const gistInput = document.getElementById("gist-id") as HTMLInputElement;
+  if (tokenInput) tokenInput.value = getStoredToken() || "";
+  if (gistInput) gistInput.value = getStoredGistId() || "";
   const encryptToggle = document.getElementById("encrypt-toggle") as HTMLInputElement | null;
   const encryptInput = document.getElementById("encrypt-passphrase") as HTMLInputElement | null;
   const hasPassphrase = !!getEncryptionPassphrase();
@@ -36,17 +57,19 @@ function openSettingsModal() {
   }
 }
 
-function closeSettingsModal() {
+function closeSettingsModal(): void {
   const modal = document.getElementById("settings-modal");
   if (modal) modal.style.display = "none";
 }
 
-async function saveSettings() {
-  const token = document.getElementById("github-token")?.value.trim();
-  const gistId = document.getElementById("gist-id")?.value.trim();
+async function saveSettings(): Promise<void> {
+  const tokenInput = document.getElementById("github-token") as HTMLInputElement;
+  const token = (tokenInput?.value || "").trim();
+  const gistInput = document.getElementById("gist-id") as HTMLInputElement;
+  const gistId = (gistInput?.value || "").trim();
 
-  if (token) localStorage.setItem("gym_github_token", token);
-  if (gistId) localStorage.setItem("gym_gist_id", gistId);
+  if (token) setStoredToken(token);
+  if (gistId) setStoredGistId(gistId);
 
   const encryptToggle = document.getElementById("encrypt-toggle") as HTMLInputElement | null;
   const encryptInput = document.getElementById("encrypt-passphrase") as HTMLInputElement | null;
@@ -76,9 +99,9 @@ async function saveSettings() {
   vibrate(50);
 }
 
-async function syncToCloud() {
-  const token = localStorage.getItem("gym_github_token");
-  const gistId = localStorage.getItem("gym_gist_id");
+async function syncToCloud(): Promise<void> {
+  const token = getStoredToken();
+  const gistId = getStoredGistId();
 
   if (!token) {
     showToast("Будь ласка, введіть GitHub Token у налаштуваннях", "warning");
@@ -121,29 +144,30 @@ async function syncToCloud() {
     });
 
     if (response.ok) {
-      const result = await response.json();
-      if (!gistId) {
-        localStorage.setItem("gym_gist_id", result.id);
-        const gistInput = document.getElementById("gist-id");
+      const result = await response.json() as { id?: string };
+      if (!gistId && result.id) {
+        setStoredGistId(result.id);
+        const gistInput = document.getElementById("gist-id") as HTMLInputElement;
         if (gistInput) gistInput.value = result.id;
       }
       showToast("Синхронізація успішна! ✅", "success");
       vibrate([50, 100, 50]);
     } else {
-      const err = await response.json().catch(() => ({}));
+      const err = await response.json().catch(() => ({})) as { message?: string };
       showToast("Помилка синхронізації: " + (err.message || `HTTP ${response.status}`), "error");
     }
-  } catch (e) {
-    showToast("Помилка мережі: " + e.message, "error");
+  } catch (e: unknown) {
+    const err = e as { message: string };
+    showToast("Помилка мережі: " + err.message, "error");
   }
 }
 
-async function fetchFromCloud() {
-  const token = localStorage.getItem("gym_github_token");
-  const gistId = localStorage.getItem("gym_gist_id");
+async function fetchFromCloud(): Promise<void> {
+  const token = getStoredToken();
+  const gistId = getStoredGistId();
 
   if (!token || !gistId) {
-      showToast("Налаштуйте Token та Gist ID для імпорту", "warning");
+    showToast("Налаштуйте Token та Gist ID для імпорту", "warning");
     return;
   }
 
@@ -153,9 +177,19 @@ async function fetchFromCloud() {
     });
 
     if (response.ok) {
-      const result = await response.json();
+      const result = await response.json() as { files?: Record<string, { content: string }> };
+      if (!result.files?.["gym-data.json"]) {
+        showToast("Gist не містить файлу gym-data.json", "warning");
+        return;
+      }
       const content = result.files["gym-data.json"].content;
-      const data = safeJSONParse(content, {});
+      const data = safeJSONParse(content, {}) as {
+        completionState?: Record<string, CompletionEntry>;
+        workoutPlans?: WorkoutPlan[];
+        exerciseLogs?: Record<string, LogEntry[]>;
+        bodyWeightHistory?: BodyWeightEntry[];
+        customExercises?: Exercise[];
+      };
 
       if (confirm("Дані завантажено. Перезаписати поточний прогрес?")) {
         Object.assign(completionState, data.completionState || {});
@@ -180,14 +214,15 @@ async function fetchFromCloud() {
     } else {
       showToast("Не вдалося завантажити дані (HTTP " + response.status + ")", "error");
     }
-  } catch (e) {
-    showToast("Помилка мережі: " + e.message, "error");
+  } catch (e: unknown) {
+    const err = e as { message: string };
+    showToast("Помилка мережі: " + err.message, "error");
   }
 }
 
-function exportData() {
+function exportData(): void {
   const data = {
-    version: 2,
+    version: 3,
     exportDate: new Date().toISOString(),
     completionState,
     workoutPlans,
@@ -207,14 +242,31 @@ function exportData() {
   URL.revokeObjectURL(url);
 }
 
-function importData(event) {
-  const file = event.target.files[0];
+function importData(event: Event): void {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
   if (!file) return;
 
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
-      const data = safeJSONParse(e.target.result, {});
+      const result = (e.target as FileReader).result as string;
+      const data = safeJSONParse(result, {}) as {
+        completionState?: Record<string, CompletionEntry>;
+        workoutPlans?: WorkoutPlan[];
+        exerciseLogs?: Record<string, LogEntry[]>;
+        bodyWeightHistory?: BodyWeightEntry[];
+        customExercises?: Exercise[];
+      };
+
+      if (
+        !confirm(
+          "Це перезапише всі ваші локальні дані. Продовжити?"
+        )
+      ) {
+        return;
+      }
+
       Object.assign(completionState, data.completionState || {});
       workoutPlans.length = 0;
       workoutPlans.push(...(data.workoutPlans || []));
@@ -233,15 +285,15 @@ function importData(event) {
       renderExercises();
       renderPlans();
       showToast("Дані успішно імпортовано!", "success");
-    } catch (err) {
+    } catch (_err) {
       showToast("Помилка при читанні файлу. Перевірте формат.", "error");
     }
   };
   reader.readAsText(file);
-  event.target.value = "";
+  target.value = "";
 }
 
-function exportToCSV() {
+function exportToCSV(): void {
   let csv = "Дата,Вправа,Група,Вага,Повтори,1RM\n";
   const allEx = getAllExercises();
 

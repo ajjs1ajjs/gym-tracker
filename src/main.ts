@@ -54,7 +54,9 @@ import { saveBodyWeight } from "./stats.js";
 import { requestNotifications } from "./utils.js";
 import LogbookModule from "./logbook.js";
 
-function init() {
+let plateDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+function init(): void {
   loadState();
   loadPlans();
   loadEncryptedOnStartup();
@@ -79,7 +81,7 @@ function init() {
 
   // Close dropdown on outside click
   document.addEventListener("click", (e) => {
-    if (!e.target.closest(".dropdown")) {
+    if (!(e.target as HTMLElement).closest(".dropdown")) {
       document.querySelectorAll(".dropdown-content.show").forEach((el) => el.classList.remove("show"));
     }
   });
@@ -90,35 +92,39 @@ function init() {
   // --- Bottom Nav ---
   document.querySelectorAll(".nav-item").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const tabId = btn.dataset.tab;
+      const tabId = (btn as HTMLElement).dataset.tab;
       if (tabId) switchTab(tabId);
     });
   });
 
   // --- Sidebar ---
-  document.getElementById("muscle-groups")?.addEventListener("click", (e) => {
-    const group = e.target.closest("[data-muscle-id]");
+  byId("muscle-groups")?.addEventListener("click", (e) => {
+    const group = (e.target as HTMLElement).closest("[data-muscle-id]") as HTMLElement;
     if (group) {
-      filterByGroup(group.dataset.muscleId);
+      const muscleId = group.dataset.muscleId;
+      if (muscleId) filterByGroup(muscleId);
     }
   });
 
   // --- Exercises Grid (event delegation) ---
-  document.getElementById("exercises-list")?.addEventListener("click", (e) => {
-    const card = e.target.closest(".exercise-card");
-    const checkBtn = e.target.closest(".check-btn");
+  byId("exercises-list")?.addEventListener("click", (e) => {
+    const target = e.target as HTMLElement;
+    const card = target.closest(".exercise-card") as HTMLElement;
+    const checkBtn = target.closest(".check-btn") as HTMLElement;
 
     if (checkBtn) {
       e.stopPropagation();
-      toggleExercise(parseInt(checkBtn.dataset.checkId));
+      const checkId = checkBtn.dataset.checkId;
+      if (checkId) toggleExercise(parseInt(checkId));
     } else if (card) {
-      openModal(parseInt(card.dataset.exId));
+      const exId = card.dataset.exId;
+      if (exId) openModal(parseInt(exId));
     }
   });
 
   // --- Exercise Modal ---
-  byId("exercise-modal").addEventListener("click", (e) => {
-    if (e.target.id === "exercise-modal") closeModal();
+  byId("exercise-modal")?.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement).id === "exercise-modal") closeModal();
   });
   byId("modal-close-btn")?.addEventListener("click", closeModal);
   byId("modal-checkin-btn")?.addEventListener("click", toggleFromModal);
@@ -126,8 +132,8 @@ function init() {
   byId("progression-toggle-btn")?.addEventListener("click", toggleProgressionChart);
 
   // --- Timer Modal ---
-  byId("timer-modal").addEventListener("click", (e) => {
-    if (e.target.id === "timer-modal") closeTimerModal();
+  byId("timer-modal")?.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement).id === "timer-modal") closeTimerModal();
   });
   byId("timer-modal-close")?.addEventListener("click", closeTimerModal);
   byId("timer-start-btn")?.addEventListener("click", startTimer);
@@ -137,7 +143,8 @@ function init() {
   // Timer presets
   document.querySelectorAll(".timer-preset").forEach((btn) => {
     btn.addEventListener("click", (e) => {
-      setTimer(parseInt(btn.dataset.seconds), e);
+      const seconds = parseInt((btn as HTMLElement).dataset.seconds || "90");
+      setTimer(seconds, e as Event);
     });
   });
 
@@ -146,38 +153,48 @@ function init() {
 
   // --- Plans ---
   byId("plans-list")?.addEventListener("click", (e) => {
-    const startBtn = e.target.closest(".btn-start-plan");
-    const delBtn = e.target.closest(".btn-delete-plan");
-    if (startBtn) startWorkout(parseInt(startBtn.dataset.planIndex));
-    if (delBtn) deletePlan(parseInt(delBtn.dataset.planIndex));
+    const target = e.target as HTMLElement;
+    const startBtn = target.closest(".btn-start-plan") as HTMLElement;
+    const delBtn = target.closest(".btn-delete-plan") as HTMLElement;
+    if (startBtn) {
+      const idx = startBtn.dataset.planIndex;
+      if (idx) startWorkout(parseInt(idx));
+    }
+    if (delBtn) {
+      const idx = delBtn.dataset.planIndex;
+      if (idx) deletePlan(parseInt(idx));
+    }
   });
-  byId("plan-modal").addEventListener("click", (e) => {
-    if (e.target.id === "plan-modal") closePlanModal();
+  byId("plan-modal")?.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement).id === "plan-modal") closePlanModal();
   });
   byId("plan-exercises-select")?.addEventListener("click", (e) => {
-    const option = e.target.closest("[data-plan-check]");
+    const option = (e.target as HTMLElement).closest("[data-plan-check]") as HTMLElement;
     if (option) {
-      option.classList.toggle("selected");
+      toggleExerciseOption(option);
     }
   });
   byId("plan-save-btn")?.addEventListener("click", savePlan);
 
   // --- Plate Modal ---
-  byId("plate-modal").addEventListener("click", (e) => {
-    if (e.target.id === "plate-modal") closePlateModal();
+  byId("plate-modal")?.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement).id === "plate-modal") closePlateModal();
   });
   byId("plate-modal-close")?.addEventListener("click", closePlateModal);
-  byId("plate-weight-input")?.addEventListener("input", calculatePlates);
+  byId("plate-weight-input")?.addEventListener("input", () => {
+    if (plateDebounceTimer) clearTimeout(plateDebounceTimer);
+    plateDebounceTimer = setTimeout(calculatePlates, 200);
+  });
 
   // --- Settings Modal ---
-  byId("settings-modal").addEventListener("click", (e) => {
-    if (e.target.id === "settings-modal") closeSettingsModal();
+  byId("settings-modal")?.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement).id === "settings-modal") closeSettingsModal();
   });
   byId("settings-modal-close")?.addEventListener("click", closeSettingsModal);
 
   // --- Custom Exercise Modal ---
-  byId("custom-exercise-modal").addEventListener("click", (e) => {
-    if (e.target.id === "custom-exercise-modal") closeCustomExerciseModal();
+  byId("custom-exercise-modal")?.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement).id === "custom-exercise-modal") closeCustomExerciseModal();
   });
   byId("custom-ex-modal-close")?.addEventListener("click", closeCustomExerciseModal);
 
@@ -203,7 +220,8 @@ function init() {
   // Logbook tabs
   document.querySelectorAll("[data-logbook-tab]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      switchLogbookTab(btn.dataset.logbookTab);
+      const tabId = (btn as HTMLElement).dataset.logbookTab;
+      if (tabId) switchLogbookTab(tabId);
     });
   });
 
@@ -239,10 +257,10 @@ function init() {
       window.location.reload();
     });
 
-    document.getElementById("update-btn")?.addEventListener("click", () => {
+    byId("update-btn")?.addEventListener("click", () => {
       navigator.serviceWorker.getRegistration().then((r) => r?.waiting?.postMessage("SKIP_WAITING"));
     });
-    document.getElementById("update-dismiss-btn")?.addEventListener("click", () => {
+    byId("update-dismiss-btn")?.addEventListener("click", () => {
       const banner = document.getElementById("update-banner");
       if (banner) banner.classList.add("hidden");
     });
@@ -260,7 +278,7 @@ function init() {
 
   // Wake Lock on visibility change
   document.addEventListener("visibilitychange", async () => {
-    const activeTab = document.querySelector(".nav-item.active")?.dataset.tab;
+    const activeTab = (document.querySelector(".nav-item.active") as HTMLElement)?.dataset.tab;
     if (document.visibilityState === "visible" && (activeTab === "exercises" || activeTab === "logbook")) {
       const { requestWakeLock } = await import("./utils.js");
       requestWakeLock();
@@ -273,60 +291,60 @@ function init() {
   console.log("GymProgress initialized ✅");
 }
 
-function byId(id) {
+function byId(id: string): HTMLElement | null {
   const el = document.getElementById(id);
   if (!el) console.warn(`Element #${id} not found`);
   return el;
 }
 
-// Expose for inline onclick compatibility (some may still exist)
-window.filterByGroup = filterByGroup;
-window.openModal = openModal;
-window.toggleExercise = toggleExercise;
-window.closeModal = closeModal;
-window.toggleFromModal = toggleFromModal;
-window.logSet = logSet;
-window.toggleProgressionChart = toggleProgressionChart;
-window.finishWorkout = finishWorkout;
-window.resetProgress = resetProgress;
-window.toggleDropdown = toggleDropdown;
-window.openPlateModal = openPlateModal;
-window.closePlateModal = closePlateModal;
-window.calculatePlates = calculatePlates;
-window.switchTab = switchTab;
-window.switchLogbookTab = switchLogbookTab;
-window.openCustomExerciseModal = openCustomExerciseModal;
-window.closeCustomExerciseModal = closeCustomExerciseModal;
-window.saveCustomExercise = saveCustomExercise;
-window.openTimerModal = openTimerModal;
-window.closeTimerModal = closeTimerModal;
-window.setTimer = setTimer;
-window.startTimer = startTimer;
-window.pauseTimer = pauseTimer;
-window.resetTimer = resetTimer;
-window.openSettingsModal = openSettingsModal;
-window.closeSettingsModal = closeSettingsModal;
-window.saveSettings = saveSettings;
-window.syncToCloud = syncToCloud;
-window.fetchFromCloud = fetchFromCloud;
-window.exportData = exportData;
-window.importData = importData;
-window.exportToCSV = exportToCSV;
-window.saveBodyWeight = saveBodyWeight;
-window.filterHistory = filterHistory;
-window.openPlanModal = openPlanModal;
-window.closePlanModal = closePlanModal;
-window.toggleExerciseOption = toggleExerciseOption;
-window.savePlan = savePlan;
-window.deletePlan = deletePlan;
-window.startWorkout = startWorkout;
-window.renderHistory = renderHistory;
-window.renderPlans = renderPlans;
-// Legacy compatibility (for any remaining inline events)
-window.LogbookModule = LogbookModule;
-window.createLogbookCustomExercise = () => LogbookModule.createExercise();
-window.loadLogbookSelect = () => LogbookModule.loadSelect();
-window.renderLogbookSets = () => LogbookModule.renderSets();
+// Expose for inline onclick compatibility
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).filterByGroup = filterByGroup;
+(window as any).openModal = openModal;
+(window as any).toggleExercise = toggleExercise;
+(window as any).closeModal = closeModal;
+(window as any).toggleFromModal = toggleFromModal;
+(window as any).logSet = logSet;
+(window as any).toggleProgressionChart = toggleProgressionChart;
+(window as any).finishWorkout = finishWorkout;
+(window as any).resetProgress = resetProgress;
+(window as any).toggleDropdown = toggleDropdown;
+(window as any).openPlateModal = openPlateModal;
+(window as any).closePlateModal = closePlateModal;
+(window as any).calculatePlates = calculatePlates;
+(window as any).switchTab = switchTab;
+(window as any).switchLogbookTab = switchLogbookTab;
+(window as any).openCustomExerciseModal = openCustomExerciseModal;
+(window as any).closeCustomExerciseModal = closeCustomExerciseModal;
+(window as any).saveCustomExercise = saveCustomExercise;
+(window as any).openTimerModal = openTimerModal;
+(window as any).closeTimerModal = closeTimerModal;
+(window as any).setTimer = setTimer;
+(window as any).startTimer = startTimer;
+(window as any).pauseTimer = pauseTimer;
+(window as any).resetTimer = resetTimer;
+(window as any).openSettingsModal = openSettingsModal;
+(window as any).closeSettingsModal = closeSettingsModal;
+(window as any).saveSettings = saveSettings;
+(window as any).syncToCloud = syncToCloud;
+(window as any).fetchFromCloud = fetchFromCloud;
+(window as any).exportData = exportData;
+(window as any).importData = importData;
+(window as any).exportToCSV = exportToCSV;
+(window as any).saveBodyWeight = saveBodyWeight;
+(window as any).filterHistory = filterHistory;
+(window as any).openPlanModal = openPlanModal;
+(window as any).closePlanModal = closePlanModal;
+(window as any).toggleExerciseOption = toggleExerciseOption;
+(window as any).savePlan = savePlan;
+(window as any).deletePlan = deletePlan;
+(window as any).startWorkout = startWorkout;
+(window as any).renderHistory = renderHistory;
+(window as any).renderPlans = renderPlans;
+(window as any).LogbookModule = LogbookModule;
+(window as any).createLogbookCustomExercise = () => LogbookModule.createExercise();
+(window as any).loadLogbookSelect = () => LogbookModule.loadSelect();
+(window as any).renderLogbookSets = () => LogbookModule.renderSets();
 
 // Wait for DOM
 if (document.readyState === "loading") {

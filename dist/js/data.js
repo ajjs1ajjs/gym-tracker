@@ -27,11 +27,12 @@ function loadState() {
     const today = new Date().toDateString();
     if (lastDate && lastDate !== today) {
         const yesterdayArchive = localStorage.getItem("completionArchive");
-        let archive = yesterdayArchive ? safeJSONParse(yesterdayArchive, {}) : {};
+        const archive = yesterdayArchive ? safeJSONParse(yesterdayArchive, {}) : {};
         archive[lastDate] = completionState;
         localStorage.setItem("completionArchive", JSON.stringify(archive));
         completionState = {};
         localStorage.setItem("trainingProgress", JSON.stringify(completionState));
+        pruneOldArchiveEntries(archive);
     }
     localStorage.setItem("lastSessionDate", today);
     const logs = localStorage.getItem("exerciseLogs");
@@ -46,6 +47,21 @@ function loadState() {
         mergeCustomExercises();
     }
     migrateLegacyLogbook();
+}
+function pruneOldArchiveEntries(archive) {
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - 2);
+    const cutoffStr = cutoff.toDateString();
+    let pruned = 0;
+    Object.keys(archive).forEach((dateStr) => {
+        if (new Date(dateStr) < new Date(cutoffStr)) {
+            delete archive[dateStr];
+            pruned++;
+        }
+    });
+    if (pruned > 0) {
+        localStorage.setItem("completionArchive", JSON.stringify(archive));
+    }
 }
 function saveState() {
     localStorage.setItem("trainingProgress", JSON.stringify(completionState));
@@ -153,13 +169,13 @@ function migrateLegacyLogbook() {
                 sess.sets.forEach((set) => {
                     const setTime = new Date(sess.timestamp).toISOString();
                     const alreadyExists = exerciseLogs[targetExId].some((logged) => logged.date === setTime &&
-                        logged.weight === parseFloat(set.weight) &&
-                        logged.reps === parseInt(set.reps));
+                        logged.weight === parseFloat(String(set.weight)) &&
+                        logged.reps === parseInt(String(set.reps)));
                     if (!alreadyExists) {
                         exerciseLogs[targetExId].push({
                             date: setTime,
-                            weight: parseFloat(set.weight),
-                            reps: parseInt(set.reps),
+                            weight: parseFloat(String(set.weight)),
+                            reps: parseInt(String(set.reps)),
                         });
                     }
                 });
@@ -186,39 +202,37 @@ function savePlans() {
 function getWorkoutHistory(period) {
     const exerciseDates = {};
     const allEx = getAllExercises();
-    allEx.forEach((ex) => {
-        if (completionState[ex.id] && completionState[ex.id].date) {
-            const dateStr = new Date(completionState[ex.id].date).toDateString();
-            if (!exerciseDates[dateStr]) {
-                exerciseDates[dateStr] = {
-                    date: completionState[ex.id].date,
-                    exercises: [],
-                    count: 0,
-                };
+    const processedDates = new Set();
+    const processEntry = (state) => {
+        allEx.forEach((ex) => {
+            if (state[ex.id] && state[ex.id].date) {
+                const dateStr = new Date(state[ex.id].date).toDateString();
+                if (processedDates.has(dateStr))
+                    return;
+                processedDates.add(dateStr);
+                if (!exerciseDates[dateStr]) {
+                    exerciseDates[dateStr] = {
+                        date: state[ex.id].date,
+                        exercises: [],
+                        count: 0,
+                    };
+                }
             }
-            exerciseDates[dateStr].exercises.push(ex.id);
-            exerciseDates[dateStr].count++;
-        }
-    });
+        });
+        allEx.forEach((ex) => {
+            if (state[ex.id] && state[ex.id].date) {
+                const dateStr = new Date(state[ex.id].date).toDateString();
+                exerciseDates[dateStr].exercises.push(ex.id);
+                exerciseDates[dateStr].count++;
+            }
+        });
+    };
+    processEntry(completionState);
     const archive = localStorage.getItem("completionArchive");
     if (archive) {
         const archiveData = safeJSONParse(archive, {});
         Object.keys(archiveData).forEach((dateStr) => {
-            const dayState = archiveData[dateStr];
-            allEx.forEach((ex) => {
-                if (dayState[ex.id] && dayState[ex.id].date) {
-                    const archivedDateStr = new Date(dayState[ex.id].date).toDateString();
-                    if (!exerciseDates[archivedDateStr]) {
-                        exerciseDates[archivedDateStr] = {
-                            date: dayState[ex.id].date,
-                            exercises: [],
-                            count: 0,
-                        };
-                    }
-                    exerciseDates[archivedDateStr].exercises.push(ex.id);
-                    exerciseDates[archivedDateStr].count++;
-                }
-            });
+            processEntry(archiveData[dateStr]);
         });
     }
     let workouts = Object.values(exerciseDates);

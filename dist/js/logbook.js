@@ -1,7 +1,7 @@
 import { exerciseLogs, customExercises, selectedExerciseId, getAllExercises, mergeCustomExercises, saveState, } from "./data.js";
 import { trainingData } from "./exercises.js";
 import { renderExerciseSetsLog, updateStats, renderExercises, renderMuscleGroups, } from "./ui.js";
-import { showToast } from "./utils.js";
+import { showToast, escapeHtml } from "./utils.js";
 const LogbookModule = {
     activeSets: [],
     init() {
@@ -14,9 +14,11 @@ const LogbookModule = {
                 e.preventDefault();
                 const wInput = document.getElementById("logbook-weight");
                 const rInput = document.getElementById("logbook-reps");
+                if (!wInput || !rInput)
+                    return;
                 const w = parseFloat(wInput.value);
                 const r = parseInt(rInput.value);
-                if (isNaN(w) || isNaN(r))
+                if (isNaN(w) || isNaN(r) || w <= 0 || r <= 0)
                     return;
                 this.activeSets.push({ weight: w, reps: r });
                 wInput.value = "";
@@ -95,7 +97,8 @@ const LogbookModule = {
             .join("");
         container.querySelectorAll(".lb-remove-set").forEach((btn) => {
             btn.addEventListener("click", () => {
-                this.removeSet(parseInt(btn.dataset.idx));
+                const idx = parseInt(btn.dataset.idx || "0");
+                this.removeSet(idx);
             });
         });
     },
@@ -195,7 +198,7 @@ const LogbookModule = {
         this.loadSelect();
         const select = document.getElementById("logbook-ex-select");
         if (select)
-            select.value = newEx.id;
+            select.value = String(newEx.id);
         this.activeSets = [];
         this.renderSets();
     },
@@ -205,7 +208,7 @@ const LogbookModule = {
         const allEx = getAllExercises();
         const sortedEx = [...allEx].sort((a, b) => a.name.localeCompare(b.name, "uk-UA"));
         const optionsBase = sortedEx
-            .map((ex) => `<option value="${ex.id}">${ex.name}</option>`)
+            .map((ex) => `<option value="${escapeHtml(String(ex.id))}">${escapeHtml(ex.name)}</option>`)
             .join("");
         if (selectLog) {
             const currentVal = selectLog.value;
@@ -261,7 +264,7 @@ const LogbookModule = {
         const sortedDates = Object.keys(groups).sort((a, b) => {
             const parseDate = (str) => {
                 const parts = str.split(".");
-                return new Date(parts[2], parts[1] - 1, parts[0]);
+                return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
             };
             return +parseDate(b) - +parseDate(a);
         });
@@ -280,17 +283,17 @@ const LogbookModule = {
                         <span style="color:var(--text-secondary);">Підхід ${index + 1}:</span>
                         <b>${s.weight} кг х ${s.reps}</b>
                     </div>
-                    <button class="lb-del-set" data-ex="${selectedId}" data-idx="${s.originalIndex}" style="background:transparent; border:none; color:#ff4444; font-size:14px; cursor:pointer;" title="Видалити підхід">✕</button>
+                    <button class="lb-del-set" data-ex="${escapeHtml(String(selectedId))}" data-idx="${s.originalIndex}" style="background:transparent; border:none; color:#ff4444; font-size:14px; cursor:pointer;" title="Видалити підхід">✕</button>
                 </div>
             `)
                 .join("");
             return `
             <div class="history-card" style="background:var(--card-bg); padding:15px; border-radius:10px; border:1px solid var(--border); margin-bottom:15px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 8px; align-items:center;">
-                    <span style="color:var(--theme-color, #00d4ff); font-weight:bold;">${ex.name}</span>
+                    <span style="color:var(--theme-color, #00d4ff); font-weight:bold;">${escapeHtml(ex.name)}</span>
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <span style="color:var(--text-secondary); font-size:0.85rem;">${dateStr}</span>
-                        <button class="lb-del-day" data-ex="${selectedId}" data-day="${dateStr}" style="background:transparent; border:none; cursor:pointer; color:#ef4444; font-size:1.1rem;" title="Видалити весь день">🗑️</button>
+                        <span style="color:var(--text-secondary); font-size:0.85rem;">${escapeHtml(dateStr)}</span>
+                        <button class="lb-del-day" data-ex="${escapeHtml(String(selectedId))}" data-day="${escapeHtml(dateStr)}" style="background:transparent; border:none; cursor:pointer; color:#ef4444; font-size:1.1rem;" title="Видалити весь день">🗑️</button>
                     </div>
                 </div>
                 ${setsHtml}
@@ -300,12 +303,14 @@ const LogbookModule = {
             .join("");
         list.querySelectorAll(".lb-del-set").forEach((btn) => {
             btn.addEventListener("click", () => {
-                this.deleteSet(btn.dataset.ex, parseInt(btn.dataset.idx));
+                const el = btn;
+                this.deleteSet(el.dataset.ex || "", parseInt(el.dataset.idx || "0"));
             });
         });
         list.querySelectorAll(".lb-del-day").forEach((btn) => {
             btn.addEventListener("click", () => {
-                this.deleteDaySession(btn.dataset.ex, btn.dataset.day);
+                const el = btn;
+                this.deleteDaySession(el.dataset.ex || "", el.dataset.day || "");
             });
         });
     },

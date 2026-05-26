@@ -6,7 +6,7 @@
   "display": "standalone",
   "background_color": "#1a1a2e",
   "theme_color": "#00d4ff",
-  "orientation": "portrait-primary",
+  "orientation": "natural",
   "icons": [
     {
       "src": "images/icon-192.png",
@@ -23,6 +23,5 @@
   ],
   "categories": ["fitness", "health"],
   "lang": "uk",
-  "scope": "./",
   "prefer_related_applications": false
 }

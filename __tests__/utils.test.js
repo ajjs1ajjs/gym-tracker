@@ -1,4 +1,4 @@
-import { safeJSONParse, calculate1RM, diffClass } from "../dist/js/utils.js";
+import { safeJSONParse, calculate1RM, diffClass } from "../src/utils.js";
 
 describe("safeJSONParse", () => {
   test("parses valid JSON", () => {

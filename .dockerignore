@@ -1,8 +1,11 @@
 node_modules
 src
+dist
 __tests__
 cypress
 .git
 .gitignore
 *.md
 .DS_Store
+Dockerfile
+.dockerignore

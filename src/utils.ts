@@ -1,8 +1,8 @@
-function safeJSONParse(str, fallback = null) {
+function safeJSONParse(str: string, fallback: unknown = null): unknown {
   try { return JSON.parse(str); } catch { return fallback; }
 }
 
-function formatDate(timestamp) {
+function formatDate(timestamp: string): string {
   if (!timestamp) return "";
   const date = new Date(timestamp);
   return date.toLocaleDateString("uk-UA", {
@@ -14,30 +14,31 @@ function formatDate(timestamp) {
   });
 }
 
-function calculate1RM(weight, reps) {
+function calculate1RM(weight: number, reps: number): number {
   if (reps === 1) return weight;
   return Math.round(weight * (1 + reps / 30));
 }
 
-function vibrate(pattern: number | number[] = 50) {
+function vibrate(pattern: number | number[] = 50): void {
   if ("vibrate" in navigator) {
     const p = Array.isArray(pattern) ? pattern : [pattern];
     navigator.vibrate(p);
   }
 }
 
-let audioCtx = null;
+let audioCtx: AudioContext | null = null;
 
-function initAudio() {
+function initAudio(): void {
   if (audioCtx) return;
   if (typeof window === "undefined") return;
   try {
-    const AudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    audioCtx = new AudioContext();
-    const buffer = audioCtx.createBuffer(1, 1, 22050);
-    const source = audioCtx.createBufferSource();
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    audioCtx = new AudioContextClass();
+    const ctx = audioCtx;
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const source = ctx.createBufferSource();
     source.buffer = buffer;
-    source.connect(audioCtx.destination);
+    source.connect(ctx.destination);
     if (source.start) source.start(0);
     ["touchstart", "touchend", "click"].forEach((evt) =>
       document.body.removeEventListener(evt, initAudio),
@@ -49,11 +50,11 @@ function initAudio() {
 
 if (typeof document !== "undefined" && document.body) {
   ["touchstart", "touchend", "click"].forEach((evt) =>
-    document.body.addEventListener(evt, initAudio),
+    document.body.addEventListener(evt, initAudio, { once: true }),
   );
 }
 
-function playBeep() {
+function playBeep(): void {
   if (!audioCtx) initAudio();
   if (!audioCtx) return;
   if (audioCtx.state === "suspended") {
@@ -73,14 +74,17 @@ function playBeep() {
     );
     oscillator.start(audioCtx.currentTime);
     oscillator.stop(audioCtx.currentTime + 0.5);
-  } catch (e) {}
+  } catch (_e) { /* silently ignore audio errors */ }
 }
 
-function celebration() {
+function celebration(): void {
   if (typeof confetti !== "function") return;
   const duration = 3 * 1000;
   const end = Date.now() + duration;
+  let iterations = 0;
+  const MAX_FRAMES = 300;
   (function frame() {
+    if (iterations++ >= MAX_FRAMES) return;
     confetti({
       particleCount: 3,
       angle: 60,
@@ -102,52 +106,61 @@ function celebration() {
   vibrate([200, 100, 200, 100, 200]);
 }
 
-let wakeLock = null;
+let wakeLock: { release(): Promise<void> } | null = null;
 
-async function requestWakeLock() {
+async function requestWakeLock(): Promise<void> {
   try {
     if ("wakeLock" in navigator) {
       wakeLock = await navigator.wakeLock.request("screen");
     }
-  } catch (err) {
-    console.log(`${err.name}, ${err.message}`);
+  } catch (err: unknown) {
+    const e = err as { name: string; message: string };
+    console.log(`${e.name}, ${e.message}`);
   }
 }
 
-function releaseWakeLock() {
+function releaseWakeLock(): void {
   if (wakeLock !== null) {
-    wakeLock.release();
+    wakeLock.release().catch(() => { /* ignore release errors */ });
     wakeLock = null;
   }
 }
 
-function requestNotifications() {
+function requestNotifications(): void {
   if ("Notification" in window && Notification.permission === "default") {
     Notification.requestPermission();
   }
 }
 
-const DIFFICULTY_CLASS = {
+const DIFFICULTY_CLASS: Record<string, string> = {
   "Легкий": "easy",
   "Середній": "medium",
   "Складний": "hard",
 };
 
-function diffClass(difficulty) {
-  return DIFFICULTY_CLASS[difficulty] || difficulty;
+function diffClass(difficulty: string): string {
+  return DIFFICULTY_CLASS[difficulty] ?? difficulty;
 }
 
-function showToast(message: string, type: "success" | "error" | "info" | "warning" = "info", duration = 4000) {
+function escapeHtml(str: string): string {
+  const div = document.createElement("div");
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
+function showToast(message: string, type: "success" | "error" | "info" | "warning" = "info", duration = 4000): void {
   const container = document.getElementById("toast-container");
   if (!container) return;
   const icons: Record<string, string> = { success: "✅", error: "❌", info: "ℹ️", warning: "⚠️" };
   const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
-  toast.innerHTML = `<span class="toast-icon">${icons[type] || ""}</span><span class="toast-message">${message}</span>`;
+  toast.innerHTML = `<span class="toast-icon">${icons[type] || ""}</span><span class="toast-message">${escapeHtml(message)}</span>`;
   container.appendChild(toast);
   setTimeout(() => {
     toast.style.opacity = "0";
-    setTimeout(() => toast.remove(), 300);
+    setTimeout(() => {
+      if (toast.parentNode) toast.remove();
+    }, 300);
   }, duration);
 }
 
@@ -157,7 +170,7 @@ async function deriveKey(passphrase: string, salt: Uint8Array): Promise<CryptoKe
     "raw", encoder.encode(passphrase) as BufferSource, "PBKDF2", false, ["deriveKey"],
   );
   return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt: salt as BufferSource, iterations: 600000, hash: "SHA-256" },
+    { name: "PBKDF2", salt: salt as unknown as BufferSource, iterations: 600000, hash: "SHA-256" },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
@@ -171,7 +184,7 @@ async function encryptData(plaintext: string, passphrase: string): Promise<strin
   const key = await deriveKey(passphrase, salt);
   const encoder = new TextEncoder();
   const ciphertext = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: iv as BufferSource },
+    { name: "AES-GCM", iv: iv as unknown as BufferSource },
     key,
     encoder.encode(plaintext) as BufferSource,
   );
@@ -194,9 +207,9 @@ async function decryptData(ciphertextB64: string, passphrase: string): Promise<s
     const data = combined.slice(29);
     const key = await deriveKey(passphrase, salt);
     const decrypted = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: iv as BufferSource },
+      { name: "AES-GCM", iv: iv as unknown as BufferSource },
       key,
-      data as BufferSource,
+      data as unknown as BufferSource,
     );
     return new TextDecoder().decode(decrypted);
   } catch {
@@ -232,6 +245,7 @@ export {
   diffClass,
   requestNotifications,
   showToast,
+  escapeHtml,
   encryptData,
   decryptData,
   getEncryptionPassphrase,

@@ -27,19 +27,20 @@ import {
   diffClass,
   safeJSONParse,
   showToast,
+  escapeHtml,
 } from "./utils.js";
 import { openTimerModal, startTimer } from "./timer.js";
 import { renderBodyStats } from "./stats.js";
 import LogbookModule from "./logbook.js";
-import type { CompletionEntry } from "./types.js";
+import type { CompletionEntry, Exercise } from "./types.js";
 
-let progressionChart = null;
+let progressionChart: { destroy(): void } | null = null;
 
-function updateStats() {
+function updateStats(): void {
   const allExercises = getAllExercises();
   const total = allExercises.length;
   let completed = 0;
-  const workoutDates = new Set();
+  const workoutDates = new Set<string>();
   let totalVolume = 0;
 
   allExercises.forEach((ex) => {
@@ -79,7 +80,7 @@ function updateStats() {
   }
 }
 
-function renderMuscleGroups() {
+function renderMuscleGroups(): void {
   const container = document.getElementById("muscle-groups");
   if (!container) return;
 
@@ -96,9 +97,9 @@ function renderMuscleGroups() {
 
       return `
             <div class="muscle-group ${isActive ? "active" : ""} ${isComplete ? "completed" : ""}"
-                 data-muscle-id="${group.id}">
-                <span class="muscle-icon">${group.icon}</span>
-                <span class="muscle-name">${group.name}</span>
+                 data-muscle-id="${escapeHtml(String(group.id))}">
+                <span class="muscle-icon">${escapeHtml(group.icon)}</span>
+                <span class="muscle-name">${escapeHtml(group.name)}</span>
                 <span class="muscle-progress">${groupCompleted}/${groupExercises}</span>
             </div>
         `;
@@ -106,13 +107,13 @@ function renderMuscleGroups() {
     .join("");
 }
 
-function filterByGroup(groupId) {
+function filterByGroup(groupId: string): void {
   setSelectedMuscleGroup(selectedMuscleGroup === groupId ? null : groupId);
   renderMuscleGroups();
   renderExercises();
 }
 
-function renderExercises() {
+function renderExercises(): void {
   const container = document.getElementById("exercises-list");
   if (!container) return;
 
@@ -124,7 +125,7 @@ function renderExercises() {
     .map(
       (group) => `
         <div class="exercise-group">
-            <h2 class="group-title">${group.icon} ${group.name}</h2>
+            <h2 class="group-title">${escapeHtml(group.icon)} ${escapeHtml(group.name)}</h2>
             <div class="exercises-grid">
                 ${group.exercises
                   .map((ex) => {
@@ -134,14 +135,14 @@ function renderExercises() {
                     return `
                         <div class="exercise-card ${isCompleted ? "completed" : ""}" data-ex-id="${ex.id}">
                             <div class="card-image">
-                                <img src="${ex.image}" alt="${ex.name}" loading="lazy">
+                                <img src="${escapeHtml(ex.image)}" alt="${escapeHtml(ex.name)}" loading="lazy">
                                 ${isCompleted ? '<div class="completed-badge">✓</div>' : ""}
                             </div>
                             <div class="card-content">
-                                <h3>${ex.name}</h3>
+                                <h3>${escapeHtml(ex.name)}</h3>
                                 <div class="card-meta">
-                                    <span class="muscle-tag">${ex.muscle}</span>
-                                    <span class="difficulty-tag ${diffClass(ex.difficulty)}">${ex.difficulty}</span>
+                                    <span class="muscle-tag">${escapeHtml(ex.muscle)}</span>
+                                    <span class="difficulty-tag ${diffClass(ex.difficulty)}">${escapeHtml(ex.difficulty)}</span>
                                 </div>
                                 ${state ? `<p class="completed-date">Виконано: ${formatDate(state.date)}</p>` : ""}
                                 <button class="check-btn ${isCompleted ? "checked" : ""}" data-check-id="${ex.id}">
@@ -159,14 +160,14 @@ function renderExercises() {
     .join("");
 }
 
-function toggleExercise(id) {
+function toggleExercise(id: string | number): void {
   const allExercises = getAllExercises();
   const exercise = allExercises.find((ex) => ex.id === id);
 
   if (completionState[id]) {
     unmarkExerciseComplete(id);
   } else {
-    markExerciseComplete(id, new Date().toISOString(), exercise.name);
+    markExerciseComplete(id, new Date().toISOString(), exercise ? exercise.name : "");
   }
 
   saveState();
@@ -186,7 +187,7 @@ function toggleExercise(id) {
   }
 }
 
-function openModal(id) {
+function openModal(id: string | number): void {
   setSelectedExerciseId(id);
   const allExercises = getAllExercises();
   const exercise = allExercises.find((ex) => ex.id === id);
@@ -196,50 +197,61 @@ function openModal(id) {
   const state = completionState[id];
   const isCompleted = !!state;
 
-  document.getElementById("modal-image").src = exercise.image;
-  document.getElementById("modal-title").textContent = exercise.name;
-  document.getElementById("modal-muscle").textContent = exercise.muscle;
-  document.getElementById("modal-difficulty").textContent = exercise.difficulty;
-  document.getElementById("modal-description").textContent =
-    exercise.description;
-  document.getElementById("modal-sets").textContent = exercise.sets;
+  const modalImage = document.getElementById("modal-image") as HTMLImageElement;
+  if (modalImage) modalImage.src = exercise.image;
+  const modalTitle = document.getElementById("modal-title");
+  if (modalTitle) modalTitle.textContent = exercise.name;
+  const modalMuscle = document.getElementById("modal-muscle");
+  if (modalMuscle) modalMuscle.textContent = exercise.muscle;
+  const modalDifficulty = document.getElementById("modal-difficulty");
+  if (modalDifficulty) modalDifficulty.textContent = exercise.difficulty;
+  const modalDescription = document.getElementById("modal-description");
+  if (modalDescription) modalDescription.textContent = exercise.description;
+  const modalSets = document.getElementById("modal-sets");
+  if (modalSets) modalSets.textContent = exercise.sets;
 
-  document.getElementById("modal-instructions").innerHTML =
-    exercise.instructions.map((i) => `<li>${i}</li>`).join("");
+  const modalInstructions = document.getElementById("modal-instructions");
+  if (modalInstructions) {
+    modalInstructions.innerHTML = exercise.instructions.map((i) => `<li>${escapeHtml(i)}</li>`).join("");
+  }
 
-  document.getElementById("modal-checkin-btn").textContent = isCompleted
-    ? "✓ Виконано"
-    : "○ Відмітити";
-  document.getElementById("modal-checkin-btn").className = isCompleted
-    ? "btn-completed"
-    : "";
-  document.getElementById("checkin-date").textContent = state
-    ? `Дата: ${formatDate(state.date)}`
-    : "";
+  const checkinBtn = document.getElementById("modal-checkin-btn");
+  if (checkinBtn) {
+    checkinBtn.textContent = isCompleted ? "✓ Виконано" : "○ Відмітити";
+    checkinBtn.className = isCompleted ? "btn-completed" : "";
+  }
+  const checkinDate = document.getElementById("checkin-date");
+  if (checkinDate) {
+    checkinDate.textContent = state ? `Дата: ${formatDate(state.date)}` : "";
+  }
 
   renderExerciseSetsLog(id);
-  document.getElementById("exercise-modal").style.display = "flex";
-  document.getElementById("progression-chart-wrapper").style.display = "none";
+  const modal = document.getElementById("exercise-modal");
+  if (modal) modal.style.display = "flex";
+  const chartWrapper = document.getElementById("progression-chart-wrapper");
+  if (chartWrapper) chartWrapper.style.display = "none";
 }
 
-function closeModal() {
-  document.getElementById("exercise-modal").style.display = "none";
+function closeModal(): void {
+  const modal = document.getElementById("exercise-modal");
+  if (modal) modal.style.display = "none";
   setSelectedExerciseId(null);
 }
 
-function updateModalState() {
+function updateModalState(): void {
   if (!selectedExerciseId) return;
   openModal(selectedExerciseId);
 }
 
-function toggleFromModal() {
+function toggleFromModal(): void {
   if (selectedExerciseId) {
     toggleExercise(selectedExerciseId);
   }
 }
 
-function renderExerciseSetsLog(id) {
+function renderExerciseSetsLog(id: string | number): void {
   const logContainer = document.getElementById("exercise-sets-log");
+  if (!logContainer) return;
   const logs = exerciseLogs[id] || [];
   const today = new Date().toDateString();
 
@@ -275,13 +287,22 @@ function renderExerciseSetsLog(id) {
       : '<p style="color:var(--text-secondary); font-size:0.8rem;">Підходів за сьогодні немає</p>';
 }
 
-function logSet() {
+function logSet(): void {
   if (!selectedExerciseId) return;
-  const weight = parseFloat(document.getElementById("set-weight").value);
-  const reps = parseInt(document.getElementById("set-reps").value);
+  const weightInput = document.getElementById("set-weight") as HTMLInputElement;
+  const repsInput = document.getElementById("set-reps") as HTMLInputElement;
+  if (!weightInput || !repsInput) return;
+
+  const weight = parseFloat(weightInput.value);
+  const reps = parseInt(repsInput.value);
 
   if (isNaN(weight) || isNaN(reps)) {
     showToast("Введіть вагу та повтори", "warning");
+    return;
+  }
+
+  if (weight <= 0 || reps <= 0) {
+    showToast("Вага та повтори мають бути більше 0", "warning");
     return;
   }
 
@@ -299,31 +320,33 @@ function logSet() {
   updateStats();
   vibrate(30);
 
-  document.getElementById("set-weight").value = "";
-  document.getElementById("set-reps").value = "";
+  weightInput.value = "";
+  repsInput.value = "";
 
-  const isSmartTimer = document.getElementById("smart-timer-toggle")?.checked;
+  const isSmartTimer = (document.getElementById("smart-timer-toggle") as HTMLInputElement)?.checked;
   if (isSmartTimer) {
     openTimerModal();
     startTimer();
   }
 }
 
-function toggleProgressionChart() {
+function toggleProgressionChart(): void {
   const wrapper = document.getElementById("progression-chart-wrapper");
-  const btn = document.querySelector(".btn-toggle-chart");
+  const btn = document.querySelector(".btn-toggle-chart") as HTMLElement;
+
+  if (!wrapper || !btn) return;
 
   if (wrapper.style.display === "none") {
     wrapper.style.display = "block";
     btn.textContent = "▲ Сховати прогрес";
-    renderProgressionChart(selectedExerciseId);
+    if (selectedExerciseId) renderProgressionChart(selectedExerciseId);
   } else {
     wrapper.style.display = "none";
     btn.textContent = "📈 Показати прогрес";
   }
 }
 
-function renderProgressionChart(id) {
+function renderProgressionChart(id: string | number): void {
   const canvas = document.getElementById("progression-chart") as HTMLCanvasElement | null;
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
@@ -371,9 +394,10 @@ function renderProgressionChart(id) {
   });
 }
 
-function renderHistory() {
+function renderHistory(): void {
   const historyList = document.getElementById("history-list");
-  const period = document.getElementById("history-period")?.value || "all";
+  if (!historyList) return;
+  const period = (document.getElementById("history-period") as HTMLSelectElement)?.value || "all";
 
   const workouts = getWorkoutHistory(period);
 
@@ -417,7 +441,7 @@ function renderHistory() {
             <div class="history-item">
                 <div>
                     <div class="history-item-date">${formatDate(w.date)}</div>
-                    <div class="history-item-exercises">${exerciseNames.substring(0, 100)}${exerciseNames.length > 100 ? "..." : ""}</div>
+                    <div class="history-item-exercises">${escapeHtml(exerciseNames.substring(0, 100))}${exerciseNames.length > 100 ? "..." : ""}</div>
                 </div>
                 <div style="text-align:right;">
                     <div class="history-item-count">${w.count} вправ</div>
@@ -431,13 +455,21 @@ function renderHistory() {
   if (workouts.length > perPage) {
     const totalPages = Math.ceil(workouts.length / perPage);
     const nav = document.createElement("div");
-    nav.style.cssText =
-      "display:flex; justify-content:center; gap:10px; margin-top:20px;";
+    nav.style.display = "flex";
+    nav.style.justifyContent = "center";
+    nav.style.gap = "10px";
+    nav.style.marginTop = "20px";
     nav.className = "history-pagination";
     for (let i = 1; i <= totalPages; i++) {
       const btn = document.createElement("button");
       btn.textContent = String(i);
-      btn.style.cssText = `padding:8px 14px; border:none; border-radius:6px; cursor:pointer; background:${i === page ? "var(--accent)" : "var(--card-bg)"}; color:var(--text-primary); font-weight:${i === page ? "bold" : "normal"};`;
+      btn.style.padding = "8px 14px";
+      btn.style.border = "none";
+      btn.style.borderRadius = "6px";
+      btn.style.cursor = "pointer";
+      btn.style.background = i === page ? "var(--accent)" : "var(--card-bg)";
+      btn.style.color = "var(--text-primary)";
+      btn.style.fontWeight = i === page ? "bold" : "normal";
       btn.addEventListener("click", () => {
         historyList.dataset.page = String(i);
         renderHistory();
@@ -452,19 +484,19 @@ function renderHistory() {
   renderHistoryChart(workouts);
 }
 
-function filterHistory() {
+function filterHistory(): void {
   const historyList = document.getElementById("history-list");
   if (historyList) historyList.dataset.page = "1";
   renderHistory();
 }
 
-function renderHistoryChart(workouts) {
+function renderHistoryChart(workouts: { date: string; count: number }[]): void {
   const canvas = document.getElementById("history-chart") as HTMLCanvasElement | null;
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
-  const container = canvas.parentElement as HTMLElement | null;
 
+  const container = canvas.parentElement as HTMLElement | null;
   const containerWidth = container?.clientWidth ?? 0;
   canvas.width = containerWidth;
   canvas.height = 200;
@@ -501,11 +533,11 @@ function renderHistoryChart(workouts) {
   });
 }
 
-function renderHeatmap() {
+function renderHeatmap(): void {
   const container = document.getElementById("activity-heatmap");
   if (!container) return;
 
-  const activity = {};
+  const activity: Record<string, number> = {};
 
   Object.values(completionState).forEach((val: CompletionEntry) => {
     if (val.date) {
@@ -515,7 +547,7 @@ function renderHeatmap() {
   });
 
   const now = new Date();
-  const days = [];
+  const days: string[] = [];
 
   for (let i = 364; i >= 0; i--) {
     const d = new Date();
@@ -536,7 +568,7 @@ function renderHeatmap() {
   container.innerHTML = days.join("");
 }
 
-function renderPlans() {
+function renderPlans(): void {
   const container = document.getElementById("plans-list");
   if (!container) return;
 
@@ -550,22 +582,22 @@ function renderPlans() {
 
   container.innerHTML = workoutPlans
     .map((plan, planIndex) => {
-      const exerciseNames = plan.exercises
+      const exerciseNames: { id: number | string; name: string }[] = plan.exercises
         .map((id) => {
           const ex = allEx.find((e) => e.id === id);
           return ex ? { id, name: ex.name } : null;
         })
-        .filter(Boolean);
+        .filter((n): n is { id: number | string; name: string } => n !== null);
 
       return `
             <div class="plan-card">
-                <h3>${plan.name}</h3>
+                <h3>${escapeHtml(plan.name)}</h3>
                 <div class="plan-card-exercises">
                     ${exerciseNames
                       .slice(0, 5)
                       .map(
                         (ex) =>
-                          `<span class="plan-exercise-mini">${ex.name}</span>`,
+                          `<span class="plan-exercise-mini">${escapeHtml(ex.name)}</span>`,
                       )
                       .join("")}
                     ${exerciseNames.length > 5 ? `<span class="plan-exercise-mini">+${exerciseNames.length - 5}</span>` : ""}
@@ -580,35 +612,41 @@ function renderPlans() {
     .join("");
 }
 
-function openPlanModal() {
-  document.getElementById("plan-modal").style.display = "flex";
-  document.getElementById("plan-name").value = "";
+function openPlanModal(): void {
+  const modal = document.getElementById("plan-modal");
+  if (modal) modal.style.display = "flex";
+  const nameInput = document.getElementById("plan-name") as HTMLInputElement;
+  if (nameInput) nameInput.value = "";
 
   const allEx = getAllExercises();
   const container = document.getElementById("plan-exercises-select");
 
-  container.innerHTML = allEx
-    .map(
-      (ex) => `
+  if (container) {
+    container.innerHTML = allEx
+      .map(
+        (ex) => `
         <label class="plan-exercise-option" data-plan-check="${ex.id}">
             <input type="checkbox" value="${ex.id}">
-            <span>${ex.name} (${ex.muscle})</span>
+            <span>${escapeHtml(ex.name)} (${escapeHtml(ex.muscle)})</span>
         </label>
     `,
-    )
-    .join("");
+      )
+      .join("");
+  }
 }
 
-function closePlanModal() {
-  document.getElementById("plan-modal").style.display = "none";
+function closePlanModal(): void {
+  const modal = document.getElementById("plan-modal");
+  if (modal) modal.style.display = "none";
 }
 
-function toggleExerciseOption(element) {
+function toggleExerciseOption(element: HTMLElement): void {
   element.classList.toggle("selected");
 }
 
-function savePlan() {
-  const name = document.getElementById("plan-name").value.trim();
+function savePlan(): void {
+  const nameInput = document.getElementById("plan-name") as HTMLInputElement;
+  const name = (nameInput?.value || "").trim();
   if (!name) {
     showToast("Введіть назву плану", "warning");
     return;
@@ -617,7 +655,7 @@ function savePlan() {
   const selected = document.querySelectorAll(
     "#plan-exercises-select input:checked",
   );
-  const exerciseIds = Array.from(selected).map((cb) => parseInt(cb.value));
+  const exerciseIds = Array.from(selected).map((cb) => parseInt((cb as HTMLInputElement).value));
 
   if (exerciseIds.length === 0) {
     showToast("Оберіть хоча б одну вправу", "warning");
@@ -637,7 +675,7 @@ function savePlan() {
   closePlanModal();
 }
 
-function deletePlan(index) {
+function deletePlan(index: number): void {
   if (confirm("Видалити цей план?")) {
     workoutPlans.splice(index, 1);
     savePlans();
@@ -645,28 +683,32 @@ function deletePlan(index) {
   }
 }
 
-function startWorkout(planIndex) {
+function startWorkout(planIndex: number): void {
   const plan = workoutPlans[planIndex];
   if (!plan) return;
 
-  const allEx = getAllExercises();
   const planExIds = plan.exercises;
+  if (!planExIds.length) {
+    showToast("План не містить вправ", "warning");
+    return;
+  }
 
   setSelectedExerciseId(planExIds[0]);
-  openModal(selectedExerciseId);
+  openModal(planExIds[0]);
 
   const planInfo = document.createElement("div");
   planInfo.className = "workout-progress";
   planInfo.innerHTML = `
-        <p style="margin: 10px 20px; color: #00d4ff;">План: ${plan.name} (${planExIds.length} вправ)</p>
+        <p style="margin: 10px 20px; color: #00d4ff;">План: ${escapeHtml(plan.name)} (${planExIds.length} вправ)</p>
     `;
 
-  document
-    .querySelector(".modal-content")
-    .insertBefore(planInfo, document.querySelector(".modal-checkin"));
+  const modalContent = document.querySelector(".modal-content");
+  if (modalContent) {
+    modalContent.insertBefore(planInfo, modalContent.querySelector(".modal-checkin"));
+  }
 }
 
-function finishWorkout() {
+function finishWorkout(): void {
   const completedCount = Object.keys(completionState).length;
   if (completedCount === 0) {
     showToast("Ви ще не відмітили жодної вправи сьогодні!", "warning");
@@ -678,12 +720,15 @@ function finishWorkout() {
   ) {
     const today = new Date().toDateString();
     const archive = localStorage.getItem("completionArchive");
-    let archiveData = archive ? safeJSONParse(archive, {}) : {};
+    const archiveData: Record<string, Record<string, CompletionEntry>> = archive ? safeJSONParse(archive, {}) as Record<string, Record<string, CompletionEntry>> : {};
 
-    archiveData[today] = Object.keys(completionState).reduce((acc, k) => {
-      acc[k] = completionState[k];
-      return acc;
-    }, {});
+    archiveData[today] = {
+      ...(archiveData[today] || {}),
+      ...Object.keys(completionState).reduce<Record<string, CompletionEntry>>((acc, k) => {
+        acc[k] = completionState[k];
+        return acc;
+      }, {}),
+    };
     localStorage.setItem("completionArchive", JSON.stringify(archiveData));
 
     resetCompletionState();
@@ -695,7 +740,6 @@ function finishWorkout() {
     celebration();
     showToast("Тренування збережено в історію! Гарна робота! 💪", "success");
 
-    // Auto-export reminder every 10 workouts
     const completedDays = Object.keys(archiveData).length;
     if (completedDays % 10 === 0) {
       showToast(`💾 Виконано ${completedDays} тренувань! Зробіть експорт.`, "info", 6000);
@@ -703,7 +747,7 @@ function finishWorkout() {
   }
 }
 
-function resetProgress() {
+function resetProgress(): void {
   if (confirm("Скинути весь прогрес? Цю дію не можна відновити.")) {
     resetCompletionState();
     saveState();
@@ -714,7 +758,7 @@ function resetProgress() {
   }
 }
 
-function toggleDropdown() {
+function toggleDropdown(): void {
   const dropdown = document.getElementById("header-dropdown");
   if (dropdown) {
     dropdown.classList.toggle("show");
@@ -722,34 +766,36 @@ function toggleDropdown() {
   vibrate(20);
 }
 
-function initTheme() {
+function initTheme(): void {
   const saved = localStorage.getItem("theme");
   const toggle = document.getElementById("theme-toggle");
 
   if (saved === "light") {
     document.body.classList.add("light-theme");
-    toggle.textContent = "☀️";
+    if (toggle) toggle.textContent = "☀️";
   }
 
-  toggle.addEventListener("click", () => {
-    document.body.classList.toggle("light-theme");
-    const isLight = document.body.classList.contains("light-theme");
-    localStorage.setItem("theme", isLight ? "light" : "dark");
-    toggle.textContent = isLight ? "☀️" : "🌙";
-    vibrate(30);
-  });
+  if (toggle) {
+    toggle.addEventListener("click", () => {
+      document.body.classList.toggle("light-theme");
+      const isLight = document.body.classList.contains("light-theme");
+      localStorage.setItem("theme", isLight ? "light" : "dark");
+      toggle.textContent = isLight ? "☀️" : "🌙";
+      vibrate(30);
+    });
+  }
 }
 
-function calculatePlates() {
-  const totalWeight =
-    parseFloat(document.getElementById("plate-weight-input").value) || 0;
+function calculatePlates(): void {
+  const weightInput = document.getElementById("plate-weight-input") as HTMLInputElement;
+  const totalWeight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
   const barWeight = 20;
   let weightToDistribute = (totalWeight - barWeight) / 2;
 
   if (weightToDistribute < 0) weightToDistribute = 0;
 
   const availablePlates = [25, 20, 15, 10, 5, 2.5, 1.25];
-  const result = [];
+  const result: number[] = [];
 
   let temp = weightToDistribute;
   availablePlates.forEach((p) => {
@@ -761,31 +807,37 @@ function calculatePlates() {
   });
 
   const visualizer = document.getElementById("plate-visualizer");
-  visualizer.innerHTML = `
+  if (visualizer) {
+    visualizer.innerHTML = `
         <div class="barbell">
             <div class="plates-stack">
-                ${result.map((p) => `<div class="plate p${p.toString().replace(".", "_")}" title="${p}kg">${p}</div>`).join("")}
+                ${result.map((p) => `<div class="plate p${String(p).replace(".", "_")}" title="${p}kg">${p}</div>`).join("")}
             </div>
         </div>
     `;
+  }
 
   const resultsArea = document.getElementById("plate-results");
-  resultsArea.innerHTML =
-    result.length > 0
-      ? `<p>З кожного боку: ${result.join("kg, ")}kg</p>`
-      : `<p>Тільки гриф (20кг)</p>`;
+  if (resultsArea) {
+    resultsArea.innerHTML =
+      result.length > 0
+        ? `<p>З кожного боку: ${result.join("kg, ")}kg</p>`
+        : `<p>Тільки гриф (20кг)</p>`;
+  }
 }
 
-function openPlateModal() {
-  document.getElementById("plate-modal").style.display = "flex";
+function openPlateModal(): void {
+  const modal = document.getElementById("plate-modal");
+  if (modal) modal.style.display = "flex";
   calculatePlates();
 }
 
-function closePlateModal() {
-  document.getElementById("plate-modal").style.display = "none";
+function closePlateModal(): void {
+  const modal = document.getElementById("plate-modal");
+  if (modal) modal.style.display = "none";
 }
 
-function switchTab(tabId) {
+function switchTab(tabId: string): void {
   setSelectedMuscleGroup(null);
 
   document
@@ -794,34 +846,40 @@ function switchTab(tabId) {
   const activeBtn = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
   if (activeBtn) activeBtn.classList.add("active");
 
-  const sections = {
-    exercises: document.querySelector(".main-layout"),
-    history: document.getElementById("history-section"),
-    plans: document.getElementById("plans-section"),
-    body: document.getElementById("body-section"),
-    logbook: document.getElementById("logbook-section"),
-  };
+  const mainLayout = document.querySelector(".main-layout") as HTMLElement;
+  const historySection = document.getElementById("history-section");
+  const plansSection = document.getElementById("plans-section");
+  const bodySection = document.getElementById("body-section");
+  const logbookSection = document.getElementById("logbook-section");
 
-  Object.values(sections).forEach((s) => {
+  const sections: (HTMLElement | null)[] = [
+    mainLayout,
+    historySection,
+    plansSection,
+    bodySection,
+    logbookSection,
+  ];
+
+  sections.forEach((s) => {
     if (s) s.style.display = "none";
   });
 
   if (tabId === "exercises") {
-    if (sections.exercises) sections.exercises.style.display = "flex";
+    if (mainLayout) mainLayout.style.display = "flex";
     renderMuscleGroups();
     renderExercises();
   } else if (tabId === "history") {
-    if (sections.history) sections.history.style.display = "block";
+    if (historySection) historySection.style.display = "block";
     renderHistory();
     renderHeatmap();
   } else if (tabId === "plans") {
-    if (sections.plans) sections.plans.style.display = "block";
+    if (plansSection) plansSection.style.display = "block";
     renderPlans();
     } else if (tabId === "body") {
-    if (sections.body) sections.body.style.display = "block";
+    if (bodySection) bodySection.style.display = "block";
     renderBodyStats();
   } else if (tabId === "logbook") {
-    if (sections.logbook) sections.logbook.style.display = "block";
+    if (logbookSection) logbookSection.style.display = "block";
     LogbookModule.loadSelect();
   }
 
@@ -832,40 +890,52 @@ function switchTab(tabId) {
   vibrate(20);
 }
 
-function switchLogbookTab(tabId) {
-  document.getElementById("logbook-tab-log")?.classList.remove("active");
-  document.getElementById("logbook-tab-history")?.classList.remove("active");
-  document.getElementById("logbook-view-log").style.display = "none";
-  document.getElementById("logbook-view-history").style.display = "none";
+function switchLogbookTab(tabId: string): void {
+  const tabLog = document.getElementById("logbook-tab-log");
+  const tabHistory = document.getElementById("logbook-tab-history");
+  const viewLog = document.getElementById("logbook-view-log");
+  const viewHistory = document.getElementById("logbook-view-history");
 
-  document.getElementById("logbook-tab-" + tabId)?.classList.add("active");
-  document.getElementById("logbook-view-" + tabId).style.display = "block";
+  if (tabLog) tabLog.classList.remove("active");
+  if (tabHistory) tabHistory.classList.remove("active");
+  if (viewLog) viewLog.style.display = "none";
+  if (viewHistory) viewHistory.style.display = "none";
+
+  const targetTab = document.getElementById("logbook-tab-" + tabId);
+  const targetView = document.getElementById("logbook-view-" + tabId);
+  if (targetTab) targetTab.classList.add("active");
+  if (targetView) targetView.style.display = "block";
 
   if (tabId === "history") {
     LogbookModule.renderHistory();
   }
 }
 
-// Custom exercises
-function openCustomExerciseModal() {
-  document.getElementById("custom-exercise-modal").style.display = "flex";
+function openCustomExerciseModal(): void {
+  const modal = document.getElementById("custom-exercise-modal");
+  if (modal) modal.style.display = "flex";
 }
 
-function closeCustomExerciseModal() {
-  document.getElementById("custom-exercise-modal").style.display = "none";
+function closeCustomExerciseModal(): void {
+  const modal = document.getElementById("custom-exercise-modal");
+  if (modal) modal.style.display = "none";
 }
 
-function saveCustomExercise() {
-  const name = document.getElementById("ce-name").value.trim();
-  const muscleGroup = document.getElementById("ce-muscle").value;
-  const description = document.getElementById("ce-desc").value.trim();
+function saveCustomExercise(): void {
+  const nameInput = document.getElementById("ce-name") as HTMLInputElement;
+  const muscleInput = document.getElementById("ce-muscle") as HTMLSelectElement;
+  const descInput = document.getElementById("ce-desc") as HTMLTextAreaElement;
+
+  const name = (nameInput?.value || "").trim();
+  const muscleGroup = muscleInput?.value || "Груди";
+  const description = (descInput?.value || "").trim();
 
   if (!name) {
     showToast("Введіть назву вправи", "warning");
     return;
   }
 
-  const newEx = {
+  const newEx: Exercise = {
     id: Date.now(),
     name,
     muscle: muscleGroup,

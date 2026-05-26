@@ -1,10 +1,12 @@
 import { bodyWeightHistory, saveState } from "./data.js";
 import { formatDate, vibrate, showToast } from "./utils.js";
 
-let bodyChart = null;
+let bodyChart: Chart | null = null;
 
 function saveBodyWeight() {
-  const weight = parseFloat(document.getElementById("body-weight-input").value);
+  const input = document.getElementById("body-weight-input") as HTMLInputElement | null;
+  if (!input) return;
+  const weight = parseFloat(input.value);
   if (!weight || weight <= 0) {
     showToast("Введіть коректну вагу", "warning");
     return;
@@ -15,7 +17,7 @@ function saveBodyWeight() {
   saveState();
   renderBodyStats();
   vibrate(50);
-  document.getElementById("body-weight-input").value = "";
+  input.value = "";
 }
 
 function renderBodyStats() {

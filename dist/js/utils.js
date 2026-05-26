@@ -36,12 +36,13 @@ function initAudio() {
     if (typeof window === "undefined")
         return;
     try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        audioCtx = new AudioContext();
-        const buffer = audioCtx.createBuffer(1, 1, 22050);
-        const source = audioCtx.createBufferSource();
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+        const ctx = audioCtx;
+        const buffer = ctx.createBuffer(1, 1, 22050);
+        const source = ctx.createBufferSource();
         source.buffer = buffer;
-        source.connect(audioCtx.destination);
+        source.connect(ctx.destination);
         if (source.start)
             source.start(0);
         ["touchstart", "touchend", "click"].forEach((evt) => document.body.removeEventListener(evt, initAudio));
@@ -51,7 +52,7 @@ function initAudio() {
     }
 }
 if (typeof document !== "undefined" && document.body) {
-    ["touchstart", "touchend", "click"].forEach((evt) => document.body.addEventListener(evt, initAudio));
+    ["touchstart", "touchend", "click"].forEach((evt) => document.body.addEventListener(evt, initAudio, { once: true }));
 }
 function playBeep() {
     if (!audioCtx)
@@ -73,14 +74,18 @@ function playBeep() {
         oscillator.start(audioCtx.currentTime);
         oscillator.stop(audioCtx.currentTime + 0.5);
     }
-    catch (e) { }
+    catch (_e) { /* silently ignore audio errors */ }
 }
 function celebration() {
     if (typeof confetti !== "function")
         return;
     const duration = 3 * 1000;
     const end = Date.now() + duration;
+    let iterations = 0;
+    const MAX_FRAMES = 300;
     (function frame() {
+        if (iterations++ >= MAX_FRAMES)
+            return;
         confetti({
             particleCount: 3,
             angle: 60,
@@ -109,12 +114,13 @@ async function requestWakeLock() {
         }
     }
     catch (err) {
-        console.log(`${err.name}, ${err.message}`);
+        const e = err;
+        console.log(`${e.name}, ${e.message}`);
     }
 }
 function releaseWakeLock() {
     if (wakeLock !== null) {
-        wakeLock.release();
+        wakeLock.release().catch(() => { });
         wakeLock = null;
     }
 }
@@ -129,7 +135,12 @@ const DIFFICULTY_CLASS = {
     "Складний": "hard",
 };
 function diffClass(difficulty) {
-    return DIFFICULTY_CLASS[difficulty] || difficulty;
+    return DIFFICULTY_CLASS[difficulty] ?? difficulty;
+}
+function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
 }
 function showToast(message, type = "info", duration = 4000) {
     const container = document.getElementById("toast-container");
@@ -138,11 +149,14 @@ function showToast(message, type = "info", duration = 4000) {
     const icons = { success: "✅", error: "❌", info: "ℹ️", warning: "⚠️" };
     const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `<span class="toast-icon">${icons[type] || ""}</span><span class="toast-message">${message}</span>`;
+    toast.innerHTML = `<span class="toast-icon">${icons[type] || ""}</span><span class="toast-message">${escapeHtml(message)}</span>`;
     container.appendChild(toast);
     setTimeout(() => {
         toast.style.opacity = "0";
-        setTimeout(() => toast.remove(), 300);
+        setTimeout(() => {
+            if (toast.parentNode)
+                toast.remove();
+        }, 300);
     }, duration);
 }
 async function deriveKey(passphrase, salt) {
@@ -194,4 +208,4 @@ function setEncryptionPassphrase(passphrase) {
 function clearEncryptionPassphrase() {
     sessionStorage.removeItem("gym_encrypt_passphrase");
 }
-export { safeJSONParse, formatDate, calculate1RM, vibrate, initAudio, playBeep, celebration, requestWakeLock, releaseWakeLock, diffClass, requestNotifications, showToast, encryptData, decryptData, getEncryptionPassphrase, setEncryptionPassphrase, clearEncryptionPassphrase, };
+export { safeJSONParse, formatDate, calculate1RM, vibrate, initAudio, playBeep, celebration, requestWakeLock, releaseWakeLock, diffClass, requestNotifications, showToast, escapeHtml, encryptData, decryptData, getEncryptionPassphrase, setEncryptionPassphrase, clearEncryptionPassphrase, };

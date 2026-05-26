@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "build:ts": "tsc",
-    "build:copy": "if not exist dist\\images mkdir dist\\images && copy /Y images\\* dist\\images\\ && copy /Y style.css dist\\ && copy /Y index.html dist\\ && copy /Y sw.js dist\\ && copy /Y manifest.json dist\\",
+    "build:copy": "shx mkdir -p dist/images && shx cp images/* dist/images/ && shx cp style.css dist/ && shx cp index.html dist/ && shx cp sw.js dist/ && shx cp manifest.json dist/",
     "build:fix-path": "node fix-paths.js",
     "build": "npm run build:ts && npm run build:copy && npm run build:fix-path",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write \"**/*.{js,jsx,json,md,ts}\"",
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
+    "format": "prettier --write \"**/*.{js,jsx,json,md,ts,css,html}\"",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch --passWithNoTests"
   },
@@ -26,10 +26,16 @@
   "license": "MIT",
   "devDependencies": {
     "@babel/preset-env": "^7.29.5",
+    "@babel/preset-typescript": "^7.24.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "babel-jest": "^29.7.0",
     "cypress": "^15.15.0",
     "eslint": "^8.56.0",
     "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "prettier": "^3.1.1",
+    "shx": "^0.3.4",
     "typescript": "^6.0.3"
   },
   "repository": {

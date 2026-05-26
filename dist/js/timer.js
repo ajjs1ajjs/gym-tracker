@@ -26,6 +26,9 @@ function closeTimerModal() {
     if (modal)
         modal.style.display = "none";
     vibrate(20);
+    if (timerRunning) {
+        pauseTimer();
+    }
 }
 function setTimer(seconds, e) {
     timerDefaultSeconds = seconds;

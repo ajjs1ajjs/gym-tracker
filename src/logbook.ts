@@ -13,10 +13,16 @@ import {
   renderExercises,
   renderMuscleGroups,
 } from "./ui.js";
-import { showToast } from "./utils.js";
+import { showToast, escapeHtml } from "./utils.js";
+import type { Exercise, LogEntry } from "./types.js";
+
+interface ActiveSet {
+  weight: number;
+  reps: number;
+}
 
 const LogbookModule = {
-  activeSets: [],
+  activeSets: [] as ActiveSet[],
 
   init() {
     this.bindEvents();
@@ -27,11 +33,12 @@ const LogbookModule = {
     if (btnAdd) {
       btnAdd.addEventListener("click", (e) => {
         e.preventDefault();
-        const wInput = document.getElementById("logbook-weight");
-        const rInput = document.getElementById("logbook-reps");
+        const wInput = document.getElementById("logbook-weight") as HTMLInputElement;
+        const rInput = document.getElementById("logbook-reps") as HTMLInputElement;
+        if (!wInput || !rInput) return;
         const w = parseFloat(wInput.value);
         const r = parseInt(rInput.value);
-        if (isNaN(w) || isNaN(r)) return;
+        if (isNaN(w) || isNaN(r) || w <= 0 || r <= 0) return;
 
         this.activeSets.push({ weight: w, reps: r });
         wInput.value = "";
@@ -44,7 +51,7 @@ const LogbookModule = {
     if (btnSave) {
       btnSave.addEventListener("click", (e) => {
         e.preventDefault();
-        const select = document.getElementById("logbook-ex-select");
+        const select = document.getElementById("logbook-ex-select") as HTMLSelectElement;
         const exerciseId = select?.value;
 
         if (!exerciseId || this.activeSets.length === 0) return;
@@ -123,18 +130,19 @@ const LogbookModule = {
 
     container.querySelectorAll(".lb-remove-set").forEach((btn) => {
       btn.addEventListener("click", () => {
-        this.removeSet(parseInt(btn.dataset.idx));
+        const idx = parseInt((btn as HTMLElement).dataset.idx || "0");
+        this.removeSet(idx);
       });
     });
   },
 
-  removeSet(idx) {
+  removeSet(idx: number) {
     this.activeSets.splice(idx, 1);
     this.renderSets();
   },
 
   deleteExercise() {
-    const select = document.getElementById("logbook-ex-select");
+    const select = document.getElementById("logbook-ex-select") as HTMLSelectElement;
     const exId = select?.value;
     if (!exId) return;
 
@@ -159,7 +167,7 @@ const LogbookModule = {
       );
 
       trainingData.forEach((group) => {
-        group.exercises = group.exercises.filter(
+        (group.exercises as Exercise[]) = (group.exercises as Exercise[]).filter(
           (e) => String(e.id) !== String(exId),
         );
       });
@@ -169,7 +177,7 @@ const LogbookModule = {
       this.renderSets();
       this.loadSelect();
 
-      const histSelect = document.getElementById("logbook-history-select");
+      const histSelect = document.getElementById("logbook-history-select") as HTMLSelectElement;
       if (histSelect && String(histSelect.value) === String(exId)) {
         histSelect.value = "";
         this.renderHistory();
@@ -181,7 +189,7 @@ const LogbookModule = {
     }
   },
 
-  deleteSet(exerciseId, originalIndex) {
+  deleteSet(exerciseId: string | number, originalIndex: number) {
     if (confirm("Ви впевнені, що хочете видалити цей підхід?")) {
       if (exerciseLogs[exerciseId] && exerciseLogs[exerciseId][originalIndex]) {
         exerciseLogs[exerciseId].splice(originalIndex, 1);
@@ -195,7 +203,7 @@ const LogbookModule = {
     }
   },
 
-  deleteDaySession(exerciseId, dateStr) {
+  deleteDaySession(exerciseId: string | number, dateStr: string) {
     if (
       confirm(`Ви впевнені, що хочете видалити всі підходи за ${dateStr}?`)
     ) {
@@ -220,12 +228,12 @@ const LogbookModule = {
   },
 
   createExercise() {
-    const input = document.getElementById("logbook-custom-ex");
+    const input = document.getElementById("logbook-custom-ex") as HTMLInputElement;
     if (!input) return;
     const title = input.value.trim();
     if (!title) return;
 
-    const newEx = {
+    const newEx: Exercise = {
       id: "lb_" + Date.now(),
       name: title,
       muscle: "Груди",
@@ -244,16 +252,16 @@ const LogbookModule = {
     input.value = "";
     this.loadSelect();
 
-    const select = document.getElementById("logbook-ex-select");
-    if (select) select.value = newEx.id;
+    const select = document.getElementById("logbook-ex-select") as HTMLSelectElement;
+    if (select) select.value = String(newEx.id);
 
     this.activeSets = [];
     this.renderSets();
   },
 
   loadSelect() {
-    const selectLog = document.getElementById("logbook-ex-select");
-    const selectHist = document.getElementById("logbook-history-select");
+    const selectLog = document.getElementById("logbook-ex-select") as HTMLSelectElement;
+    const selectHist = document.getElementById("logbook-history-select") as HTMLSelectElement;
 
     const allEx = getAllExercises();
     const sortedEx = [...allEx].sort((a, b) =>
@@ -261,7 +269,7 @@ const LogbookModule = {
     );
 
     const optionsBase = sortedEx
-      .map((ex) => `<option value="${ex.id}">${ex.name}</option>`)
+      .map((ex) => `<option value="${escapeHtml(String(ex.id))}">${escapeHtml(ex.name)}</option>`)
       .join("");
 
     if (selectLog) {
@@ -293,7 +301,7 @@ const LogbookModule = {
 
   renderHistory() {
     const list = document.getElementById("logbook-history-list");
-    const selectHist = document.getElementById("logbook-history-select");
+    const selectHist = document.getElementById("logbook-history-select") as HTMLSelectElement;
     if (!list) return;
 
     const selectedId = selectHist?.value;
@@ -312,7 +320,7 @@ const LogbookModule = {
       return;
     }
 
-    const groups = {};
+    const groups: Record<string, (LogEntry & { originalIndex: number })[]> = {};
     sets.forEach((set, idx) => {
       const d = new Date(set.date);
       const dateStr = d.toLocaleDateString("uk-UA", {
@@ -327,9 +335,9 @@ const LogbookModule = {
     });
 
     const sortedDates = Object.keys(groups).sort((a, b) => {
-      const parseDate = (str) => {
+      const parseDate = (str: string) => {
         const parts = str.split(".");
-        return new Date(parts[2], parts[1] - 1, parts[0]);
+        return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
       };
       return +parseDate(b) - +parseDate(a);
     });
@@ -354,7 +362,7 @@ const LogbookModule = {
                         <span style="color:var(--text-secondary);">Підхід ${index + 1}:</span>
                         <b>${s.weight} кг х ${s.reps}</b>
                     </div>
-                    <button class="lb-del-set" data-ex="${selectedId}" data-idx="${s.originalIndex}" style="background:transparent; border:none; color:#ff4444; font-size:14px; cursor:pointer;" title="Видалити підхід">✕</button>
+                    <button class="lb-del-set" data-ex="${escapeHtml(String(selectedId))}" data-idx="${s.originalIndex}" style="background:transparent; border:none; color:#ff4444; font-size:14px; cursor:pointer;" title="Видалити підхід">✕</button>
                 </div>
             `,
           )
@@ -363,10 +371,10 @@ const LogbookModule = {
         return `
             <div class="history-card" style="background:var(--card-bg); padding:15px; border-radius:10px; border:1px solid var(--border); margin-bottom:15px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 8px; align-items:center;">
-                    <span style="color:var(--theme-color, #00d4ff); font-weight:bold;">${ex.name}</span>
+                    <span style="color:var(--theme-color, #00d4ff); font-weight:bold;">${escapeHtml(ex.name)}</span>
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <span style="color:var(--text-secondary); font-size:0.85rem;">${dateStr}</span>
-                        <button class="lb-del-day" data-ex="${selectedId}" data-day="${dateStr}" style="background:transparent; border:none; cursor:pointer; color:#ef4444; font-size:1.1rem;" title="Видалити весь день">🗑️</button>
+                        <span style="color:var(--text-secondary); font-size:0.85rem;">${escapeHtml(dateStr)}</span>
+                        <button class="lb-del-day" data-ex="${escapeHtml(String(selectedId))}" data-day="${escapeHtml(dateStr)}" style="background:transparent; border:none; cursor:pointer; color:#ef4444; font-size:1.1rem;" title="Видалити весь день">🗑️</button>
                     </div>
                 </div>
                 ${setsHtml}
@@ -377,13 +385,15 @@ const LogbookModule = {
 
     list.querySelectorAll(".lb-del-set").forEach((btn) => {
       btn.addEventListener("click", () => {
-        this.deleteSet(btn.dataset.ex, parseInt(btn.dataset.idx));
+        const el = btn as HTMLElement;
+        this.deleteSet(el.dataset.ex || "", parseInt(el.dataset.idx || "0"));
       });
     });
 
     list.querySelectorAll(".lb-del-day").forEach((btn) => {
       btn.addEventListener("click", () => {
-        this.deleteDaySession(btn.dataset.ex, btn.dataset.day);
+        const el = btn as HTMLElement;
+        this.deleteDaySession(el.dataset.ex || "", el.dataset.day || "");
       });
     });
   },

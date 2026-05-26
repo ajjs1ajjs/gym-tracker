@@ -1,11 +1,11 @@
 import { vibrate, playBeep } from "./utils.js";
 
-let timerInterval = null;
+let timerInterval: ReturnType<typeof setInterval> | null = null;
 let timerSeconds = 90;
 let timerRunning = false;
 let timerDefaultSeconds = 90;
 
-function openTimerModal() {
+function openTimerModal(): void {
   const modal = document.getElementById("timer-modal");
   if (modal) modal.style.display = "flex";
   vibrate(30);
@@ -20,13 +20,16 @@ function openTimerModal() {
   }
 }
 
-function closeTimerModal() {
+function closeTimerModal(): void {
   const modal = document.getElementById("timer-modal");
   if (modal) modal.style.display = "none";
   vibrate(20);
+  if (timerRunning) {
+    pauseTimer();
+  }
 }
 
-function setTimer(seconds, e) {
+function setTimer(seconds: number, e: Event): void {
   timerDefaultSeconds = seconds;
   timerSeconds = seconds;
   updateTimerDisplay();
@@ -34,11 +37,11 @@ function setTimer(seconds, e) {
     .querySelectorAll(".timer-preset")
     .forEach((btn) => btn.classList.remove("active"));
   if (e && e.target) {
-    e.target.classList.add("active");
+    (e.target as HTMLElement).classList.add("active");
   }
 }
 
-function updateTimerDisplay() {
+function updateTimerDisplay(): void {
   const mins = Math.floor(timerSeconds / 60);
   const secs = timerSeconds % 60;
   const timeStr = `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
@@ -58,7 +61,7 @@ function updateTimerDisplay() {
   }
 }
 
-function startTimer() {
+function startTimer(): void {
   if (timerRunning) return;
   timerRunning = true;
   const startBtn = document.getElementById("timer-start-btn");
@@ -72,7 +75,7 @@ function startTimer() {
       timerSeconds--;
       updateTimerDisplay();
     } else {
-      clearInterval(timerInterval);
+      clearInterval(timerInterval!);
       timerInterval = null;
       timerRunning = false;
       if (Notification.permission === "granted") {
@@ -90,7 +93,7 @@ function startTimer() {
   }, 1000);
 }
 
-function pauseTimer() {
+function pauseTimer(): void {
   if (timerInterval) {
     clearInterval(timerInterval);
     timerInterval = null;
@@ -103,7 +106,7 @@ function pauseTimer() {
   updateTimerDisplay();
 }
 
-function resetTimer() {
+function resetTimer(): void {
   if (timerInterval) {
     clearInterval(timerInterval);
     timerInterval = null;

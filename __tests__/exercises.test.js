@@ -1,4 +1,4 @@
-import { trainingData } from "../dist/js/exercises.js";
+import { trainingData } from "../src/exercises.js";
 
 describe("trainingData", () => {
   test("has 9 muscle groups", () => {

@@ -5,6 +5,7 @@ import { openSettingsModal, closeSettingsModal, saveSettings, syncToCloud, fetch
 import { saveBodyWeight } from "./stats.js";
 import { requestNotifications } from "./utils.js";
 import LogbookModule from "./logbook.js";
+let plateDebounceTimer = null;
 function init() {
     loadState();
     loadPlans();
@@ -43,26 +44,33 @@ function init() {
         });
     });
     // --- Sidebar ---
-    document.getElementById("muscle-groups")?.addEventListener("click", (e) => {
+    byId("muscle-groups")?.addEventListener("click", (e) => {
         const group = e.target.closest("[data-muscle-id]");
         if (group) {
-            filterByGroup(group.dataset.muscleId);
+            const muscleId = group.dataset.muscleId;
+            if (muscleId)
+                filterByGroup(muscleId);
         }
     });
     // --- Exercises Grid (event delegation) ---
-    document.getElementById("exercises-list")?.addEventListener("click", (e) => {
-        const card = e.target.closest(".exercise-card");
-        const checkBtn = e.target.closest(".check-btn");
+    byId("exercises-list")?.addEventListener("click", (e) => {
+        const target = e.target;
+        const card = target.closest(".exercise-card");
+        const checkBtn = target.closest(".check-btn");
         if (checkBtn) {
             e.stopPropagation();
-            toggleExercise(parseInt(checkBtn.dataset.checkId));
+            const checkId = checkBtn.dataset.checkId;
+            if (checkId)
+                toggleExercise(parseInt(checkId));
         }
         else if (card) {
-            openModal(parseInt(card.dataset.exId));
+            const exId = card.dataset.exId;
+            if (exId)
+                openModal(parseInt(exId));
         }
     });
     // --- Exercise Modal ---
-    byId("exercise-modal").addEventListener("click", (e) => {
+    byId("exercise-modal")?.addEventListener("click", (e) => {
         if (e.target.id === "exercise-modal")
             closeModal();
     });
@@ -71,7 +79,7 @@ function init() {
     byId("set-log-btn")?.addEventListener("click", logSet);
     byId("progression-toggle-btn")?.addEventListener("click", toggleProgressionChart);
     // --- Timer Modal ---
-    byId("timer-modal").addEventListener("click", (e) => {
+    byId("timer-modal")?.addEventListener("click", (e) => {
         if (e.target.id === "timer-modal")
             closeTimerModal();
     });
@@ -82,46 +90,58 @@ function init() {
     // Timer presets
     document.querySelectorAll(".timer-preset").forEach((btn) => {
         btn.addEventListener("click", (e) => {
-            setTimer(parseInt(btn.dataset.seconds), e);
+            const seconds = parseInt(btn.dataset.seconds || "90");
+            setTimer(seconds, e);
         });
     });
     // --- Plans Modal ---
     byId("plan-modal-close")?.addEventListener("click", closePlanModal);
     // --- Plans ---
     byId("plans-list")?.addEventListener("click", (e) => {
-        const startBtn = e.target.closest(".btn-start-plan");
-        const delBtn = e.target.closest(".btn-delete-plan");
-        if (startBtn)
-            startWorkout(parseInt(startBtn.dataset.planIndex));
-        if (delBtn)
-            deletePlan(parseInt(delBtn.dataset.planIndex));
+        const target = e.target;
+        const startBtn = target.closest(".btn-start-plan");
+        const delBtn = target.closest(".btn-delete-plan");
+        if (startBtn) {
+            const idx = startBtn.dataset.planIndex;
+            if (idx)
+                startWorkout(parseInt(idx));
+        }
+        if (delBtn) {
+            const idx = delBtn.dataset.planIndex;
+            if (idx)
+                deletePlan(parseInt(idx));
+        }
     });
-    byId("plan-modal").addEventListener("click", (e) => {
+    byId("plan-modal")?.addEventListener("click", (e) => {
         if (e.target.id === "plan-modal")
             closePlanModal();
     });
     byId("plan-exercises-select")?.addEventListener("click", (e) => {
         const option = e.target.closest("[data-plan-check]");
         if (option) {
-            option.classList.toggle("selected");
+            toggleExerciseOption(option);
         }
     });
     byId("plan-save-btn")?.addEventListener("click", savePlan);
     // --- Plate Modal ---
-    byId("plate-modal").addEventListener("click", (e) => {
+    byId("plate-modal")?.addEventListener("click", (e) => {
         if (e.target.id === "plate-modal")
             closePlateModal();
     });
     byId("plate-modal-close")?.addEventListener("click", closePlateModal);
-    byId("plate-weight-input")?.addEventListener("input", calculatePlates);
+    byId("plate-weight-input")?.addEventListener("input", () => {
+        if (plateDebounceTimer)
+            clearTimeout(plateDebounceTimer);
+        plateDebounceTimer = setTimeout(calculatePlates, 200);
+    });
     // --- Settings Modal ---
-    byId("settings-modal").addEventListener("click", (e) => {
+    byId("settings-modal")?.addEventListener("click", (e) => {
         if (e.target.id === "settings-modal")
             closeSettingsModal();
     });
     byId("settings-modal-close")?.addEventListener("click", closeSettingsModal);
     // --- Custom Exercise Modal ---
-    byId("custom-exercise-modal").addEventListener("click", (e) => {
+    byId("custom-exercise-modal")?.addEventListener("click", (e) => {
         if (e.target.id === "custom-exercise-modal")
             closeCustomExerciseModal();
     });
@@ -143,7 +163,9 @@ function init() {
     // Logbook tabs
     document.querySelectorAll("[data-logbook-tab]").forEach((btn) => {
         btn.addEventListener("click", () => {
-            switchLogbookTab(btn.dataset.logbookTab);
+            const tabId = btn.dataset.logbookTab;
+            if (tabId)
+                switchLogbookTab(tabId);
         });
     });
     // Create custom exercise from logbook
@@ -177,10 +199,10 @@ function init() {
         navigator.serviceWorker.addEventListener("controllerchange", () => {
             window.location.reload();
         });
-        document.getElementById("update-btn")?.addEventListener("click", () => {
+        byId("update-btn")?.addEventListener("click", () => {
             navigator.serviceWorker.getRegistration().then((r) => r?.waiting?.postMessage("SKIP_WAITING"));
         });
-        document.getElementById("update-dismiss-btn")?.addEventListener("click", () => {
+        byId("update-dismiss-btn")?.addEventListener("click", () => {
             const banner = document.getElementById("update-banner");
             if (banner)
                 banner.classList.add("hidden");
@@ -216,7 +238,8 @@ function byId(id) {
         console.warn(`Element #${id} not found`);
     return el;
 }
-// Expose for inline onclick compatibility (some may still exist)
+// Expose for inline onclick compatibility
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 window.filterByGroup = filterByGroup;
 window.openModal = openModal;
 window.toggleExercise = toggleExercise;
@@ -259,7 +282,6 @@ window.deletePlan = deletePlan;
 window.startWorkout = startWorkout;
 window.renderHistory = renderHistory;
 window.renderPlans = renderPlans;
-// Legacy compatibility (for any remaining inline events)
 window.LogbookModule = LogbookModule;
 window.createLogbookCustomExercise = () => LogbookModule.createExercise();
 window.loadLogbookSelect = () => LogbookModule.loadSelect();

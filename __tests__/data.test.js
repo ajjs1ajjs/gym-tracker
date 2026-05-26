@@ -1,4 +1,4 @@
-import { getAllExercises, resetCompletionState, markExerciseComplete, unmarkExerciseComplete } from "../dist/js/data.js";
+import { getAllExercises, resetCompletionState, markExerciseComplete, unmarkExerciseComplete, completionState } from "../src/data.js";
 
 describe("getAllExercises", () => {
   test("returns all exercises from all groups", () => {
@@ -15,17 +15,14 @@ describe("completion state helpers", () => {
   test("mark and unmark exercise", () => {
     const id = 99999;
     resetCompletionState();
-    
-    markExerciseComplete(id, "2026-01-01T00:00:00.000Z", "Test");
-    
-    // Import completionState to verify
-    import("../dist/js/data.js").then((mod) => {
-      expect(mod.completionState[id]).toBeDefined();
-      expect(mod.completionState[id].completed).toBe(true);
-      expect(mod.completionState[id].name).toBe("Test");
 
-      unmarkExerciseComplete(id);
-      expect(mod.completionState[id]).toBeUndefined();
-    });
+    markExerciseComplete(id, "2026-01-01T00:00:00.000Z", "Test");
+
+    expect(completionState[id]).toBeDefined();
+    expect(completionState[id].completed).toBe(true);
+    expect(completionState[id].name).toBe("Test");
+
+    unmarkExerciseComplete(id);
+    expect(completionState[id]).toBeUndefined();
   });
 });

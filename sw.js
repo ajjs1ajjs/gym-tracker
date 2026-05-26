@@ -1,18 +1,17 @@
-const CACHE_NAME = "gym-tracker-v3";
+const CACHE_NAME = "gym-tracker-v4";
 const urlsToCache = [
   "./",
   "./index.html",
   "./style.css",
-  "./dist/js/main.js",
-  "./dist/js/ui.js",
-  "./dist/js/data.js",
-  "./dist/js/utils.js",
-  "./dist/js/timer.js",
-  "./dist/js/logbook.js",
-  "./dist/js/sync.js",
-  "./dist/js/stats.js",
-  "./dist/js/exercises.js",
-  "./dist/js/types.js",
+  "./js/main.js",
+  "./js/ui.js",
+  "./js/data.js",
+  "./js/utils.js",
+  "./js/timer.js",
+  "./js/logbook.js",
+  "./js/sync.js",
+  "./js/stats.js",
+  "./js/exercises.js",
   "./manifest.json",
   "./images/icon-192.png",
   "./images/icon-512.png",
@@ -48,7 +47,7 @@ self.addEventListener("fetch", (event) => {
         const responseToCache = response.clone();
 
         caches.open(CACHE_NAME).then((cache) => {
-          if (event.request.url.includes("/images/")) {
+          if (event.request.url.includes("/images/") || event.request.url.includes("/js/")) {
             cache.put(event.request, responseToCache);
           }
         });

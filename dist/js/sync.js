@@ -1,6 +1,21 @@
 import { completionState, exerciseLogs, bodyWeightHistory, customExercises, workoutPlans, getAllExercises, mergeCustomExercises, saveState, savePlans, encryptLocalData, decryptLocalData, } from "./data.js";
 import { vibrate, safeJSONParse, calculate1RM, showToast, getEncryptionPassphrase, setEncryptionPassphrase, clearEncryptionPassphrase } from "./utils.js";
 import { renderMuscleGroups, renderExercises, renderPlans, updateStats } from "./ui.js";
+const TOKEN_KEY = "gym_github_token";
+const GIST_KEY = "gym_gist_id";
+function getStoredToken() {
+    const raw = localStorage.getItem(TOKEN_KEY);
+    return raw || null;
+}
+function setStoredToken(token) {
+    localStorage.setItem(TOKEN_KEY, token);
+}
+function getStoredGistId() {
+    return localStorage.getItem(GIST_KEY);
+}
+function setStoredGistId(id) {
+    localStorage.setItem(GIST_KEY, id);
+}
 function openSettingsModal() {
     const modal = document.getElementById("settings-modal");
     if (modal)
@@ -8,9 +23,9 @@ function openSettingsModal() {
     const tokenInput = document.getElementById("github-token");
     const gistInput = document.getElementById("gist-id");
     if (tokenInput)
-        tokenInput.value = localStorage.getItem("gym_github_token") || "";
+        tokenInput.value = getStoredToken() || "";
     if (gistInput)
-        gistInput.value = localStorage.getItem("gym_gist_id") || "";
+        gistInput.value = getStoredGistId() || "";
     const encryptToggle = document.getElementById("encrypt-toggle");
     const encryptInput = document.getElementById("encrypt-passphrase");
     const hasPassphrase = !!getEncryptionPassphrase();
@@ -32,12 +47,14 @@ function closeSettingsModal() {
         modal.style.display = "none";
 }
 async function saveSettings() {
-    const token = document.getElementById("github-token")?.value.trim();
-    const gistId = document.getElementById("gist-id")?.value.trim();
+    const tokenInput = document.getElementById("github-token");
+    const token = (tokenInput?.value || "").trim();
+    const gistInput = document.getElementById("gist-id");
+    const gistId = (gistInput?.value || "").trim();
     if (token)
-        localStorage.setItem("gym_github_token", token);
+        setStoredToken(token);
     if (gistId)
-        localStorage.setItem("gym_gist_id", gistId);
+        setStoredGistId(gistId);
     const encryptToggle = document.getElementById("encrypt-toggle");
     const encryptInput = document.getElementById("encrypt-passphrase");
     if (encryptToggle?.checked) {
@@ -66,8 +83,8 @@ async function saveSettings() {
     vibrate(50);
 }
 async function syncToCloud() {
-    const token = localStorage.getItem("gym_github_token");
-    const gistId = localStorage.getItem("gym_gist_id");
+    const token = getStoredToken();
+    const gistId = getStoredGistId();
     if (!token) {
         showToast("Будь ласка, введіть GitHub Token у налаштуваннях", "warning");
         openSettingsModal();
@@ -105,8 +122,8 @@ async function syncToCloud() {
         });
         if (response.ok) {
             const result = await response.json();
-            if (!gistId) {
-                localStorage.setItem("gym_gist_id", result.id);
+            if (!gistId && result.id) {
+                setStoredGistId(result.id);
                 const gistInput = document.getElementById("gist-id");
                 if (gistInput)
                     gistInput.value = result.id;
@@ -120,12 +137,13 @@ async function syncToCloud() {
         }
     }
     catch (e) {
-        showToast("Помилка мережі: " + e.message, "error");
+        const err = e;
+        showToast("Помилка мережі: " + err.message, "error");
     }
 }
 async function fetchFromCloud() {
-    const token = localStorage.getItem("gym_github_token");
-    const gistId = localStorage.getItem("gym_gist_id");
+    const token = getStoredToken();
+    const gistId = getStoredGistId();
     if (!token || !gistId) {
         showToast("Налаштуйте Token та Gist ID для імпорту", "warning");
         return;
@@ -136,6 +154,10 @@ async function fetchFromCloud() {
         });
         if (response.ok) {
             const result = await response.json();
+            if (!result.files?.["gym-data.json"]) {
+                showToast("Gist не містить файлу gym-data.json", "warning");
+                return;
+            }
             const content = result.files["gym-data.json"].content;
             const data = safeJSONParse(content, {});
             if (confirm("Дані завантажено. Перезаписати поточний прогрес?")) {
@@ -163,12 +185,13 @@ async function fetchFromCloud() {
         }
     }
     catch (e) {
-        showToast("Помилка мережі: " + e.message, "error");
+        const err = e;
+        showToast("Помилка мережі: " + err.message, "error");
     }
 }
 function exportData() {
     const data = {
-        version: 2,
+        version: 3,
         exportDate: new Date().toISOString(),
         completionState,
         workoutPlans,
@@ -187,13 +210,18 @@ function exportData() {
     URL.revokeObjectURL(url);
 }
 function importData(event) {
-    const file = event.target.files[0];
+    const target = event.target;
+    const file = target.files?.[0];
     if (!file)
         return;
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
-            const data = safeJSONParse(e.target.result, {});
+            const result = e.target.result;
+            const data = safeJSONParse(result, {});
+            if (!confirm("Це перезапише всі ваші локальні дані. Продовжити?")) {
+                return;
+            }
             Object.assign(completionState, data.completionState || {});
             workoutPlans.length = 0;
             workoutPlans.push(...(data.workoutPlans || []));
@@ -212,12 +240,12 @@ function importData(event) {
             renderPlans();
             showToast("Дані успішно імпортовано!", "success");
         }
-        catch (err) {
+        catch (_err) {
             showToast("Помилка при читанні файлу. Перевірте формат.", "error");
         }
     };
     reader.readAsText(file);
-    event.target.value = "";
+    target.value = "";
 }
 function exportToCSV() {
     let csv = "Дата,Вправа,Група,Вага,Повтори,1RM\n";
