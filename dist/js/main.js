@@ -2,8 +2,8 @@ import { loadState, loadPlans, pruneOldLogs, loadEncryptedOnStartup, } from "./d
 import { updateStats, renderMuscleGroups, renderExercises, filterByGroup, openModal, closeModal, toggleExercise, toggleFromModal, logSet, toggleProgressionChart, finishWorkout, resetProgress, toggleDropdown, initTheme, openPlateModal, closePlateModal, calculatePlates, switchTab, switchLogbookTab, openCustomExerciseModal, closeCustomExerciseModal, saveCustomExercise, renderPlans, openPlanModal, closePlanModal, savePlan, deletePlan, startWorkout, renderHistory, filterHistory, toggleExerciseOption, } from "./ui.js";
 import { openTimerModal, closeTimerModal, setTimer, startTimer, pauseTimer, resetTimer, } from "./timer.js";
 import { openSettingsModal, closeSettingsModal, saveSettings, syncToCloud, fetchFromCloud, exportData, importData, exportToCSV, } from "./sync.js";
-import { saveBodyWeight } from "./stats.js";
-import { requestNotifications } from "./utils.js";
+import { saveBodyWeight, addWater, resetWater, saveWaterGoal, calculateCalories, } from "./stats.js";
+import { requestNotifications, playBeep } from "./utils.js";
 import LogbookModule from "./logbook.js";
 let plateDebounceTimer = null;
 function init() {
@@ -91,6 +91,11 @@ function init() {
     byId("timer-start-btn")?.addEventListener("click", startTimer);
     byId("timer-pause-btn")?.addEventListener("click", pauseTimer);
     byId("timer-reset-btn")?.addEventListener("click", resetTimer);
+    byId("timer-sound-select")?.addEventListener("change", (e) => {
+        const val = e.target.value;
+        localStorage.setItem("gym_timer_sound", val);
+        playBeep(val);
+    });
     // Timer presets
     document.querySelectorAll(".timer-preset").forEach((btn) => {
         btn.addEventListener("click", (e) => {
@@ -170,6 +175,24 @@ function init() {
     document
         .querySelector("[data-action='save-body-weight']")
         ?.addEventListener("click", saveBodyWeight);
+    // --- Water Tracker Events ---
+    document.querySelectorAll(".btn-water-add").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const ml = parseInt(btn.dataset.ml || "250", 10);
+            addWater(ml);
+        });
+    });
+    byId("btn-water-reset")?.addEventListener("click", resetWater);
+    byId("water-goal-input")?.addEventListener("change", (e) => {
+        const val = parseInt(e.target.value, 10);
+        if (val && val > 0) {
+            saveWaterGoal(val);
+        }
+    });
+    // --- Calorie Calculator Event ---
+    byId("btn-calculate-calories")?.addEventListener("click", () => {
+        calculateCalories(true);
+    });
     // Plans page
     document
         .querySelector("[data-action='add-plan']")
@@ -310,6 +333,10 @@ window.LogbookModule = LogbookModule;
 window.createLogbookCustomExercise = () => LogbookModule.createExercise();
 window.loadLogbookSelect = () => LogbookModule.loadSelect();
 window.renderLogbookSets = () => LogbookModule.renderSets();
+window.addWater = addWater;
+window.resetWater = resetWater;
+window.saveWaterGoal = saveWaterGoal;
+window.calculateCalories = calculateCalories;
 // Wait for DOM
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

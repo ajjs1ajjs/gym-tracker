@@ -8,6 +8,10 @@ function openTimerModal() {
     if (modal)
         modal.style.display = "flex";
     vibrate(30);
+    const soundSelect = document.getElementById("timer-sound-select");
+    if (soundSelect) {
+        soundSelect.value = localStorage.getItem("gym_timer_sound") || "classic";
+    }
     if (!timerRunning) {
         resetTimer();
     }

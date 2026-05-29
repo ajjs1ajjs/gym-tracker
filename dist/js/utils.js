@@ -56,7 +56,7 @@ function initAudio() {
 if (typeof document !== "undefined" && document.body) {
     ["touchstart", "touchend", "click"].forEach((evt) => document.body.addEventListener(evt, initAudio, { once: true }));
 }
-function playBeep() {
+function playBeep(soundName) {
     if (!audioCtx)
         initAudio();
     if (!audioCtx)
@@ -64,17 +64,86 @@ function playBeep() {
     if (audioCtx.state === "suspended") {
         audioCtx.resume();
     }
+    const sound = soundName || localStorage.getItem("gym_timer_sound") || "classic";
+    const now = audioCtx.currentTime;
     try {
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-        oscillator.start(audioCtx.currentTime);
-        oscillator.stop(audioCtx.currentTime + 0.5);
+        if (sound === "classic") {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(880, now);
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now);
+            osc.stop(now + 0.5);
+        }
+        else if (sound === "double") {
+            // First beep
+            const osc1 = audioCtx.createOscillator();
+            const gain1 = audioCtx.createGain();
+            osc1.connect(gain1);
+            gain1.connect(audioCtx.destination);
+            osc1.type = "sine";
+            osc1.frequency.setValueAtTime(880, now);
+            gain1.gain.setValueAtTime(0.5, now);
+            gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+            osc1.start(now);
+            osc1.stop(now + 0.15);
+            // Second beep
+            const osc2 = audioCtx.createOscillator();
+            const gain2 = audioCtx.createGain();
+            osc2.connect(gain2);
+            gain2.connect(audioCtx.destination);
+            osc2.type = "sine";
+            osc2.frequency.setValueAtTime(880, now + 0.25);
+            gain2.gain.setValueAtTime(0.5, now + 0.25);
+            gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc2.start(now + 0.25);
+            osc2.stop(now + 0.4);
+        }
+        else if (sound === "low") {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(440, now);
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            osc.start(now);
+            osc.stop(now + 0.5);
+        }
+        else if (sound === "gong") {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.exponentialRampToValueAtTime(80, now + 1.2);
+            gain.gain.setValueAtTime(0.8, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+            osc.start(now);
+            osc.stop(now + 1.2);
+        }
+        else if (sound === "melody") {
+            const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+            const step = 0.15;
+            notes.forEach((freq, index) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(freq, now + index * step);
+                gain.gain.setValueAtTime(0.4, now + index * step);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + (index + 1) * step + (index === 2 ? 0.15 : 0));
+                osc.start(now + index * step);
+                osc.stop(now + (index + 1) * step + (index === 2 ? 0.15 : 0));
+            });
+        }
     }
     catch (_e) {
         /* silently ignore audio errors */

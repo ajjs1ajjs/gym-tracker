@@ -9,6 +9,14 @@ function openTimerModal(): void {
   const modal = document.getElementById("timer-modal");
   if (modal) modal.style.display = "flex";
   vibrate(30);
+
+  const soundSelect = document.getElementById(
+    "timer-sound-select",
+  ) as HTMLSelectElement | null;
+  if (soundSelect) {
+    soundSelect.value = localStorage.getItem("gym_timer_sound") || "classic";
+  }
+
   if (!timerRunning) {
     resetTimer();
   } else {

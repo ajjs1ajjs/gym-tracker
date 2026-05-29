@@ -31,12 +31,17 @@ import {
   getLastSessionSets,
 } from "./utils.js";
 import { openTimerModal, startTimer } from "./timer.js";
-import { renderBodyStats } from "./stats.js";
+import {
+  renderBodyStats,
+  renderWaterTracker,
+  loadCalorieParams,
+} from "./stats.js";
 import LogbookModule from "./logbook.js";
 import type { CompletionEntry, Exercise } from "./types.js";
 
 let progressionChart: { destroy(): void } | null = null;
 let historyChartInstance: { destroy(): void } | null = null;
+let muscleChartInstance: { destroy(): void } | null = null;
 
 function updateStats(): void {
   const allExercises = getAllExercises();
@@ -507,6 +512,14 @@ function renderHistory(): void {
   const workouts = getWorkoutHistory(period);
 
   if (workouts.length === 0) {
+    if (historyChartInstance) {
+      historyChartInstance.destroy();
+      historyChartInstance = null;
+    }
+    if (muscleChartInstance) {
+      muscleChartInstance.destroy();
+      muscleChartInstance = null;
+    }
     historyList.innerHTML =
       '<div class="history-item"><p>Історія тренувань порожня</p></div>';
     return;
@@ -587,6 +600,7 @@ function renderHistory(): void {
   }
 
   renderHistoryChart(workouts);
+  renderMuscleDistributionChart(workouts);
 }
 
 function filterHistory(): void {
@@ -654,6 +668,104 @@ function renderHistoryChart(workouts: { date: string; count: number }[]): void {
           display: false,
         },
       },
+    },
+  });
+}
+
+function renderMuscleDistributionChart(
+  workouts: { date: string; count: number; exercises: (string | number)[] }[],
+): void {
+  const canvas = document.getElementById(
+    "muscle-distribution-chart",
+  ) as HTMLCanvasElement | null;
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  if (muscleChartInstance) {
+    muscleChartInstance.destroy();
+    muscleChartInstance = null;
+  }
+
+  if (workouts.length === 0) return;
+
+  const allEx = getAllExercises();
+  const muscleCounts: Record<string, number> = {};
+
+  workouts.forEach((w) => {
+    w.exercises.forEach((exId) => {
+      const ex = allEx.find((e) => e.id === exId);
+      if (ex) {
+        const group = ex.muscleGroup || ex.muscle || "Інші";
+        muscleCounts[group] = (muscleCounts[group] || 0) + 1;
+      }
+    });
+  });
+
+  const labels = Object.keys(muscleCounts);
+  const data = Object.values(muscleCounts);
+
+  if (labels.length === 0) return;
+
+  const colorMap: Record<string, string> = {
+    Груди: "#00d4ff",
+    Спина: "#ff007f",
+    Ноги: "#28a745",
+    Плечі: "#ffc107",
+    Руки: "#fd7e14",
+    Прес: "#e83e8c",
+    Трицепс: "#20c997",
+    Біцепс: "#6f42c1",
+    Сідниці: "#dc3545",
+    Кардіо: "#17a2b8",
+  };
+
+  const backgroundColors = labels.map(
+    (label) => colorMap[label] || `hsl(${Math.random() * 360}, 75%, 60%)`,
+  );
+
+  muscleChartInstance = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels,
+      datasets: [
+        {
+          data,
+          backgroundColor: backgroundColors,
+          borderWidth: 2,
+          borderColor: "var(--card-bg, #1a1a2e)",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: {
+            color: "var(--text-primary, #ffffff)",
+            font: {
+              size: 11,
+            },
+            padding: 15,
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              const value = context.raw as number;
+              const total = (context.dataset.data as number[]).reduce(
+                (a, b) => a + b,
+                0,
+              );
+              const percentage = Math.round((value / total) * 100);
+              return ` ${context.label}: ${value} (${percentage}%)`;
+            },
+          },
+        },
+      },
+      cutout: "60%",
     },
   });
 }
@@ -1085,6 +1197,8 @@ function switchTab(tabId: string): void {
   } else if (tabId === "body") {
     if (bodySection) bodySection.style.display = "block";
     renderBodyStats();
+    renderWaterTracker();
+    loadCalorieParams();
   } else if (tabId === "logbook") {
     if (logbookSection) logbookSection.style.display = "block";
     LogbookModule.loadSelect();

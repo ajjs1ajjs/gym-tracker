@@ -55,8 +55,14 @@ import {
   importData,
   exportToCSV,
 } from "./sync.js";
-import { saveBodyWeight } from "./stats.js";
-import { requestNotifications } from "./utils.js";
+import {
+  saveBodyWeight,
+  addWater,
+  resetWater,
+  saveWaterGoal,
+  calculateCalories,
+} from "./stats.js";
+import { requestNotifications, playBeep } from "./utils.js";
 import LogbookModule from "./logbook.js";
 
 let plateDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -168,6 +174,11 @@ function init(): void {
   byId("timer-start-btn")?.addEventListener("click", startTimer);
   byId("timer-pause-btn")?.addEventListener("click", pauseTimer);
   byId("timer-reset-btn")?.addEventListener("click", resetTimer);
+  byId("timer-sound-select")?.addEventListener("change", (e) => {
+    const val = (e.target as HTMLSelectElement).value;
+    localStorage.setItem("gym_timer_sound", val);
+    playBeep(val);
+  });
 
   // Timer presets
   document.querySelectorAll(".timer-preset").forEach((btn) => {
@@ -254,6 +265,28 @@ function init(): void {
   document
     .querySelector("[data-action='save-body-weight']")
     ?.addEventListener("click", saveBodyWeight);
+
+  // --- Water Tracker Events ---
+  document.querySelectorAll(".btn-water-add").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const ml = parseInt((btn as HTMLElement).dataset.ml || "250", 10);
+      addWater(ml);
+    });
+  });
+
+  byId("btn-water-reset")?.addEventListener("click", resetWater);
+
+  byId("water-goal-input")?.addEventListener("change", (e) => {
+    const val = parseInt((e.target as HTMLInputElement).value, 10);
+    if (val && val > 0) {
+      saveWaterGoal(val);
+    }
+  });
+
+  // --- Calorie Calculator Event ---
+  byId("btn-calculate-calories")?.addEventListener("click", () => {
+    calculateCalories(true);
+  });
 
   // Plans page
   document
@@ -410,6 +443,10 @@ function byId(id: string): HTMLElement | null {
   LogbookModule.createExercise();
 (window as any).loadLogbookSelect = () => LogbookModule.loadSelect();
 (window as any).renderLogbookSets = () => LogbookModule.renderSets();
+(window as any).addWater = addWater;
+(window as any).resetWater = resetWater;
+(window as any).saveWaterGoal = saveWaterGoal;
+(window as any).calculateCalories = calculateCalories;
 
 // Wait for DOM
 if (document.readyState === "loading") {
