@@ -1,4 +1,4 @@
-import { loadState, loadPlans, pruneOldLogs, loadEncryptedOnStartup } from "./data.js";
+import { loadState, loadPlans, pruneOldLogs, loadEncryptedOnStartup, } from "./data.js";
 import { updateStats, renderMuscleGroups, renderExercises, filterByGroup, openModal, closeModal, toggleExercise, toggleFromModal, logSet, toggleProgressionChart, finishWorkout, resetProgress, toggleDropdown, initTheme, openPlateModal, closePlateModal, calculatePlates, switchTab, switchLogbookTab, openCustomExerciseModal, closeCustomExerciseModal, saveCustomExercise, renderPlans, openPlanModal, closePlanModal, savePlan, deletePlan, startWorkout, renderHistory, filterHistory, toggleExerciseOption, } from "./ui.js";
 import { openTimerModal, closeTimerModal, setTimer, startTimer, pauseTimer, resetTimer, } from "./timer.js";
 import { openSettingsModal, closeSettingsModal, saveSettings, syncToCloud, fetchFromCloud, exportData, importData, exportToCSV, } from "./sync.js";
@@ -30,10 +30,14 @@ function init() {
     // Close dropdown on outside click
     document.addEventListener("click", (e) => {
         if (!e.target.closest(".dropdown")) {
-            document.querySelectorAll(".dropdown-content.show").forEach((el) => el.classList.remove("show"));
+            document
+                .querySelectorAll(".dropdown-content.show")
+                .forEach((el) => el.classList.remove("show"));
         }
     });
-    document.querySelector(".btn-settings")?.addEventListener("click", toggleDropdown);
+    document
+        .querySelector(".btn-settings")
+        ?.addEventListener("click", toggleDropdown);
     byId("finish-workout-btn")?.addEventListener("click", finishWorkout);
     // --- Bottom Nav ---
     document.querySelectorAll(".nav-item").forEach((btn) => {
@@ -147,15 +151,29 @@ function init() {
     });
     byId("custom-ex-modal-close")?.addEventListener("click", closeCustomExerciseModal);
     // Syncing
-    document.querySelector("[data-action='save-settings']")?.addEventListener("click", saveSettings);
-    document.querySelector("[data-action='sync-upload']")?.addEventListener("click", syncToCloud);
-    document.querySelector("[data-action='sync-download']")?.addEventListener("click", fetchFromCloud);
-    document.querySelector("[data-action='export-csv']")?.addEventListener("click", exportToCSV);
+    document
+        .querySelector("[data-action='save-settings']")
+        ?.addEventListener("click", saveSettings);
+    document
+        .querySelector("[data-action='sync-upload']")
+        ?.addEventListener("click", syncToCloud);
+    document
+        .querySelector("[data-action='sync-download']")
+        ?.addEventListener("click", fetchFromCloud);
+    document
+        .querySelector("[data-action='export-csv']")
+        ?.addEventListener("click", exportToCSV);
     // Custom exercise form
-    document.querySelector("[data-action='save-custom-ex']")?.addEventListener("click", saveCustomExercise);
-    document.querySelector("[data-action='save-body-weight']")?.addEventListener("click", saveBodyWeight);
+    document
+        .querySelector("[data-action='save-custom-ex']")
+        ?.addEventListener("click", saveCustomExercise);
+    document
+        .querySelector("[data-action='save-body-weight']")
+        ?.addEventListener("click", saveBodyWeight);
     // Plans page
-    document.querySelector("[data-action='add-plan']")?.addEventListener("click", openPlanModal);
+    document
+        .querySelector("[data-action='add-plan']")
+        ?.addEventListener("click", openPlanModal);
     // History
     byId("history-period")?.addEventListener("change", filterHistory);
     // Custom exercise button
@@ -169,7 +187,9 @@ function init() {
         });
     });
     // Create custom exercise from logbook
-    document.querySelector("[data-action='create-logbook-ex']")?.addEventListener("click", () => {
+    document
+        .querySelector("[data-action='create-logbook-ex']")
+        ?.addEventListener("click", () => {
         LogbookModule.createExercise();
     });
     // Register Service Worker
@@ -184,7 +204,8 @@ function init() {
                     if (!installingWorker)
                         return;
                     installingWorker.addEventListener("statechange", () => {
-                        if (installingWorker.state === "installed" && navigator.serviceWorker.controller) {
+                        if (installingWorker.state === "installed" &&
+                            navigator.serviceWorker.controller) {
                             const banner = document.getElementById("update-banner");
                             if (banner)
                                 banner.classList.remove("hidden");
@@ -200,7 +221,9 @@ function init() {
             window.location.reload();
         });
         byId("update-btn")?.addEventListener("click", () => {
-            navigator.serviceWorker.getRegistration().then((r) => r?.waiting?.postMessage("SKIP_WAITING"));
+            navigator.serviceWorker
+                .getRegistration()
+                .then((r) => r?.waiting?.postMessage("SKIP_WAITING"));
         });
         byId("update-dismiss-btn")?.addEventListener("click", () => {
             const banner = document.getElementById("update-banner");
@@ -221,7 +244,8 @@ function init() {
     // Wake Lock on visibility change
     document.addEventListener("visibilitychange", async () => {
         const activeTab = document.querySelector(".nav-item.active")?.dataset.tab;
-        if (document.visibilityState === "visible" && (activeTab === "exercises" || activeTab === "logbook")) {
+        if (document.visibilityState === "visible" &&
+            (activeTab === "exercises" || activeTab === "logbook")) {
             const { requestWakeLock } = await import("./utils.js");
             requestWakeLock();
         }

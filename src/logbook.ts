@@ -13,7 +13,7 @@ import {
   renderExercises,
   renderMuscleGroups,
 } from "./ui.js";
-import { showToast, escapeHtml } from "./utils.js";
+import { showToast, escapeHtml, getLastSessionSets } from "./utils.js";
 import type { Exercise, LogEntry } from "./types.js";
 
 interface ActiveSet {
@@ -33,8 +33,12 @@ const LogbookModule = {
     if (btnAdd) {
       btnAdd.addEventListener("click", (e) => {
         e.preventDefault();
-        const wInput = document.getElementById("logbook-weight") as HTMLInputElement;
-        const rInput = document.getElementById("logbook-reps") as HTMLInputElement;
+        const wInput = document.getElementById(
+          "logbook-weight",
+        ) as HTMLInputElement;
+        const rInput = document.getElementById(
+          "logbook-reps",
+        ) as HTMLInputElement;
         if (!wInput || !rInput) return;
         const w = parseFloat(wInput.value);
         const r = parseInt(rInput.value);
@@ -51,7 +55,9 @@ const LogbookModule = {
     if (btnSave) {
       btnSave.addEventListener("click", (e) => {
         e.preventDefault();
-        const select = document.getElementById("logbook-ex-select") as HTMLSelectElement;
+        const select = document.getElementById(
+          "logbook-ex-select",
+        ) as HTMLSelectElement;
         const exerciseId = select?.value;
 
         if (!exerciseId || this.activeSets.length === 0) return;
@@ -88,11 +94,14 @@ const LogbookModule = {
       });
     }
 
-    const exSelect = document.getElementById("logbook-ex-select");
+    const exSelect = document.getElementById(
+      "logbook-ex-select",
+    ) as HTMLSelectElement | null;
     if (exSelect) {
       exSelect.addEventListener("change", () => {
         this.activeSets = [];
         this.renderSets();
+        this.renderLastSession();
       });
     }
 
@@ -141,8 +150,53 @@ const LogbookModule = {
     this.renderSets();
   },
 
+  renderLastSession() {
+    const select = document.getElementById(
+      "logbook-ex-select",
+    ) as HTMLSelectElement | null;
+    const exerciseId = select?.value;
+    const container = document.getElementById("logbook-last-session-container");
+    if (!container) return;
+
+    if (!exerciseId) {
+      container.style.display = "none";
+      return;
+    }
+
+    const logs = exerciseLogs[exerciseId] || [];
+    const lastSets = getLastSessionSets(logs);
+
+    if (lastSets.length > 0) {
+      container.style.display = "flex";
+      const setsStr = lastSets
+        .map((s) => `${s.weight}кг x ${s.reps}`)
+        .join(", ");
+      container.innerHTML = `
+        <span>📋 Минулий раз: ${lastSets.length} підх. (${setsStr})</span>
+        <button class="btn-copy-last" id="btn-copy-last-logbook">Скопіювати</button>
+      `;
+      const copyBtn = document.getElementById("btn-copy-last-logbook");
+      if (copyBtn) {
+        copyBtn.onclick = (e) => {
+          e.preventDefault();
+          this.activeSets = lastSets.map((s) => ({
+            weight: s.weight,
+            reps: s.reps,
+          }));
+          this.renderSets();
+          showToast("Попередні підходи додано в журнал", "success");
+          container.style.display = "none";
+        };
+      }
+    } else {
+      container.style.display = "none";
+    }
+  },
+
   deleteExercise() {
-    const select = document.getElementById("logbook-ex-select") as HTMLSelectElement;
+    const select = document.getElementById(
+      "logbook-ex-select",
+    ) as HTMLSelectElement;
     const exId = select?.value;
     if (!exId) return;
 
@@ -167,9 +221,9 @@ const LogbookModule = {
       );
 
       trainingData.forEach((group) => {
-        (group.exercises as Exercise[]) = (group.exercises as Exercise[]).filter(
-          (e) => String(e.id) !== String(exId),
-        );
+        (group.exercises as Exercise[]) = (
+          group.exercises as Exercise[]
+        ).filter((e) => String(e.id) !== String(exId));
       });
 
       saveState();
@@ -177,7 +231,9 @@ const LogbookModule = {
       this.renderSets();
       this.loadSelect();
 
-      const histSelect = document.getElementById("logbook-history-select") as HTMLSelectElement;
+      const histSelect = document.getElementById(
+        "logbook-history-select",
+      ) as HTMLSelectElement;
       if (histSelect && String(histSelect.value) === String(exId)) {
         histSelect.value = "";
         this.renderHistory();
@@ -204,9 +260,7 @@ const LogbookModule = {
   },
 
   deleteDaySession(exerciseId: string | number, dateStr: string) {
-    if (
-      confirm(`Ви впевнені, що хочете видалити всі підходи за ${dateStr}?`)
-    ) {
+    if (confirm(`Ви впевнені, що хочете видалити всі підходи за ${dateStr}?`)) {
       if (exerciseLogs[exerciseId]) {
         exerciseLogs[exerciseId] = exerciseLogs[exerciseId].filter((set) => {
           const d = new Date(set.date);
@@ -228,7 +282,9 @@ const LogbookModule = {
   },
 
   createExercise() {
-    const input = document.getElementById("logbook-custom-ex") as HTMLInputElement;
+    const input = document.getElementById(
+      "logbook-custom-ex",
+    ) as HTMLInputElement;
     if (!input) return;
     const title = input.value.trim();
     if (!title) return;
@@ -252,7 +308,9 @@ const LogbookModule = {
     input.value = "";
     this.loadSelect();
 
-    const select = document.getElementById("logbook-ex-select") as HTMLSelectElement;
+    const select = document.getElementById(
+      "logbook-ex-select",
+    ) as HTMLSelectElement;
     if (select) select.value = String(newEx.id);
 
     this.activeSets = [];
@@ -260,8 +318,12 @@ const LogbookModule = {
   },
 
   loadSelect() {
-    const selectLog = document.getElementById("logbook-ex-select") as HTMLSelectElement;
-    const selectHist = document.getElementById("logbook-history-select") as HTMLSelectElement;
+    const selectLog = document.getElementById(
+      "logbook-ex-select",
+    ) as HTMLSelectElement;
+    const selectHist = document.getElementById(
+      "logbook-history-select",
+    ) as HTMLSelectElement;
 
     const allEx = getAllExercises();
     const sortedEx = [...allEx].sort((a, b) =>
@@ -269,7 +331,10 @@ const LogbookModule = {
     );
 
     const optionsBase = sortedEx
-      .map((ex) => `<option value="${escapeHtml(String(ex.id))}">${escapeHtml(ex.name)}</option>`)
+      .map(
+        (ex) =>
+          `<option value="${escapeHtml(String(ex.id))}">${escapeHtml(ex.name)}</option>`,
+      )
       .join("");
 
     if (selectLog) {
@@ -297,11 +362,15 @@ const LogbookModule = {
         selectHist.value = currentVal;
       }
     }
+
+    this.renderLastSession();
   },
 
   renderHistory() {
     const list = document.getElementById("logbook-history-list");
-    const selectHist = document.getElementById("logbook-history-select") as HTMLSelectElement;
+    const selectHist = document.getElementById(
+      "logbook-history-select",
+    ) as HTMLSelectElement;
     if (!list) return;
 
     const selectedId = selectHist?.value;
@@ -337,7 +406,11 @@ const LogbookModule = {
     const sortedDates = Object.keys(groups).sort((a, b) => {
       const parseDate = (str: string) => {
         const parts = str.split(".");
-        return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+        return new Date(
+          Number(parts[2]),
+          Number(parts[1]) - 1,
+          Number(parts[0]),
+        );
       };
       return +parseDate(b) - +parseDate(a);
     });

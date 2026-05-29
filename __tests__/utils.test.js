@@ -1,4 +1,9 @@
-import { safeJSONParse, calculate1RM, diffClass } from "../src/utils.js";
+import {
+  safeJSONParse,
+  calculate1RM,
+  diffClass,
+  getLastSessionSets,
+} from "../src/utils.js";
 
 describe("safeJSONParse", () => {
   test("parses valid JSON", () => {
@@ -52,7 +57,41 @@ describe("diffClass", () => {
     expect(diffClass("Складний")).toBe("hard");
   });
 
-  test('returns input for unknown', () => {
+  test("returns input for unknown", () => {
     expect(diffClass("Unknown")).toBe("Unknown");
+  });
+});
+
+describe("getLastSessionSets", () => {
+  test("returns empty array for empty logs", () => {
+    expect(getLastSessionSets([])).toEqual([]);
+    expect(getLastSessionSets(null)).toEqual([]);
+  });
+
+  test("ignores today's logs", () => {
+    const today = new Date().toISOString();
+    const logs = [
+      { date: today, weight: 100, reps: 5 },
+      { date: today, weight: 105, reps: 5 },
+    ];
+    expect(getLastSessionSets(logs)).toEqual([]);
+  });
+
+  test("returns sets from the most recent past day", () => {
+    const today = new Date().toISOString();
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const lastWeek = new Date(
+      Date.now() - 7 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+    const logs = [
+      { date: lastWeek, weight: 80, reps: 5 },
+      { date: yesterday, weight: 90, reps: 5 },
+      { date: yesterday, weight: 95, reps: 5 },
+      { date: today, weight: 100, reps: 5 },
+    ];
+    expect(getLastSessionSets(logs)).toEqual([
+      { date: yesterday, weight: 90, reps: 5 },
+      { date: yesterday, weight: 95, reps: 5 },
+    ]);
   });
 });

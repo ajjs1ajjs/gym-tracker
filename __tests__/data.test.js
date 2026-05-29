@@ -1,4 +1,10 @@
-import { getAllExercises, resetCompletionState, markExerciseComplete, unmarkExerciseComplete, completionState } from "../src/data.js";
+import {
+  getAllExercises,
+  resetCompletionState,
+  markExerciseComplete,
+  unmarkExerciseComplete,
+  completionState,
+} from "../src/data.js";
 
 describe("getAllExercises", () => {
   test("returns all exercises from all groups", () => {

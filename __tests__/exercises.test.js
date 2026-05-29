@@ -28,8 +28,10 @@ describe("trainingData", () => {
 
   test("difficulty values are valid", () => {
     const valid = ["Легкий", "Середній", "Складний"];
-    trainingData.flatMap((g) => g.exercises).forEach((ex) => {
-      expect(valid).toContain(ex.difficulty);
-    });
+    trainingData
+      .flatMap((g) => g.exercises)
+      .forEach((ex) => {
+        expect(valid).toContain(ex.difficulty);
+      });
   });
 });

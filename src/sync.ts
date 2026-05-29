@@ -11,9 +11,28 @@ import {
   encryptLocalData,
   decryptLocalData,
 } from "./data.js";
-import { vibrate, safeJSONParse, calculate1RM, showToast, getEncryptionPassphrase, setEncryptionPassphrase, clearEncryptionPassphrase } from "./utils.js";
-import { renderMuscleGroups, renderExercises, renderPlans, updateStats } from "./ui.js";
-import type { CompletionEntry, Exercise, WorkoutPlan, LogEntry, BodyWeightEntry } from "./types.js";
+import {
+  vibrate,
+  safeJSONParse,
+  calculate1RM,
+  showToast,
+  getEncryptionPassphrase,
+  setEncryptionPassphrase,
+  clearEncryptionPassphrase,
+} from "./utils.js";
+import {
+  renderMuscleGroups,
+  renderExercises,
+  renderPlans,
+  updateStats,
+} from "./ui.js";
+import type {
+  CompletionEntry,
+  Exercise,
+  WorkoutPlan,
+  LogEntry,
+  BodyWeightEntry,
+} from "./types.js";
 
 const TOKEN_KEY = "gym_github_token";
 const GIST_KEY = "gym_gist_id";
@@ -38,12 +57,18 @@ function setStoredGistId(id: string): void {
 function openSettingsModal(): void {
   const modal = document.getElementById("settings-modal");
   if (modal) modal.style.display = "flex";
-  const tokenInput = document.getElementById("github-token") as HTMLInputElement;
+  const tokenInput = document.getElementById(
+    "github-token",
+  ) as HTMLInputElement;
   const gistInput = document.getElementById("gist-id") as HTMLInputElement;
   if (tokenInput) tokenInput.value = getStoredToken() || "";
   if (gistInput) gistInput.value = getStoredGistId() || "";
-  const encryptToggle = document.getElementById("encrypt-toggle") as HTMLInputElement | null;
-  const encryptInput = document.getElementById("encrypt-passphrase") as HTMLInputElement | null;
+  const encryptToggle = document.getElementById(
+    "encrypt-toggle",
+  ) as HTMLInputElement | null;
+  const encryptInput = document.getElementById(
+    "encrypt-passphrase",
+  ) as HTMLInputElement | null;
   const hasPassphrase = !!getEncryptionPassphrase();
   if (encryptToggle) {
     encryptToggle.checked = hasPassphrase;
@@ -63,7 +88,9 @@ function closeSettingsModal(): void {
 }
 
 async function saveSettings(): Promise<void> {
-  const tokenInput = document.getElementById("github-token") as HTMLInputElement;
+  const tokenInput = document.getElementById(
+    "github-token",
+  ) as HTMLInputElement;
   const token = (tokenInput?.value || "").trim();
   const gistInput = document.getElementById("gist-id") as HTMLInputElement;
   const gistId = (gistInput?.value || "").trim();
@@ -71,8 +98,12 @@ async function saveSettings(): Promise<void> {
   if (token) setStoredToken(token);
   if (gistId) setStoredGistId(gistId);
 
-  const encryptToggle = document.getElementById("encrypt-toggle") as HTMLInputElement | null;
-  const encryptInput = document.getElementById("encrypt-passphrase") as HTMLInputElement | null;
+  const encryptToggle = document.getElementById(
+    "encrypt-toggle",
+  ) as HTMLInputElement | null;
+  const encryptInput = document.getElementById(
+    "encrypt-passphrase",
+  ) as HTMLInputElement | null;
   if (encryptToggle?.checked) {
     const passphrase = encryptInput?.value;
     if (!passphrase || passphrase.length < 8 || passphrase === "********") {
@@ -144,17 +175,24 @@ async function syncToCloud(): Promise<void> {
     });
 
     if (response.ok) {
-      const result = await response.json() as { id?: string };
+      const result = (await response.json()) as { id?: string };
       if (!gistId && result.id) {
         setStoredGistId(result.id);
-        const gistInput = document.getElementById("gist-id") as HTMLInputElement;
+        const gistInput = document.getElementById(
+          "gist-id",
+        ) as HTMLInputElement;
         if (gistInput) gistInput.value = result.id;
       }
       showToast("Синхронізація успішна! ✅", "success");
       vibrate([50, 100, 50]);
     } else {
-      const err = await response.json().catch(() => ({})) as { message?: string };
-      showToast("Помилка синхронізації: " + (err.message || `HTTP ${response.status}`), "error");
+      const err = (await response.json().catch(() => ({}))) as {
+        message?: string;
+      };
+      showToast(
+        "Помилка синхронізації: " + (err.message || `HTTP ${response.status}`),
+        "error",
+      );
     }
   } catch (e: unknown) {
     const err = e as { message: string };
@@ -177,7 +215,9 @@ async function fetchFromCloud(): Promise<void> {
     });
 
     if (response.ok) {
-      const result = await response.json() as { files?: Record<string, { content: string }> };
+      const result = (await response.json()) as {
+        files?: Record<string, { content: string }>;
+      };
       if (!result.files?.["gym-data.json"]) {
         showToast("Gist не містить файлу gym-data.json", "warning");
         return;
@@ -212,7 +252,10 @@ async function fetchFromCloud(): Promise<void> {
         vibrate([300, 100, 300]);
       }
     } else {
-      showToast("Не вдалося завантажити дані (HTTP " + response.status + ")", "error");
+      showToast(
+        "Не вдалося завантажити дані (HTTP " + response.status + ")",
+        "error",
+      );
     }
   } catch (e: unknown) {
     const err = e as { message: string };
@@ -259,11 +302,7 @@ function importData(event: Event): void {
         customExercises?: Exercise[];
       };
 
-      if (
-        !confirm(
-          "Це перезапише всі ваші локальні дані. Продовжити?"
-        )
-      ) {
+      if (!confirm("Це перезапише всі ваші локальні дані. Продовжити?")) {
         return;
       }
 

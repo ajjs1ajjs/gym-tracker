@@ -47,7 +47,10 @@ self.addEventListener("fetch", (event) => {
         const responseToCache = response.clone();
 
         caches.open(CACHE_NAME).then((cache) => {
-          if (event.request.url.includes("/images/") || event.request.url.includes("/js/")) {
+          if (
+            event.request.url.includes("/images/") ||
+            event.request.url.includes("/js/")
+          ) {
             cache.put(event.request, responseToCache);
           }
         });

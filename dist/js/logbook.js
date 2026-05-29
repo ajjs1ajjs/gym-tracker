@@ -1,7 +1,7 @@
 import { exerciseLogs, customExercises, selectedExerciseId, getAllExercises, mergeCustomExercises, saveState, } from "./data.js";
 import { trainingData } from "./exercises.js";
 import { renderExerciseSetsLog, updateStats, renderExercises, renderMuscleGroups, } from "./ui.js";
-import { showToast, escapeHtml } from "./utils.js";
+import { showToast, escapeHtml, getLastSessionSets } from "./utils.js";
 const LogbookModule = {
     activeSets: [],
     init() {
@@ -66,6 +66,7 @@ const LogbookModule = {
             exSelect.addEventListener("change", () => {
                 this.activeSets = [];
                 this.renderSets();
+                this.renderLastSession();
             });
         }
         const histSelect = document.getElementById("logbook-history-select");
@@ -105,6 +106,45 @@ const LogbookModule = {
     removeSet(idx) {
         this.activeSets.splice(idx, 1);
         this.renderSets();
+    },
+    renderLastSession() {
+        const select = document.getElementById("logbook-ex-select");
+        const exerciseId = select?.value;
+        const container = document.getElementById("logbook-last-session-container");
+        if (!container)
+            return;
+        if (!exerciseId) {
+            container.style.display = "none";
+            return;
+        }
+        const logs = exerciseLogs[exerciseId] || [];
+        const lastSets = getLastSessionSets(logs);
+        if (lastSets.length > 0) {
+            container.style.display = "flex";
+            const setsStr = lastSets
+                .map((s) => `${s.weight}кг x ${s.reps}`)
+                .join(", ");
+            container.innerHTML = `
+        <span>📋 Минулий раз: ${lastSets.length} підх. (${setsStr})</span>
+        <button class="btn-copy-last" id="btn-copy-last-logbook">Скопіювати</button>
+      `;
+            const copyBtn = document.getElementById("btn-copy-last-logbook");
+            if (copyBtn) {
+                copyBtn.onclick = (e) => {
+                    e.preventDefault();
+                    this.activeSets = lastSets.map((s) => ({
+                        weight: s.weight,
+                        reps: s.reps,
+                    }));
+                    this.renderSets();
+                    showToast("Попередні підходи додано в журнал", "success");
+                    container.style.display = "none";
+                };
+            }
+        }
+        else {
+            container.style.display = "none";
+        }
     },
     deleteExercise() {
         const select = document.getElementById("logbook-ex-select");
@@ -230,6 +270,7 @@ const LogbookModule = {
                 selectHist.value = currentVal;
             }
         }
+        this.renderLastSession();
     },
     renderHistory() {
         const list = document.getElementById("logbook-history-list");

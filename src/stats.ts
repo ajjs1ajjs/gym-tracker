@@ -4,7 +4,9 @@ import { formatDate, vibrate, showToast } from "./utils.js";
 let bodyChart: Chart | null = null;
 
 function saveBodyWeight() {
-  const input = document.getElementById("body-weight-input") as HTMLInputElement | null;
+  const input = document.getElementById(
+    "body-weight-input",
+  ) as HTMLInputElement | null;
   if (!input) return;
   const weight = parseFloat(input.value);
   if (!weight || weight <= 0) {
@@ -43,7 +45,9 @@ function renderBodyStats() {
 }
 
 function renderBodyChart() {
-  const canvas = document.getElementById("body-chart") as HTMLCanvasElement | null;
+  const canvas = document.getElementById(
+    "body-chart",
+  ) as HTMLCanvasElement | null;
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;

@@ -284,8 +284,7 @@ const trainingData = [
         id: 16,
         name: "Присідання зі штангою",
         image: "images/squat.webp",
-        description:
-          "Королева вправ для ніг. Розвиває квадрицепси та сідниці.",
+        description: "Королева вправ для ніг. Розвиває квадрицепси та сідниці.",
         difficulty: "Складний",
         instructions: [
           "Штанга на плечах, ноги на ширині плечей",
@@ -330,8 +329,7 @@ const trainingData = [
         id: 32,
         name: "Згинання ніг в тренажері",
         image: "images/leg-curl.webp",
-        description:
-          "Вправа для задньої поверхні стегна (біцепс стегна).",
+        description: "Вправа для задньої поверхні стегна (біцепс стегна).",
         difficulty: "Легкий",
         instructions: [
           "Ляжте в тренажер на животі",

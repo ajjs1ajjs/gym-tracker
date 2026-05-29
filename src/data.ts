@@ -1,5 +1,10 @@
 import { trainingData } from "./exercises.js";
-import { safeJSONParse, encryptData, decryptData, getEncryptionPassphrase } from "./utils.js";
+import {
+  safeJSONParse,
+  encryptData,
+  decryptData,
+  getEncryptionPassphrase,
+} from "./utils.js";
 import type {
   CompletionEntry,
   LogEntry,
@@ -23,7 +28,10 @@ function getAllExercises(): Exercise[] {
 function mergeCustomExercises(): void {
   customExercises.forEach((ce) => {
     const group = trainingData.find((g) => g.name === ce.muscleGroup);
-    if (group && !group.exercises.some((ex) => String(ex.id) === String(ce.id))) {
+    if (
+      group &&
+      !group.exercises.some((ex) => String(ex.id) === String(ce.id))
+    ) {
       (group.exercises as Exercise[]).push(ce);
     }
   });
@@ -32,7 +40,10 @@ function mergeCustomExercises(): void {
 function loadState(): void {
   const saved = localStorage.getItem("trainingProgress");
   if (saved) {
-    completionState = safeJSONParse(saved, {}) as Record<string, CompletionEntry>;
+    completionState = safeJSONParse(saved, {}) as Record<
+      string,
+      CompletionEntry
+    >;
   }
 
   const lastDate = localStorage.getItem("lastSessionDate");
@@ -40,7 +51,15 @@ function loadState(): void {
 
   if (lastDate && lastDate !== today) {
     const yesterdayArchive = localStorage.getItem("completionArchive");
-    const archive: Record<string, Record<string, CompletionEntry>> = yesterdayArchive ? safeJSONParse(yesterdayArchive, {}) as Record<string, Record<string, CompletionEntry>> : {};
+    const archive: Record<
+      string,
+      Record<string, CompletionEntry>
+    > = yesterdayArchive
+      ? (safeJSONParse(yesterdayArchive, {}) as Record<
+          string,
+          Record<string, CompletionEntry>
+        >)
+      : {};
     archive[lastDate] = completionState;
     localStorage.setItem("completionArchive", JSON.stringify(archive));
     completionState = {};
@@ -50,7 +69,8 @@ function loadState(): void {
   localStorage.setItem("lastSessionDate", today);
 
   const logs = localStorage.getItem("exerciseLogs");
-  if (logs) exerciseLogs = safeJSONParse(logs, {}) as Record<string, LogEntry[]>;
+  if (logs)
+    exerciseLogs = safeJSONParse(logs, {}) as Record<string, LogEntry[]>;
 
   const bw = localStorage.getItem("bodyWeightHistory");
   if (bw) bodyWeightHistory = safeJSONParse(bw, []) as BodyWeightEntry[];
@@ -64,7 +84,9 @@ function loadState(): void {
   migrateLegacyLogbook();
 }
 
-function pruneOldArchiveEntries(archive: Record<string, Record<string, CompletionEntry>>): void {
+function pruneOldArchiveEntries(
+  archive: Record<string, Record<string, CompletionEntry>>,
+): void {
   const cutoff = new Date();
   cutoff.setFullYear(cutoff.getFullYear() - 2);
   const cutoffStr = cutoff.toDateString();
@@ -91,7 +113,9 @@ function isEncrypted(value: string): boolean {
   try {
     const first = value.charCodeAt(0);
     return first === 1;
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 async function encryptLocalData(passphrase: string): Promise<void> {
@@ -111,7 +135,13 @@ async function encryptLocalData(passphrase: string): Promise<void> {
 
 async function decryptLocalData(passphrase: string): Promise<boolean> {
   try {
-    const keys = ["trainingProgress", "exerciseLogs", "bodyWeightHistory", "customExercises", "workoutPlans"];
+    const keys = [
+      "trainingProgress",
+      "exerciseLogs",
+      "bodyWeightHistory",
+      "customExercises",
+      "workoutPlans",
+    ];
     for (const key of keys) {
       const raw = localStorage.getItem(key);
       if (!raw) continue;
@@ -123,7 +153,9 @@ async function decryptLocalData(passphrase: string): Promise<boolean> {
       localStorage.setItem(key, dec);
     }
     return true;
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 function loadEncryptedOnStartup(): boolean {
@@ -144,7 +176,8 @@ function migrateLegacyLogbook(): void {
   if (!rawData) return;
   try {
     const data = JSON.parse(rawData);
-    const legacyExercises: { id: number | string; name: string }[] = data.exercises || [];
+    const legacyExercises: { id: number | string; name: string }[] =
+      data.exercises || [];
     const legacySessions: {
       exerciseId: string | number;
       timestamp: string;
@@ -154,7 +187,7 @@ function migrateLegacyLogbook(): void {
 
     legacyExercises.forEach((ex) => {
       const existingEx = getAllExercises().find(
-        (e) => e.name.toLowerCase().trim() === ex.name.toLowerCase().trim()
+        (e) => e.name.toLowerCase().trim() === ex.name.toLowerCase().trim(),
       );
       if (existingEx) {
         legacyIdMap[ex.id] = existingEx.id;
@@ -168,7 +201,8 @@ function migrateLegacyLogbook(): void {
           description: "Користувацька вправа з Журналу",
           instructions: ["Користувацька вправа"],
           sets: "3 x 10",
-          image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=300&auto=format&fit=crop"
+          image:
+            "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=300&auto=format&fit=crop",
         };
         customExercises.push(newEx);
         legacyIdMap[ex.id] = ex.id;
@@ -189,7 +223,7 @@ function migrateLegacyLogbook(): void {
             (logged) =>
               logged.date === setTime &&
               logged.weight === parseFloat(String(set.weight)) &&
-              logged.reps === parseInt(String(set.reps))
+              logged.reps === parseInt(String(set.reps)),
           );
           if (!alreadyExists) {
             exerciseLogs[targetExId].push({
@@ -222,8 +256,13 @@ function savePlans(): void {
   localStorage.setItem("workoutPlans", JSON.stringify(workoutPlans));
 }
 
-function getWorkoutHistory(period: string): { date: string; count: number; exercises: (string | number)[] }[] {
-  const exerciseDates: Record<string, { date: string; count: number; exercises: (string | number)[] }> = {};
+function getWorkoutHistory(
+  period: string,
+): { date: string; count: number; exercises: (string | number)[] }[] {
+  const exerciseDates: Record<
+    string,
+    { date: string; count: number; exercises: (string | number)[] }
+  > = {};
   const allEx = getAllExercises();
 
   const processedDates = new Set<string>();
@@ -257,7 +296,10 @@ function getWorkoutHistory(period: string): { date: string; count: number; exerc
 
   const archive = localStorage.getItem("completionArchive");
   if (archive) {
-    const archiveData = safeJSONParse(archive, {}) as Record<string, Record<string, CompletionEntry>>;
+    const archiveData = safeJSONParse(archive, {}) as Record<
+      string,
+      Record<string, CompletionEntry>
+    >;
     Object.keys(archiveData).forEach((dateStr) => {
       processEntry(archiveData[dateStr]);
     });
@@ -282,7 +324,11 @@ function resetCompletionState(): void {
   Object.keys(completionState).forEach((k) => delete completionState[k]);
 }
 
-function markExerciseComplete(id: string | number, date: string, name: string): void {
+function markExerciseComplete(
+  id: string | number,
+  date: string,
+  name: string,
+): void {
   completionState[id] = { completed: true, date, name };
 }
 

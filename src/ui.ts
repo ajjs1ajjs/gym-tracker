@@ -28,6 +28,7 @@ import {
   safeJSONParse,
   showToast,
   escapeHtml,
+  getLastSessionSets,
 } from "./utils.js";
 import { openTimerModal, startTimer } from "./timer.js";
 import { renderBodyStats } from "./stats.js";
@@ -35,6 +36,7 @@ import LogbookModule from "./logbook.js";
 import type { CompletionEntry, Exercise } from "./types.js";
 
 let progressionChart: { destroy(): void } | null = null;
+let historyChartInstance: { destroy(): void } | null = null;
 
 function updateStats(): void {
   const allExercises = getAllExercises();
@@ -167,7 +169,11 @@ function toggleExercise(id: string | number): void {
   if (completionState[id]) {
     unmarkExerciseComplete(id);
   } else {
-    markExerciseComplete(id, new Date().toISOString(), exercise ? exercise.name : "");
+    markExerciseComplete(
+      id,
+      new Date().toISOString(),
+      exercise ? exercise.name : "",
+    );
   }
 
   saveState();
@@ -212,7 +218,9 @@ function openModal(id: string | number): void {
 
   const modalInstructions = document.getElementById("modal-instructions");
   if (modalInstructions) {
-    modalInstructions.innerHTML = exercise.instructions.map((i) => `<li>${escapeHtml(i)}</li>`).join("");
+    modalInstructions.innerHTML = exercise.instructions
+      .map((i) => `<li>${escapeHtml(i)}</li>`)
+      .join("");
   }
 
   const checkinBtn = document.getElementById("modal-checkin-btn");
@@ -223,6 +231,46 @@ function openModal(id: string | number): void {
   const checkinDate = document.getElementById("checkin-date");
   if (checkinDate) {
     checkinDate.textContent = state ? `Дата: ${formatDate(state.date)}` : "";
+  }
+
+  const lastSessionContainer = document.getElementById(
+    "modal-last-session-container",
+  );
+  if (lastSessionContainer) {
+    const logs = exerciseLogs[id] || [];
+    const lastSets = getLastSessionSets(logs);
+    if (lastSets.length > 0) {
+      lastSessionContainer.style.display = "flex";
+      const setsStr = lastSets
+        .map((s) => `${s.weight}кг x ${s.reps}`)
+        .join(", ");
+      lastSessionContainer.innerHTML = `
+        <span>📋 Минулий раз: ${lastSets.length} підх. (${setsStr})</span>
+        <button class="btn-copy-last" id="btn-copy-last-modal">Скопіювати</button>
+      `;
+      const copyBtn = document.getElementById("btn-copy-last-modal");
+      if (copyBtn) {
+        copyBtn.onclick = () => {
+          if (!exerciseLogs[id]) exerciseLogs[id] = [];
+          const now = new Date().toISOString();
+          lastSets.forEach((s) => {
+            exerciseLogs[id].push({
+              date: now,
+              weight: s.weight,
+              reps: s.reps,
+            });
+          });
+          saveState();
+          renderExerciseSetsLog(id);
+          updateStats();
+          showToast("Підходи скопійовано!", "success");
+          vibrate(50);
+          lastSessionContainer.style.display = "none";
+        };
+      }
+    } else {
+      lastSessionContainer.style.display = "none";
+    }
   }
 
   renderExerciseSetsLog(id);
@@ -261,9 +309,7 @@ function renderExerciseSetsLog(id: string | number): void {
 
   let max1RM = 0;
   if (todaySets.length > 0) {
-    max1RM = Math.max(
-      ...todaySets.map((s) => calculate1RM(s.weight, s.reps)),
-    );
+    max1RM = Math.max(...todaySets.map((s) => calculate1RM(s.weight, s.reps)));
   }
 
   logContainer.innerHTML =
@@ -306,8 +352,7 @@ function logSet(): void {
     return;
   }
 
-  if (!exerciseLogs[selectedExerciseId])
-    exerciseLogs[selectedExerciseId] = [];
+  if (!exerciseLogs[selectedExerciseId]) exerciseLogs[selectedExerciseId] = [];
 
   exerciseLogs[selectedExerciseId].push({
     date: new Date().toISOString(),
@@ -323,7 +368,9 @@ function logSet(): void {
   weightInput.value = "";
   repsInput.value = "";
 
-  const isSmartTimer = (document.getElementById("smart-timer-toggle") as HTMLInputElement)?.checked;
+  const isSmartTimer = (
+    document.getElementById("smart-timer-toggle") as HTMLInputElement
+  )?.checked;
   if (isSmartTimer) {
     openTimerModal();
     startTimer();
@@ -347,7 +394,9 @@ function toggleProgressionChart(): void {
 }
 
 function renderProgressionChart(id: string | number): void {
-  const canvas = document.getElementById("progression-chart") as HTMLCanvasElement | null;
+  const canvas = document.getElementById(
+    "progression-chart",
+  ) as HTMLCanvasElement | null;
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -360,14 +409,67 @@ function renderProgressionChart(id: string | number): void {
 
   if (progressionChart) progressionChart.destroy();
 
+  const metricSelect = document.getElementById(
+    "progression-metric",
+  ) as HTMLSelectElement | null;
+  const metric = metricSelect?.value || "weight";
+
+  // Group logs by date to compute metric per day
   const entries: Record<string, number> = {};
+
+  // Group logs by date string
+  const groupedByDate: Record<string, typeof logs> = {};
   logs.forEach((l) => {
     const d = new Date(l.date).toLocaleDateString();
-    if (!entries[d] || l.weight > entries[d]) entries[d] = l.weight;
+    if (!groupedByDate[d]) groupedByDate[d] = [];
+    groupedByDate[d].push(l);
   });
 
-  const labels = Object.keys(entries).slice(-7);
+  Object.keys(groupedByDate).forEach((d) => {
+    const dayLogs = groupedByDate[d];
+    if (metric === "weight") {
+      // Maximum weight lifted on that day
+      entries[d] = Math.max(...dayLogs.map((l) => l.weight));
+    } else if (metric === "1rm") {
+      // Maximum estimated 1RM on that day
+      entries[d] = Math.max(
+        ...dayLogs.map((l) => calculate1RM(l.weight, l.reps)),
+      );
+    } else if (metric === "volume") {
+      // Total volume (weight * reps) lifted on that day
+      entries[d] = dayLogs.reduce((sum, l) => sum + l.weight * l.reps, 0);
+    }
+  });
+
+  const labels = Object.keys(entries)
+    .sort((a, b) => {
+      const parseDate = (str: string) => {
+        const parts = str.split("."); // DD.MM.YYYY
+        return new Date(
+          Number(parts[2]),
+          Number(parts[1]) - 1,
+          Number(parts[0]),
+        );
+      };
+      return +parseDate(a) - +parseDate(b);
+    })
+    .slice(-7);
+
   const datasets = labels.map((l) => entries[l]);
+
+  let labelText = "Максимальна вага (кг)";
+  let borderColor = "#28a745";
+  let backgroundColor = "rgba(40, 167, 69, 0.15)";
+
+  if (metric === "1rm") {
+    labelText = "Розрахунковий 1RM (кг)";
+    borderColor = "#ffc107";
+    backgroundColor = "rgba(255, 193, 7, 0.15)";
+  } else if (metric === "volume") {
+    labelText = "Загальний об'єм (кг)";
+    borderColor = "#00d4ff";
+    backgroundColor = "rgba(0, 212, 255, 0.15)";
+  }
 
   progressionChart = new Chart(ctx, {
     type: "line",
@@ -375,11 +477,12 @@ function renderProgressionChart(id: string | number): void {
       labels,
       datasets: [
         {
-          label: "Максимальна вага (кг)",
+          label: labelText,
           data: datasets,
-          borderColor: "#28a745",
-          tension: 0.1,
-          fill: false,
+          borderColor,
+          backgroundColor,
+          tension: 0.2,
+          fill: true,
         },
       ],
     },
@@ -397,7 +500,9 @@ function renderProgressionChart(id: string | number): void {
 function renderHistory(): void {
   const historyList = document.getElementById("history-list");
   if (!historyList) return;
-  const period = (document.getElementById("history-period") as HTMLSelectElement)?.value || "all";
+  const period =
+    (document.getElementById("history-period") as HTMLSelectElement)?.value ||
+    "all";
 
   const workouts = getWorkoutHistory(period);
 
@@ -491,45 +596,65 @@ function filterHistory(): void {
 }
 
 function renderHistoryChart(workouts: { date: string; count: number }[]): void {
-  const canvas = document.getElementById("history-chart") as HTMLCanvasElement | null;
+  const canvas = document.getElementById(
+    "history-chart",
+  ) as HTMLCanvasElement | null;
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
-  const container = canvas.parentElement as HTMLElement | null;
-  const containerWidth = container?.clientWidth ?? 0;
-  canvas.width = containerWidth;
-  canvas.height = 200;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (historyChartInstance) {
+    historyChartInstance.destroy();
+    historyChartInstance = null;
+  }
 
   if (workouts.length === 0) return;
 
   const last7 = workouts.slice(0, 7).reverse();
-  const maxCount = Math.max(...last7.map((w) => w.count || 1));
-  const barWidth = (canvas.width - 40) / Math.max(last7.length, 1);
-  const scale = (canvas.height - 40) / Math.max(maxCount, 1);
 
-  last7.forEach((w, i) => {
-    const x = 20 + i * barWidth;
-    const height = (w.count || 0) * scale;
-    const y = canvas.height - 20 - height;
-
-    ctx.fillStyle = "#00d4ff";
-    ctx.fillRect(x, y, barWidth - 10, height);
-
-    ctx.fillStyle = "#888";
-    ctx.font = "11px sans-serif";
-    ctx.textAlign = "center";
-    const date = new Date(w.date);
-    ctx.fillText(
-      `${date.getDate()}.${date.getMonth() + 1}`,
-      x + (barWidth - 10) / 2,
-      canvas.height - 5,
-    );
-
-    ctx.fillStyle = "#fff";
-    ctx.fillText(String(w.count), x + (barWidth - 10) / 2, y - 5);
+  historyChartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: last7.map((w) => {
+        const d = new Date(w.date);
+        return `${d.getDate()}.${d.getMonth() + 1}`;
+      }),
+      datasets: [
+        {
+          label: "Виконано вправ",
+          data: last7.map((w) => w.count),
+          backgroundColor: "rgba(0, 212, 255, 0.2)",
+          borderColor: "#00d4ff",
+          borderWidth: 2,
+          borderRadius: 6,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+          },
+          grid: {
+            color: "rgba(255, 255, 255, 0.05)",
+          },
+        },
+        x: {
+          grid: {
+            display: false,
+          },
+        },
+      },
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+    },
   });
 }
 
@@ -582,12 +707,15 @@ function renderPlans(): void {
 
   container.innerHTML = workoutPlans
     .map((plan, planIndex) => {
-      const exerciseNames: { id: number | string; name: string }[] = plan.exercises
-        .map((id) => {
-          const ex = allEx.find((e) => e.id === id);
-          return ex ? { id, name: ex.name } : null;
-        })
-        .filter((n): n is { id: number | string; name: string } => n !== null);
+      const exerciseNames: { id: number | string; name: string }[] =
+        plan.exercises
+          .map((id) => {
+            const ex = allEx.find((e) => e.id === id);
+            return ex ? { id, name: ex.name } : null;
+          })
+          .filter(
+            (n): n is { id: number | string; name: string } => n !== null,
+          );
 
       return `
             <div class="plan-card">
@@ -655,7 +783,9 @@ function savePlan(): void {
   const selected = document.querySelectorAll(
     "#plan-exercises-select input:checked",
   );
-  const exerciseIds = Array.from(selected).map((cb) => parseInt((cb as HTMLInputElement).value));
+  const exerciseIds = Array.from(selected).map((cb) =>
+    parseInt((cb as HTMLInputElement).value),
+  );
 
   if (exerciseIds.length === 0) {
     showToast("Оберіть хоча б одну вправу", "warning");
@@ -704,7 +834,10 @@ function startWorkout(planIndex: number): void {
 
   const modalContent = document.querySelector(".modal-content");
   if (modalContent) {
-    modalContent.insertBefore(planInfo, modalContent.querySelector(".modal-checkin"));
+    modalContent.insertBefore(
+      planInfo,
+      modalContent.querySelector(".modal-checkin"),
+    );
   }
 }
 
@@ -715,19 +848,25 @@ function finishWorkout(): void {
     return;
   }
 
-  if (
-    confirm(`Завершити тренування? Ви виконали ${completedCount} вправ.`)
-  ) {
+  if (confirm(`Завершити тренування? Ви виконали ${completedCount} вправ.`)) {
     const today = new Date().toDateString();
     const archive = localStorage.getItem("completionArchive");
-    const archiveData: Record<string, Record<string, CompletionEntry>> = archive ? safeJSONParse(archive, {}) as Record<string, Record<string, CompletionEntry>> : {};
+    const archiveData: Record<string, Record<string, CompletionEntry>> = archive
+      ? (safeJSONParse(archive, {}) as Record<
+          string,
+          Record<string, CompletionEntry>
+        >)
+      : {};
 
     archiveData[today] = {
       ...(archiveData[today] || {}),
-      ...Object.keys(completionState).reduce<Record<string, CompletionEntry>>((acc, k) => {
-        acc[k] = completionState[k];
-        return acc;
-      }, {}),
+      ...Object.keys(completionState).reduce<Record<string, CompletionEntry>>(
+        (acc, k) => {
+          acc[k] = completionState[k];
+          return acc;
+        },
+        {},
+      ),
     };
     localStorage.setItem("completionArchive", JSON.stringify(archiveData));
 
@@ -742,7 +881,11 @@ function finishWorkout(): void {
 
     const completedDays = Object.keys(archiveData).length;
     if (completedDays % 10 === 0) {
-      showToast(`💾 Виконано ${completedDays} тренувань! Зробіть експорт.`, "info", 6000);
+      showToast(
+        `💾 Виконано ${completedDays} тренувань! Зробіть експорт.`,
+        "info",
+        6000,
+      );
     }
   }
 }
@@ -787,7 +930,9 @@ function initTheme(): void {
 }
 
 function calculatePlates(): void {
-  const weightInput = document.getElementById("plate-weight-input") as HTMLInputElement;
+  const weightInput = document.getElementById(
+    "plate-weight-input",
+  ) as HTMLInputElement;
   const totalWeight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
   const barWeight = 20;
   let weightToDistribute = (totalWeight - barWeight) / 2;
@@ -826,9 +971,71 @@ function calculatePlates(): void {
   }
 }
 
+function calculate1RMSplits(): void {
+  const wInput = document.getElementById(
+    "calc-1rm-weight",
+  ) as HTMLInputElement | null;
+  const rInput = document.getElementById(
+    "calc-1rm-reps",
+  ) as HTMLInputElement | null;
+  if (!wInput || !rInput) return;
+
+  const w = parseFloat(wInput.value) || 0;
+  const r = parseInt(rInput.value) || 0;
+
+  let oneRM = 0;
+  if (w > 0 && r > 0) {
+    oneRM = calculate1RM(w, r);
+  }
+
+  const valueDisplay = document.getElementById("calc-1rm-value");
+  if (valueDisplay) {
+    valueDisplay.textContent = `${oneRM} кг`;
+  }
+
+  const tbody = document.getElementById("splits-tbody");
+  if (tbody) {
+    if (oneRM === 0) {
+      tbody.innerHTML = `<tr><td colspan="2" style="text-align:center; padding: 15px; color: var(--text-secondary);">Введіть вагу та повтори</td></tr>`;
+      return;
+    }
+
+    const percentages = [100, 95, 90, 85, 80, 75, 70, 65, 60, 50];
+    tbody.innerHTML = percentages
+      .map((pct) => {
+        const splitWeight = Math.round(oneRM * (pct / 100) * 10) / 10;
+        return `
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px 0; color: var(--text-primary); font-weight: 500;">${pct}%</td>
+            <td style="padding: 8px 0; color: var(--accent); font-weight: bold; text-align: right;">${splitWeight} кг</td>
+          </tr>
+        `;
+      })
+      .join("");
+  }
+}
+
+function switchCalcTab(tabId: "plate" | "1rm"): void {
+  const btnPlate = document.getElementById("btn-calc-tab-plate");
+  const btn1rm = document.getElementById("btn-calc-tab-1rm");
+  const viewPlate = document.getElementById("calc-view-plate");
+  const view1rm = document.getElementById("calc-view-1rm");
+
+  if (btnPlate) btnPlate.classList.toggle("active", tabId === "plate");
+  if (btn1rm) btn1rm.classList.toggle("active", tabId === "1rm");
+  if (viewPlate) viewPlate.style.display = tabId === "plate" ? "block" : "none";
+  if (view1rm) view1rm.style.display = tabId === "1rm" ? "block" : "none";
+
+  if (tabId === "1rm") {
+    calculate1RMSplits();
+  }
+  vibrate(20);
+}
+
 function openPlateModal(): void {
   const modal = document.getElementById("plate-modal");
   if (modal) modal.style.display = "flex";
+  switchCalcTab("plate");
   calculatePlates();
 }
 
@@ -875,7 +1082,7 @@ function switchTab(tabId: string): void {
   } else if (tabId === "plans") {
     if (plansSection) plansSection.style.display = "block";
     renderPlans();
-    } else if (tabId === "body") {
+  } else if (tabId === "body") {
     if (bodySection) bodySection.style.display = "block";
     renderBodyStats();
   } else if (tabId === "logbook") {
@@ -954,6 +1161,34 @@ function saveCustomExercise(): void {
   renderExercises();
   closeCustomExerciseModal();
   celebration();
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => {
+    document
+      .getElementById("progression-metric")
+      ?.addEventListener("change", () => {
+        if (selectedExerciseId) renderProgressionChart(selectedExerciseId);
+      });
+
+    // Calculator modal tabs listeners
+    document
+      .getElementById("btn-calc-tab-plate")
+      ?.addEventListener("click", () => switchCalcTab("plate"));
+    document
+      .getElementById("btn-calc-tab-1rm")
+      ?.addEventListener("click", () => switchCalcTab("1rm"));
+
+    // 1RM calculator input change listeners
+    const calc1rmWeight = document.getElementById("calc-1rm-weight");
+    const calc1rmReps = document.getElementById("calc-1rm-reps");
+
+    const triggerCalculation = () => {
+      calculate1RMSplits();
+    };
+    calc1rmWeight?.addEventListener("input", triggerCalculation);
+    calc1rmReps?.addEventListener("input", triggerCalculation);
+  });
 }
 
 export {

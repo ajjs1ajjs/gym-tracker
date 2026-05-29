@@ -1,6 +1,6 @@
 import { completionState, exerciseLogs, bodyWeightHistory, customExercises, workoutPlans, getAllExercises, mergeCustomExercises, saveState, savePlans, encryptLocalData, decryptLocalData, } from "./data.js";
-import { vibrate, safeJSONParse, calculate1RM, showToast, getEncryptionPassphrase, setEncryptionPassphrase, clearEncryptionPassphrase } from "./utils.js";
-import { renderMuscleGroups, renderExercises, renderPlans, updateStats } from "./ui.js";
+import { vibrate, safeJSONParse, calculate1RM, showToast, getEncryptionPassphrase, setEncryptionPassphrase, clearEncryptionPassphrase, } from "./utils.js";
+import { renderMuscleGroups, renderExercises, renderPlans, updateStats, } from "./ui.js";
 const TOKEN_KEY = "gym_github_token";
 const GIST_KEY = "gym_gist_id";
 function getStoredToken() {
@@ -121,7 +121,7 @@ async function syncToCloud() {
             body: JSON.stringify(body),
         });
         if (response.ok) {
-            const result = await response.json();
+            const result = (await response.json());
             if (!gistId && result.id) {
                 setStoredGistId(result.id);
                 const gistInput = document.getElementById("gist-id");
@@ -132,7 +132,7 @@ async function syncToCloud() {
             vibrate([50, 100, 50]);
         }
         else {
-            const err = await response.json().catch(() => ({}));
+            const err = (await response.json().catch(() => ({})));
             showToast("Помилка синхронізації: " + (err.message || `HTTP ${response.status}`), "error");
         }
     }
@@ -153,7 +153,7 @@ async function fetchFromCloud() {
             headers: { Authorization: `token ${token}` },
         });
         if (response.ok) {
-            const result = await response.json();
+            const result = (await response.json());
             if (!result.files?.["gym-data.json"]) {
                 showToast("Gist не містить файлу gym-data.json", "warning");
                 return;

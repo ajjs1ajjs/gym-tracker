@@ -36,7 +36,9 @@ function initAudio() {
     if (typeof window === "undefined")
         return;
     try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const AudioContextClass = window.AudioContext ||
+            window
+                .webkitAudioContext;
         audioCtx = new AudioContextClass();
         const ctx = audioCtx;
         const buffer = ctx.createBuffer(1, 1, 22050);
@@ -74,7 +76,9 @@ function playBeep() {
         oscillator.start(audioCtx.currentTime);
         oscillator.stop(audioCtx.currentTime + 0.5);
     }
-    catch (_e) { /* silently ignore audio errors */ }
+    catch (_e) {
+        /* silently ignore audio errors */
+    }
 }
 function celebration() {
     if (typeof confetti !== "function")
@@ -120,7 +124,9 @@ async function requestWakeLock() {
 }
 function releaseWakeLock() {
     if (wakeLock !== null) {
-        wakeLock.release().catch(() => { });
+        wakeLock.release().catch(() => {
+            /* ignore release errors */
+        });
         wakeLock = null;
     }
 }
@@ -130,9 +136,9 @@ function requestNotifications() {
     }
 }
 const DIFFICULTY_CLASS = {
-    "Легкий": "easy",
-    "Середній": "medium",
-    "Складний": "hard",
+    Легкий: "easy",
+    Середній: "medium",
+    Складний: "hard",
 };
 function diffClass(difficulty) {
     return DIFFICULTY_CLASS[difficulty] ?? difficulty;
@@ -146,7 +152,12 @@ function showToast(message, type = "info", duration = 4000) {
     const container = document.getElementById("toast-container");
     if (!container)
         return;
-    const icons = { success: "✅", error: "❌", info: "ℹ️", warning: "⚠️" };
+    const icons = {
+        success: "✅",
+        error: "❌",
+        info: "ℹ️",
+        warning: "⚠️",
+    };
     const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `<span class="toast-icon">${icons[type] || ""}</span><span class="toast-message">${escapeHtml(message)}</span>`;
@@ -162,7 +173,12 @@ function showToast(message, type = "info", duration = 4000) {
 async function deriveKey(passphrase, salt) {
     const encoder = new TextEncoder();
     const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(passphrase), "PBKDF2", false, ["deriveKey"]);
-    return crypto.subtle.deriveKey({ name: "PBKDF2", salt: salt, iterations: 600000, hash: "SHA-256" }, keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+    return crypto.subtle.deriveKey({
+        name: "PBKDF2",
+        salt: salt,
+        iterations: 600000,
+        hash: "SHA-256",
+    }, keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
 }
 async function encryptData(plaintext, passphrase) {
     const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -208,4 +224,26 @@ function setEncryptionPassphrase(passphrase) {
 function clearEncryptionPassphrase() {
     sessionStorage.removeItem("gym_encrypt_passphrase");
 }
-export { safeJSONParse, formatDate, calculate1RM, vibrate, initAudio, playBeep, celebration, requestWakeLock, releaseWakeLock, diffClass, requestNotifications, showToast, escapeHtml, encryptData, decryptData, getEncryptionPassphrase, setEncryptionPassphrase, clearEncryptionPassphrase, };
+function getLastSessionSets(logs) {
+    if (!logs || logs.length === 0)
+        return [];
+    const today = new Date().toDateString();
+    // Group sets by date string (ignoring time)
+    const groups = {};
+    logs.forEach((log) => {
+        const dateStr = new Date(log.date).toDateString();
+        if (dateStr === today)
+            return; // skip today's logged sets
+        if (!groups[dateStr])
+            groups[dateStr] = [];
+        groups[dateStr].push(log);
+    });
+    const dates = Object.keys(groups);
+    if (dates.length === 0)
+        return [];
+    // Sort dates descending to get the most recent one before today
+    dates.sort((a, b) => +new Date(b) - +new Date(a));
+    const lastDate = dates[0];
+    return groups[lastDate];
+}
+export { safeJSONParse, formatDate, calculate1RM, vibrate, initAudio, playBeep, celebration, requestWakeLock, releaseWakeLock, diffClass, requestNotifications, showToast, escapeHtml, encryptData, decryptData, getEncryptionPassphrase, setEncryptionPassphrase, clearEncryptionPassphrase, getLastSessionSets, };

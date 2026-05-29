@@ -1,4 +1,9 @@
-import { loadState, loadPlans, pruneOldLogs, loadEncryptedOnStartup } from "./data.js";
+import {
+  loadState,
+  loadPlans,
+  pruneOldLogs,
+  loadEncryptedOnStartup,
+} from "./data.js";
 import {
   updateStats,
   renderMuscleGroups,
@@ -72,20 +77,39 @@ function init(): void {
   byId("header-timer-btn")?.addEventListener("click", openTimerModal);
   const dd = byId("header-dropdown");
   if (dd) {
-    dd.querySelector("[data-action='plate']")?.addEventListener("click", openPlateModal);
-    dd.querySelector("[data-action='export']")?.addEventListener("click", exportData);
-    dd.querySelector("[data-action='settings']")?.addEventListener("click", openSettingsModal);
-    dd.querySelector("[data-action='reset']")?.addEventListener("click", resetProgress);
-    dd.querySelector("input[type='file']")?.addEventListener("change", importData);
+    dd.querySelector("[data-action='plate']")?.addEventListener(
+      "click",
+      openPlateModal,
+    );
+    dd.querySelector("[data-action='export']")?.addEventListener(
+      "click",
+      exportData,
+    );
+    dd.querySelector("[data-action='settings']")?.addEventListener(
+      "click",
+      openSettingsModal,
+    );
+    dd.querySelector("[data-action='reset']")?.addEventListener(
+      "click",
+      resetProgress,
+    );
+    dd.querySelector("input[type='file']")?.addEventListener(
+      "change",
+      importData,
+    );
   }
 
   // Close dropdown on outside click
   document.addEventListener("click", (e) => {
     if (!(e.target as HTMLElement).closest(".dropdown")) {
-      document.querySelectorAll(".dropdown-content.show").forEach((el) => el.classList.remove("show"));
+      document
+        .querySelectorAll(".dropdown-content.show")
+        .forEach((el) => el.classList.remove("show"));
     }
   });
-  document.querySelector(".btn-settings")?.addEventListener("click", toggleDropdown);
+  document
+    .querySelector(".btn-settings")
+    ?.addEventListener("click", toggleDropdown);
 
   byId("finish-workout-btn")?.addEventListener("click", finishWorkout);
 
@@ -99,7 +123,9 @@ function init(): void {
 
   // --- Sidebar ---
   byId("muscle-groups")?.addEventListener("click", (e) => {
-    const group = (e.target as HTMLElement).closest("[data-muscle-id]") as HTMLElement;
+    const group = (e.target as HTMLElement).closest(
+      "[data-muscle-id]",
+    ) as HTMLElement;
     if (group) {
       const muscleId = group.dataset.muscleId;
       if (muscleId) filterByGroup(muscleId);
@@ -129,7 +155,10 @@ function init(): void {
   byId("modal-close-btn")?.addEventListener("click", closeModal);
   byId("modal-checkin-btn")?.addEventListener("click", toggleFromModal);
   byId("set-log-btn")?.addEventListener("click", logSet);
-  byId("progression-toggle-btn")?.addEventListener("click", toggleProgressionChart);
+  byId("progression-toggle-btn")?.addEventListener(
+    "click",
+    toggleProgressionChart,
+  );
 
   // --- Timer Modal ---
   byId("timer-modal")?.addEventListener("click", (e) => {
@@ -169,7 +198,9 @@ function init(): void {
     if ((e.target as HTMLElement).id === "plan-modal") closePlanModal();
   });
   byId("plan-exercises-select")?.addEventListener("click", (e) => {
-    const option = (e.target as HTMLElement).closest("[data-plan-check]") as HTMLElement;
+    const option = (e.target as HTMLElement).closest(
+      "[data-plan-check]",
+    ) as HTMLElement;
     if (option) {
       toggleExerciseOption(option);
     }
@@ -194,28 +225,49 @@ function init(): void {
 
   // --- Custom Exercise Modal ---
   byId("custom-exercise-modal")?.addEventListener("click", (e) => {
-    if ((e.target as HTMLElement).id === "custom-exercise-modal") closeCustomExerciseModal();
+    if ((e.target as HTMLElement).id === "custom-exercise-modal")
+      closeCustomExerciseModal();
   });
-  byId("custom-ex-modal-close")?.addEventListener("click", closeCustomExerciseModal);
+  byId("custom-ex-modal-close")?.addEventListener(
+    "click",
+    closeCustomExerciseModal,
+  );
 
   // Syncing
-  document.querySelector("[data-action='save-settings']")?.addEventListener("click", saveSettings);
-  document.querySelector("[data-action='sync-upload']")?.addEventListener("click", syncToCloud);
-  document.querySelector("[data-action='sync-download']")?.addEventListener("click", fetchFromCloud);
-  document.querySelector("[data-action='export-csv']")?.addEventListener("click", exportToCSV);
+  document
+    .querySelector("[data-action='save-settings']")
+    ?.addEventListener("click", saveSettings);
+  document
+    .querySelector("[data-action='sync-upload']")
+    ?.addEventListener("click", syncToCloud);
+  document
+    .querySelector("[data-action='sync-download']")
+    ?.addEventListener("click", fetchFromCloud);
+  document
+    .querySelector("[data-action='export-csv']")
+    ?.addEventListener("click", exportToCSV);
 
   // Custom exercise form
-  document.querySelector("[data-action='save-custom-ex']")?.addEventListener("click", saveCustomExercise);
-  document.querySelector("[data-action='save-body-weight']")?.addEventListener("click", saveBodyWeight);
+  document
+    .querySelector("[data-action='save-custom-ex']")
+    ?.addEventListener("click", saveCustomExercise);
+  document
+    .querySelector("[data-action='save-body-weight']")
+    ?.addEventListener("click", saveBodyWeight);
 
   // Plans page
-  document.querySelector("[data-action='add-plan']")?.addEventListener("click", openPlanModal);
+  document
+    .querySelector("[data-action='add-plan']")
+    ?.addEventListener("click", openPlanModal);
 
   // History
   byId("history-period")?.addEventListener("change", filterHistory);
 
   // Custom exercise button
-  byId("open-custom-ex-btn")?.addEventListener("click", openCustomExerciseModal);
+  byId("open-custom-ex-btn")?.addEventListener(
+    "click",
+    openCustomExerciseModal,
+  );
 
   // Logbook tabs
   document.querySelectorAll("[data-logbook-tab]").forEach((btn) => {
@@ -226,9 +278,11 @@ function init(): void {
   });
 
   // Create custom exercise from logbook
-  document.querySelector("[data-action='create-logbook-ex']")?.addEventListener("click", () => {
-    LogbookModule.createExercise();
-  });
+  document
+    .querySelector("[data-action='create-logbook-ex']")
+    ?.addEventListener("click", () => {
+      LogbookModule.createExercise();
+    });
 
   // Register Service Worker
   if ("serviceWorker" in navigator) {
@@ -241,7 +295,10 @@ function init(): void {
             const installingWorker = registration.installing;
             if (!installingWorker) return;
             installingWorker.addEventListener("statechange", () => {
-              if (installingWorker.state === "installed" && navigator.serviceWorker.controller) {
+              if (
+                installingWorker.state === "installed" &&
+                navigator.serviceWorker.controller
+              ) {
                 const banner = document.getElementById("update-banner");
                 if (banner) banner.classList.remove("hidden");
               }
@@ -258,7 +315,9 @@ function init(): void {
     });
 
     byId("update-btn")?.addEventListener("click", () => {
-      navigator.serviceWorker.getRegistration().then((r) => r?.waiting?.postMessage("SKIP_WAITING"));
+      navigator.serviceWorker
+        .getRegistration()
+        .then((r) => r?.waiting?.postMessage("SKIP_WAITING"));
     });
     byId("update-dismiss-btn")?.addEventListener("click", () => {
       const banner = document.getElementById("update-banner");
@@ -278,8 +337,13 @@ function init(): void {
 
   // Wake Lock on visibility change
   document.addEventListener("visibilitychange", async () => {
-    const activeTab = (document.querySelector(".nav-item.active") as HTMLElement)?.dataset.tab;
-    if (document.visibilityState === "visible" && (activeTab === "exercises" || activeTab === "logbook")) {
+    const activeTab = (
+      document.querySelector(".nav-item.active") as HTMLElement
+    )?.dataset.tab;
+    if (
+      document.visibilityState === "visible" &&
+      (activeTab === "exercises" || activeTab === "logbook")
+    ) {
       const { requestWakeLock } = await import("./utils.js");
       requestWakeLock();
     } else {
@@ -342,7 +406,8 @@ function byId(id: string): HTMLElement | null {
 (window as any).renderHistory = renderHistory;
 (window as any).renderPlans = renderPlans;
 (window as any).LogbookModule = LogbookModule;
-(window as any).createLogbookCustomExercise = () => LogbookModule.createExercise();
+(window as any).createLogbookCustomExercise = () =>
+  LogbookModule.createExercise();
 (window as any).loadLogbookSelect = () => LogbookModule.loadSelect();
 (window as any).renderLogbookSets = () => LogbookModule.renderSets();
 

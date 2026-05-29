@@ -1,5 +1,5 @@
 import { trainingData } from "./exercises.js";
-import { safeJSONParse, encryptData, decryptData, getEncryptionPassphrase } from "./utils.js";
+import { safeJSONParse, encryptData, decryptData, getEncryptionPassphrase, } from "./utils.js";
 let completionState = {};
 let exerciseLogs = {};
 let bodyWeightHistory = [];
@@ -13,7 +13,8 @@ function getAllExercises() {
 function mergeCustomExercises() {
     customExercises.forEach((ce) => {
         const group = trainingData.find((g) => g.name === ce.muscleGroup);
-        if (group && !group.exercises.some((ex) => String(ex.id) === String(ce.id))) {
+        if (group &&
+            !group.exercises.some((ex) => String(ex.id) === String(ce.id))) {
             group.exercises.push(ce);
         }
     });
@@ -27,7 +28,9 @@ function loadState() {
     const today = new Date().toDateString();
     if (lastDate && lastDate !== today) {
         const yesterdayArchive = localStorage.getItem("completionArchive");
-        const archive = yesterdayArchive ? safeJSONParse(yesterdayArchive, {}) : {};
+        const archive = yesterdayArchive
+            ? safeJSONParse(yesterdayArchive, {})
+            : {};
         archive[lastDate] = completionState;
         localStorage.setItem("completionArchive", JSON.stringify(archive));
         completionState = {};
@@ -94,7 +97,13 @@ async function encryptLocalData(passphrase) {
 }
 async function decryptLocalData(passphrase) {
     try {
-        const keys = ["trainingProgress", "exerciseLogs", "bodyWeightHistory", "customExercises", "workoutPlans"];
+        const keys = [
+            "trainingProgress",
+            "exerciseLogs",
+            "bodyWeightHistory",
+            "customExercises",
+            "workoutPlans",
+        ];
         for (const key of keys) {
             const raw = localStorage.getItem(key);
             if (!raw)
@@ -153,7 +162,7 @@ function migrateLegacyLogbook() {
                     description: "Користувацька вправа з Журналу",
                     instructions: ["Користувацька вправа"],
                     sets: "3 x 10",
-                    image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=300&auto=format&fit=crop"
+                    image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=300&auto=format&fit=crop",
                 };
                 customExercises.push(newEx);
                 legacyIdMap[ex.id] = ex.id;
