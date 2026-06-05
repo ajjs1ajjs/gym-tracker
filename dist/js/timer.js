@@ -3,6 +3,7 @@ let timerInterval = null;
 let timerSeconds = 90;
 let timerRunning = false;
 let timerDefaultSeconds = 90;
+let targetEndTime = 0;
 function openTimerModal() {
     const modal = document.getElementById("timer-modal");
     if (modal)
@@ -65,6 +66,7 @@ function startTimer() {
     if (timerRunning)
         return;
     timerRunning = true;
+    targetEndTime = Date.now() + timerSeconds * 1000;
     const startBtn = document.getElementById("timer-start-btn");
     const pauseBtn = document.getElementById("timer-pause-btn");
     if (startBtn)
@@ -73,8 +75,9 @@ function startTimer() {
         pauseBtn.style.display = "inline-block";
     updateTimerDisplay();
     timerInterval = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((targetEndTime - Date.now()) / 1000));
+        timerSeconds = remaining;
         if (timerSeconds > 0) {
-            timerSeconds--;
             updateTimerDisplay();
         }
         else {
@@ -94,7 +97,7 @@ function startTimer() {
                 pauseBtn2.style.display = "none";
             updateTimerDisplay();
         }
-    }, 1000);
+    }, 200);
 }
 function pauseTimer() {
     if (timerInterval) {
@@ -102,6 +105,7 @@ function pauseTimer() {
         timerInterval = null;
     }
     timerRunning = false;
+    timerSeconds = Math.max(0, Math.ceil((targetEndTime - Date.now()) / 1000));
     const startBtn = document.getElementById("timer-start-btn");
     const pauseBtn = document.getElementById("timer-pause-btn");
     if (startBtn)

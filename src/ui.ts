@@ -43,48 +43,53 @@ let progressionChart: { destroy(): void } | null = null;
 let historyChartInstance: { destroy(): void } | null = null;
 let muscleChartInstance: { destroy(): void } | null = null;
 
+let updateStatsTimeout: ReturnType<typeof setTimeout> | null = null;
+
 function updateStats(): void {
-  const allExercises = getAllExercises();
-  const total = allExercises.length;
-  let completed = 0;
-  const workoutDates = new Set<string>();
-  let totalVolume = 0;
+  if (updateStatsTimeout) clearTimeout(updateStatsTimeout);
+  updateStatsTimeout = setTimeout(() => {
+    const allExercises = getAllExercises();
+    const total = allExercises.length;
+    let completed = 0;
+    const workoutDates = new Set<string>();
+    let totalVolume = 0;
 
-  allExercises.forEach((ex) => {
-    if (completionState[ex.id]) {
-      completed++;
-      if (completionState[ex.id].date) {
-        workoutDates.add(new Date(completionState[ex.id].date).toDateString());
+    allExercises.forEach((ex) => {
+      if (completionState[ex.id]) {
+        completed++;
+        if (completionState[ex.id].date) {
+          workoutDates.add(new Date(completionState[ex.id].date).toDateString());
+        }
       }
-    }
-  });
-
-  Object.values(exerciseLogs).forEach((logs) => {
-    logs.forEach((s) => {
-      totalVolume += (s.weight || 0) * (s.reps || 0);
     });
-  });
 
-  const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    Object.values(exerciseLogs).forEach((logs) => {
+      logs.forEach((s) => {
+        totalVolume += (s.weight || 0) * (s.reps || 0);
+      });
+    });
 
-  const progressEl = document.getElementById("progress-percent");
-  const fillEl = document.getElementById("progress-fill");
-  if (progressEl) progressEl.textContent = percent + "%";
-  if (fillEl) fillEl.style.width = percent + "%";
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-  const completedEl = document.getElementById("completed-exercises");
-  if (completedEl) completedEl.textContent = String(completed);
+    const progressEl = document.getElementById("progress-percent");
+    const fillEl = document.getElementById("progress-fill");
+    if (progressEl) progressEl.textContent = percent + "%";
+    if (fillEl) fillEl.style.width = percent + "%";
 
-  const workoutsEl = document.getElementById("total-workouts");
-  if (workoutsEl) workoutsEl.textContent = String(workoutDates.size);
+    const completedEl = document.getElementById("completed-exercises");
+    if (completedEl) completedEl.textContent = String(completed);
 
-  const volumeEl = document.getElementById("total-volume");
-  if (volumeEl) {
-    volumeEl.textContent =
-      totalVolume > 1000
-        ? (totalVolume / 1000).toFixed(1) + "т"
-        : totalVolume + "кг";
-  }
+    const workoutsEl = document.getElementById("total-workouts");
+    if (workoutsEl) workoutsEl.textContent = String(workoutDates.size);
+
+    const volumeEl = document.getElementById("total-volume");
+    if (volumeEl) {
+      volumeEl.textContent =
+        totalVolume > 1000
+          ? (totalVolume / 1000).toFixed(1) + "т"
+          : totalVolume + "кг";
+    }
+  }, 100);
 }
 
 function renderMuscleGroups(): void {

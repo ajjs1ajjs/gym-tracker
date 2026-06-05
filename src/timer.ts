@@ -4,6 +4,7 @@ let timerInterval: ReturnType<typeof setInterval> | null = null;
 let timerSeconds = 90;
 let timerRunning = false;
 let timerDefaultSeconds = 90;
+let targetEndTime = 0;
 
 function openTimerModal(): void {
   const modal = document.getElementById("timer-modal");
@@ -70,6 +71,8 @@ function updateTimerDisplay(): void {
 function startTimer(): void {
   if (timerRunning) return;
   timerRunning = true;
+  targetEndTime = Date.now() + timerSeconds * 1000;
+  
   const startBtn = document.getElementById("timer-start-btn");
   const pauseBtn = document.getElementById("timer-pause-btn");
   if (startBtn) startBtn.style.display = "none";
@@ -77,8 +80,10 @@ function startTimer(): void {
   updateTimerDisplay();
 
   timerInterval = setInterval(() => {
+    const remaining = Math.max(0, Math.ceil((targetEndTime - Date.now()) / 1000));
+    timerSeconds = remaining;
+    
     if (timerSeconds > 0) {
-      timerSeconds--;
       updateTimerDisplay();
     } else {
       clearInterval(timerInterval!);
@@ -96,7 +101,7 @@ function startTimer(): void {
       if (pauseBtn2) pauseBtn2.style.display = "none";
       updateTimerDisplay();
     }
-  }, 1000);
+  }, 200);
 }
 
 function pauseTimer(): void {
@@ -105,6 +110,7 @@ function pauseTimer(): void {
     timerInterval = null;
   }
   timerRunning = false;
+  timerSeconds = Math.max(0, Math.ceil((targetEndTime - Date.now()) / 1000));
   const startBtn = document.getElementById("timer-start-btn");
   const pauseBtn = document.getElementById("timer-pause-btn");
   if (startBtn) startBtn.style.display = "inline-block";

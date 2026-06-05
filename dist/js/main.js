@@ -1,9 +1,9 @@
 import { loadState, loadPlans, pruneOldLogs, loadEncryptedOnStartup, } from "./data.js";
-import { updateStats, renderMuscleGroups, renderExercises, filterByGroup, openModal, closeModal, toggleExercise, toggleFromModal, logSet, toggleProgressionChart, finishWorkout, resetProgress, toggleDropdown, initTheme, openPlateModal, closePlateModal, calculatePlates, switchTab, switchLogbookTab, openCustomExerciseModal, closeCustomExerciseModal, saveCustomExercise, renderPlans, openPlanModal, closePlanModal, savePlan, deletePlan, startWorkout, renderHistory, filterHistory, toggleExerciseOption, } from "./ui.js";
+import { updateStats, renderMuscleGroups, renderExercises, filterByGroup, openModal, closeModal, toggleExercise, toggleFromModal, logSet, toggleProgressionChart, finishWorkout, resetProgress, toggleDropdown, initTheme, openPlateModal, closePlateModal, calculatePlates, switchTab, switchLogbookTab, openCustomExerciseModal, closeCustomExerciseModal, saveCustomExercise, openPlanModal, closePlanModal, savePlan, deletePlan, startWorkout, filterHistory, toggleExerciseOption, } from "./ui.js";
 import { openTimerModal, closeTimerModal, setTimer, startTimer, pauseTimer, resetTimer, } from "./timer.js";
-import { openSettingsModal, closeSettingsModal, saveSettings, syncToCloud, fetchFromCloud, exportData, importData, exportToCSV, } from "./sync.js";
+import { openSettingsModal, closeSettingsModal, saveSettings, syncToCloud, fetchFromCloud, exportData, importData, exportToCSV, exportForAppleHealth, } from "./sync.js";
 import { saveBodyWeight, addWater, resetWater, saveWaterGoal, calculateCalories, } from "./stats.js";
-import { requestNotifications, playBeep } from "./utils.js";
+import { requestNotifications, playBeep, requestWakeLock, releaseWakeLock } from "./utils.js";
 import LogbookModule from "./logbook.js";
 let plateDebounceTimer = null;
 function init() {
@@ -23,6 +23,7 @@ function init() {
     if (dd) {
         dd.querySelector("[data-action='plate']")?.addEventListener("click", openPlateModal);
         dd.querySelector("[data-action='export']")?.addEventListener("click", exportData);
+        dd.querySelector("[data-action='export-health']")?.addEventListener("click", exportForAppleHealth);
         dd.querySelector("[data-action='settings']")?.addEventListener("click", openSettingsModal);
         dd.querySelector("[data-action='reset']")?.addEventListener("click", resetProgress);
         dd.querySelector("input[type='file']")?.addEventListener("change", importData);
@@ -265,15 +266,13 @@ function init() {
     window.addEventListener("offline", updateOnlineStatus);
     updateOnlineStatus();
     // Wake Lock on visibility change
-    document.addEventListener("visibilitychange", async () => {
+    document.addEventListener("visibilitychange", () => {
         const activeTab = document.querySelector(".nav-item.active")?.dataset.tab;
         if (document.visibilityState === "visible" &&
             (activeTab === "exercises" || activeTab === "logbook")) {
-            const { requestWakeLock } = await import("./utils.js");
             requestWakeLock();
         }
         else {
-            const { releaseWakeLock } = await import("./utils.js");
             releaseWakeLock();
         }
     });
@@ -285,58 +284,6 @@ function byId(id) {
         console.warn(`Element #${id} not found`);
     return el;
 }
-// Expose for inline onclick compatibility
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-window.filterByGroup = filterByGroup;
-window.openModal = openModal;
-window.toggleExercise = toggleExercise;
-window.closeModal = closeModal;
-window.toggleFromModal = toggleFromModal;
-window.logSet = logSet;
-window.toggleProgressionChart = toggleProgressionChart;
-window.finishWorkout = finishWorkout;
-window.resetProgress = resetProgress;
-window.toggleDropdown = toggleDropdown;
-window.openPlateModal = openPlateModal;
-window.closePlateModal = closePlateModal;
-window.calculatePlates = calculatePlates;
-window.switchTab = switchTab;
-window.switchLogbookTab = switchLogbookTab;
-window.openCustomExerciseModal = openCustomExerciseModal;
-window.closeCustomExerciseModal = closeCustomExerciseModal;
-window.saveCustomExercise = saveCustomExercise;
-window.openTimerModal = openTimerModal;
-window.closeTimerModal = closeTimerModal;
-window.setTimer = setTimer;
-window.startTimer = startTimer;
-window.pauseTimer = pauseTimer;
-window.resetTimer = resetTimer;
-window.openSettingsModal = openSettingsModal;
-window.closeSettingsModal = closeSettingsModal;
-window.saveSettings = saveSettings;
-window.syncToCloud = syncToCloud;
-window.fetchFromCloud = fetchFromCloud;
-window.exportData = exportData;
-window.importData = importData;
-window.exportToCSV = exportToCSV;
-window.saveBodyWeight = saveBodyWeight;
-window.filterHistory = filterHistory;
-window.openPlanModal = openPlanModal;
-window.closePlanModal = closePlanModal;
-window.toggleExerciseOption = toggleExerciseOption;
-window.savePlan = savePlan;
-window.deletePlan = deletePlan;
-window.startWorkout = startWorkout;
-window.renderHistory = renderHistory;
-window.renderPlans = renderPlans;
-window.LogbookModule = LogbookModule;
-window.createLogbookCustomExercise = () => LogbookModule.createExercise();
-window.loadLogbookSelect = () => LogbookModule.loadSelect();
-window.renderLogbookSets = () => LogbookModule.renderSets();
-window.addWater = addWater;
-window.resetWater = resetWater;
-window.saveWaterGoal = saveWaterGoal;
-window.calculateCalories = calculateCalories;
 // Wait for DOM
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);

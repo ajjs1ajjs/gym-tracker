@@ -54,6 +54,7 @@ import {
   exportData,
   importData,
   exportToCSV,
+  exportForAppleHealth,
 } from "./sync.js";
 import {
   saveBodyWeight,
@@ -62,7 +63,7 @@ import {
   saveWaterGoal,
   calculateCalories,
 } from "./stats.js";
-import { requestNotifications, playBeep } from "./utils.js";
+import { requestNotifications, playBeep, requestWakeLock, releaseWakeLock } from "./utils.js";
 import LogbookModule from "./logbook.js";
 
 let plateDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -90,6 +91,10 @@ function init(): void {
     dd.querySelector("[data-action='export']")?.addEventListener(
       "click",
       exportData,
+    );
+    dd.querySelector("[data-action='export-health']")?.addEventListener(
+      "click",
+      exportForAppleHealth,
     );
     dd.querySelector("[data-action='settings']")?.addEventListener(
       "click",
@@ -369,7 +374,7 @@ function init(): void {
   updateOnlineStatus();
 
   // Wake Lock on visibility change
-  document.addEventListener("visibilitychange", async () => {
+  document.addEventListener("visibilitychange", () => {
     const activeTab = (
       document.querySelector(".nav-item.active") as HTMLElement
     )?.dataset.tab;
@@ -377,10 +382,8 @@ function init(): void {
       document.visibilityState === "visible" &&
       (activeTab === "exercises" || activeTab === "logbook")
     ) {
-      const { requestWakeLock } = await import("./utils.js");
       requestWakeLock();
     } else {
-      const { releaseWakeLock } = await import("./utils.js");
       releaseWakeLock();
     }
   });
@@ -394,59 +397,6 @@ function byId(id: string): HTMLElement | null {
   return el;
 }
 
-// Expose for inline onclick compatibility
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(window as any).filterByGroup = filterByGroup;
-(window as any).openModal = openModal;
-(window as any).toggleExercise = toggleExercise;
-(window as any).closeModal = closeModal;
-(window as any).toggleFromModal = toggleFromModal;
-(window as any).logSet = logSet;
-(window as any).toggleProgressionChart = toggleProgressionChart;
-(window as any).finishWorkout = finishWorkout;
-(window as any).resetProgress = resetProgress;
-(window as any).toggleDropdown = toggleDropdown;
-(window as any).openPlateModal = openPlateModal;
-(window as any).closePlateModal = closePlateModal;
-(window as any).calculatePlates = calculatePlates;
-(window as any).switchTab = switchTab;
-(window as any).switchLogbookTab = switchLogbookTab;
-(window as any).openCustomExerciseModal = openCustomExerciseModal;
-(window as any).closeCustomExerciseModal = closeCustomExerciseModal;
-(window as any).saveCustomExercise = saveCustomExercise;
-(window as any).openTimerModal = openTimerModal;
-(window as any).closeTimerModal = closeTimerModal;
-(window as any).setTimer = setTimer;
-(window as any).startTimer = startTimer;
-(window as any).pauseTimer = pauseTimer;
-(window as any).resetTimer = resetTimer;
-(window as any).openSettingsModal = openSettingsModal;
-(window as any).closeSettingsModal = closeSettingsModal;
-(window as any).saveSettings = saveSettings;
-(window as any).syncToCloud = syncToCloud;
-(window as any).fetchFromCloud = fetchFromCloud;
-(window as any).exportData = exportData;
-(window as any).importData = importData;
-(window as any).exportToCSV = exportToCSV;
-(window as any).saveBodyWeight = saveBodyWeight;
-(window as any).filterHistory = filterHistory;
-(window as any).openPlanModal = openPlanModal;
-(window as any).closePlanModal = closePlanModal;
-(window as any).toggleExerciseOption = toggleExerciseOption;
-(window as any).savePlan = savePlan;
-(window as any).deletePlan = deletePlan;
-(window as any).startWorkout = startWorkout;
-(window as any).renderHistory = renderHistory;
-(window as any).renderPlans = renderPlans;
-(window as any).LogbookModule = LogbookModule;
-(window as any).createLogbookCustomExercise = () =>
-  LogbookModule.createExercise();
-(window as any).loadLogbookSelect = () => LogbookModule.loadSelect();
-(window as any).renderLogbookSets = () => LogbookModule.renderSets();
-(window as any).addWater = addWater;
-(window as any).resetWater = resetWater;
-(window as any).saveWaterGoal = saveWaterGoal;
-(window as any).calculateCalories = calculateCalories;
 
 // Wait for DOM
 if (document.readyState === "loading") {

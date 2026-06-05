@@ -160,16 +160,66 @@ async function fetchFromCloud() {
             }
             const content = result.files["gym-data.json"].content;
             const data = safeJSONParse(content, {});
-            if (confirm("Дані завантажено. Перезаписати поточний прогрес?")) {
-                Object.assign(completionState, data.completionState || {});
-                workoutPlans.length = 0;
-                workoutPlans.push(...(data.workoutPlans || []));
-                Object.keys(exerciseLogs).forEach((k) => delete exerciseLogs[k]);
-                Object.assign(exerciseLogs, data.exerciseLogs || {});
+            if (confirm("Дані завантажено. Об'єднати з поточним прогресом? (Рекомендується)")) {
+                const remoteCompletion = data.completionState || {};
+                for (const [key, remoteVal] of Object.entries(remoteCompletion)) {
+                    const localVal = completionState[key];
+                    if (!localVal) {
+                        completionState[key] = remoteVal;
+                    }
+                    else if (remoteVal.date && localVal.date) {
+                        if (new Date(remoteVal.date) > new Date(localVal.date)) {
+                            completionState[key] = remoteVal;
+                        }
+                    }
+                }
+                const remoteLogs = data.exerciseLogs || {};
+                for (const [key, remoteArr] of Object.entries(remoteLogs)) {
+                    if (!exerciseLogs[key]) {
+                        exerciseLogs[key] = remoteArr;
+                    }
+                    else {
+                        const localArr = exerciseLogs[key];
+                        const merged = [...localArr];
+                        for (const rLog of remoteArr) {
+                            const exists = merged.some((l) => l.date === rLog.date && l.weight === rLog.weight && l.reps === rLog.reps);
+                            if (!exists)
+                                merged.push(rLog);
+                        }
+                        merged.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                        exerciseLogs[key] = merged;
+                    }
+                }
+                const remoteBw = data.bodyWeightHistory || [];
+                const mergedBw = [...bodyWeightHistory];
+                for (const rBw of remoteBw) {
+                    const exists = mergedBw.some((l) => l.date === rBw.date);
+                    if (!exists)
+                        mergedBw.push(rBw);
+                }
+                mergedBw.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
                 bodyWeightHistory.length = 0;
-                bodyWeightHistory.push(...(data.bodyWeightHistory || []));
-                customExercises.length = 0;
-                customExercises.push(...(data.customExercises || []));
+                bodyWeightHistory.push(...mergedBw);
+                const remoteCe = data.customExercises || [];
+                for (const rCe of remoteCe) {
+                    const existsIdx = customExercises.findIndex((ce) => String(ce.id) === String(rCe.id));
+                    if (existsIdx === -1) {
+                        customExercises.push(rCe);
+                    }
+                    else {
+                        customExercises[existsIdx] = rCe;
+                    }
+                }
+                const remoteWp = data.workoutPlans || [];
+                for (const rWp of remoteWp) {
+                    const existsIdx = workoutPlans.findIndex((wp) => String(wp.id) === String(rWp.id));
+                    if (existsIdx === -1) {
+                        workoutPlans.push(rWp);
+                    }
+                    else {
+                        workoutPlans[existsIdx] = rWp;
+                    }
+                }
                 mergeCustomExercises();
                 saveState();
                 savePlans();
@@ -219,18 +269,68 @@ function importData(event) {
         try {
             const result = e.target.result;
             const data = safeJSONParse(result, {});
-            if (!confirm("Це перезапише всі ваші локальні дані. Продовжити?")) {
+            if (!confirm("Об'єднати імпортовані дані з поточним прогресом?")) {
                 return;
             }
-            Object.assign(completionState, data.completionState || {});
-            workoutPlans.length = 0;
-            workoutPlans.push(...(data.workoutPlans || []));
-            Object.keys(exerciseLogs).forEach((k) => delete exerciseLogs[k]);
-            Object.assign(exerciseLogs, data.exerciseLogs || {});
+            const remoteCompletion = data.completionState || {};
+            for (const [key, remoteVal] of Object.entries(remoteCompletion)) {
+                const localVal = completionState[key];
+                if (!localVal) {
+                    completionState[key] = remoteVal;
+                }
+                else if (remoteVal.date && localVal.date) {
+                    if (new Date(remoteVal.date) > new Date(localVal.date)) {
+                        completionState[key] = remoteVal;
+                    }
+                }
+            }
+            const remoteLogs = data.exerciseLogs || {};
+            for (const [key, remoteArr] of Object.entries(remoteLogs)) {
+                if (!exerciseLogs[key]) {
+                    exerciseLogs[key] = remoteArr;
+                }
+                else {
+                    const localArr = exerciseLogs[key];
+                    const merged = [...localArr];
+                    for (const rLog of remoteArr) {
+                        const exists = merged.some((l) => l.date === rLog.date && l.weight === rLog.weight && l.reps === rLog.reps);
+                        if (!exists)
+                            merged.push(rLog);
+                    }
+                    merged.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                    exerciseLogs[key] = merged;
+                }
+            }
+            const remoteBw = data.bodyWeightHistory || [];
+            const mergedBw = [...bodyWeightHistory];
+            for (const rBw of remoteBw) {
+                const exists = mergedBw.some((l) => l.date === rBw.date);
+                if (!exists)
+                    mergedBw.push(rBw);
+            }
+            mergedBw.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
             bodyWeightHistory.length = 0;
-            bodyWeightHistory.push(...(data.bodyWeightHistory || []));
-            customExercises.length = 0;
-            customExercises.push(...(data.customExercises || []));
+            bodyWeightHistory.push(...mergedBw);
+            const remoteCe = data.customExercises || [];
+            for (const rCe of remoteCe) {
+                const existsIdx = customExercises.findIndex((ce) => String(ce.id) === String(rCe.id));
+                if (existsIdx === -1) {
+                    customExercises.push(rCe);
+                }
+                else {
+                    customExercises[existsIdx] = rCe;
+                }
+            }
+            const remoteWp = data.workoutPlans || [];
+            for (const rWp of remoteWp) {
+                const existsIdx = workoutPlans.findIndex((wp) => String(wp.id) === String(rWp.id));
+                if (existsIdx === -1) {
+                    workoutPlans.push(rWp);
+                }
+                else {
+                    workoutPlans[existsIdx] = rWp;
+                }
+            }
             mergeCustomExercises();
             saveState();
             savePlans();
@@ -265,8 +365,47 @@ function exportToCSV() {
     const link = document.createElement("a");
     link.setAttribute("href", url);
     link.setAttribute("download", `gym_data_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.removeChild(link);
+}
+function exportForAppleHealth() {
+    const csvHeaders = "Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,Notes,Workout Notes,RPE\n";
+    let csv = csvHeaders;
+    const allEx = getAllExercises();
+    const groupedLogs = {};
+    Object.keys(exerciseLogs).forEach((id) => {
+        const ex = allEx.find((e) => String(e.id) === String(id));
+        const name = ex ? ex.name : "Exercise " + id;
+        exerciseLogs[id].forEach((s) => {
+            const d = new Date(s.date);
+            const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            if (!groupedLogs[dateStr])
+                groupedLogs[dateStr] = [];
+            groupedLogs[dateStr].push({ exName: name, weight: s.weight || 0, reps: s.reps || 0, time: d.getTime() });
+        });
+    });
+    const sortedDates = Object.keys(groupedLogs).sort();
+    sortedDates.forEach(dateStr => {
+        const strongDate = `${dateStr} 12:00:00`;
+        const workoutName = "GymProgress Workout";
+        const duration = "1h 0m";
+        const dayLogs = groupedLogs[dateStr].sort((a, b) => a.time - b.time);
+        const setOrders = {};
+        dayLogs.forEach(log => {
+            if (!setOrders[log.exName])
+                setOrders[log.exName] = 1;
+            else
+                setOrders[log.exName]++;
+            const setOrder = setOrders[log.exName];
+            csv += `"${strongDate}","${workoutName}","${duration}","${log.exName}",${setOrder},${log.weight},${log.reps},0,0,"","",\n`;
+        });
+    });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `strong_compatible_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 }
-export { openSettingsModal, closeSettingsModal, saveSettings, syncToCloud, fetchFromCloud, exportData, importData, exportToCSV, };
+export { openSettingsModal, closeSettingsModal, saveSettings, syncToCloud, fetchFromCloud, exportData, importData, exportToCSV, exportForAppleHealth, };
