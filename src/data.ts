@@ -110,12 +110,7 @@ function saveState(): void {
 }
 
 function isEncrypted(value: string): boolean {
-  try {
-    const first = value.charCodeAt(0);
-    return first === 1;
-  } catch {
-    return false;
-  }
+  return value.startsWith("#1#");
 }
 
 async function encryptLocalData(passphrase: string): Promise<void> {
@@ -150,7 +145,6 @@ async function decryptLocalData(passphrase: string): Promise<boolean> {
       if (dec === null) return false;
       const parsed = safeJSONParse(dec, null);
       if (parsed === null) return false;
-      localStorage.setItem(key, dec);
     }
     return true;
   } catch {

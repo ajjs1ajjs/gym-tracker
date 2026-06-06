@@ -263,11 +263,12 @@ async function encryptData(plaintext, passphrase) {
     let bin = "";
     for (let i = 0; i < combined.length; i++)
         bin += String.fromCharCode(combined[i]);
-    return btoa(bin);
+    return "#1#" + btoa(bin);
 }
 async function decryptData(ciphertextB64, passphrase) {
     try {
-        const combined = Uint8Array.from(atob(ciphertextB64), (c) => c.charCodeAt(0));
+        const raw = ciphertextB64.startsWith("#1#") ? ciphertextB64.slice(3) : ciphertextB64;
+        const combined = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
         if (combined[0] !== 1)
             return null;
         const salt = combined.slice(1, 17);

@@ -136,74 +136,80 @@
           <span class="muscle-tag" id="modal-muscle"></span>
           <span class="difficulty-tag" id="modal-difficulty"></span>
         </div>
-        <p class="modal-description" id="modal-description"></p>
-        <div class="modal-instructions">
-          <h4>Як виконувати:</h4>
-          <ul id="modal-instructions"></ul>
-        </div>
-        <div class="modal-sets">
-          <h4>Підходи та повтори:</h4>
-          <p id="modal-sets"></p>
-        </div>
-        <div class="modal-progression">
-          <h4>Лог підходів (сьогодні)</h4>
-          <div id="exercise-sets-log"></div>
-          <div
-            id="modal-last-session-container"
-            class="last-session-container"
-            style="display: none"
-          ></div>
-          <div class="set-input-row">
-            <input
-              type="number"
-              id="set-weight"
-              placeholder="Вага (кг)"
-              step="0.5"
-            />
-            <input type="number" id="set-reps" placeholder="Повтори" step="1" />
-            <button id="set-log-btn">+ Додати</button>
-          </div>
-          <button class="btn-toggle-chart" id="progression-toggle-btn">
-            📈 Показати прогрес
-          </button>
-          <div
-            class="progression-chart-container"
-            id="progression-chart-wrapper"
-            style="display: none"
-          >
-            <div
-              class="chart-metric-selector"
-              style="
-                margin-bottom: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: flex-end;
-                gap: 8px;
-              "
-            >
-              <label
-                for="progression-metric"
-                style="font-size: 0.85rem; color: var(--text-secondary)"
-                >Показник:</label
-              >
-              <select
-                id="progression-metric"
-                style="
-                  background: var(--bg-solid);
-                  color: var(--text-primary);
-                  border: 1px solid var(--border);
-                  border-radius: 6px;
-                  padding: 4px 8px;
-                  font-size: 0.85rem;
-                  cursor: pointer;
-                "
-              >
-                <option value="weight">Максимальна вага (кг)</option>
-                <option value="1rm">Розрахунковий 1RM (кг)</option>
-                <option value="volume">Сумарний об'єм (кг)</option>
-              </select>
+        <div class="modal-body-grid">
+          <div>
+            <p class="modal-description" id="modal-description"></p>
+            <div class="modal-instructions">
+              <h4>Як виконувати:</h4>
+              <ul id="modal-instructions"></ul>
             </div>
-            <canvas id="progression-chart"></canvas>
+            <div class="modal-sets">
+              <h4>Підходи та повтори:</h4>
+              <p id="modal-sets"></p>
+            </div>
+          </div>
+          <div>
+            <div class="modal-progression">
+              <h4>Лог підходів (сьогодні)</h4>
+              <div id="exercise-sets-log"></div>
+              <div
+                id="modal-last-session-container"
+                class="last-session-container"
+                style="display: none"
+              ></div>
+              <div class="set-input-row">
+                <input
+                  type="number"
+                  id="set-weight"
+                  placeholder="Вага (кг)"
+                  step="0.5"
+                />
+                <input type="number" id="set-reps" placeholder="Повтори" step="1" />
+                <button id="set-log-btn">+ Додати</button>
+              </div>
+              <button class="btn-toggle-chart" id="progression-toggle-btn">
+                📈 Показати прогрес
+              </button>
+              <div
+                class="progression-chart-container"
+                id="progression-chart-wrapper"
+                style="display: none"
+              >
+                <div
+                  class="chart-metric-selector"
+                  style="
+                    margin-bottom: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    gap: 8px;
+                  "
+                >
+                  <label
+                    for="progression-metric"
+                    style="font-size: 0.85rem; color: var(--text-secondary)"
+                    >Показник:</label
+                  >
+                  <select
+                    id="progression-metric"
+                    style="
+                      background: var(--bg-solid);
+                      color: var(--text-primary);
+                      border: 1px solid var(--border);
+                      border-radius: 6px;
+                      padding: 4px 8px;
+                      font-size: 0.85rem;
+                      cursor: pointer;
+                    "
+                  >
+                    <option value="weight">Максимальна вага (кг)</option>
+                    <option value="1rm">Розрахунковий 1RM (кг)</option>
+                    <option value="volume">Сумарний об'єм (кг)</option>
+                  </select>
+                </div>
+                <canvas id="progression-chart"></canvas>
+              </div>
+            </div>
           </div>
         </div>
         <div class="modal-checkin">

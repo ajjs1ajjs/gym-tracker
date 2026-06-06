@@ -1,5 +1,4 @@
 node_modules
-src
 dist
 __tests__
 cypress

@@ -73,13 +73,7 @@ function saveState() {
     localStorage.setItem("customExercises", JSON.stringify(customExercises));
 }
 function isEncrypted(value) {
-    try {
-        const first = value.charCodeAt(0);
-        return first === 1;
-    }
-    catch {
-        return false;
-    }
+    return value.startsWith("#1#");
 }
 async function encryptLocalData(passphrase) {
     const keys = [
@@ -116,7 +110,6 @@ async function decryptLocalData(passphrase) {
             const parsed = safeJSONParse(dec, null);
             if (parsed === null)
                 return false;
-            localStorage.setItem(key, dec);
         }
         return true;
     }
