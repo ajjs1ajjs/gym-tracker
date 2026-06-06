@@ -27,13 +27,11 @@ import {
   openCustomExerciseModal,
   closeCustomExerciseModal,
   saveCustomExercise,
-  renderPlans,
   openPlanModal,
   closePlanModal,
   savePlan,
   deletePlan,
   startWorkout,
-  renderHistory,
   filterHistory,
   toggleExerciseOption,
 } from "./ui.js";

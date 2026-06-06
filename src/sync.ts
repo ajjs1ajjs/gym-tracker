@@ -80,6 +80,12 @@ function openSettingsModal(): void {
     encryptInput.disabled = !hasPassphrase;
     encryptInput.value = hasPassphrase ? "********" : "";
   }
+  const smartTimerToggle = document.getElementById(
+    "smart-timer-toggle",
+  ) as HTMLInputElement | null;
+  if (smartTimerToggle) {
+    smartTimerToggle.checked = localStorage.getItem("gym_smart_timer") !== "false";
+  }
 }
 
 function closeSettingsModal(): void {
@@ -97,6 +103,13 @@ async function saveSettings(): Promise<void> {
 
   if (token) setStoredToken(token);
   if (gistId) setStoredGistId(gistId);
+
+  const smartTimerToggle = document.getElementById(
+    "smart-timer-toggle",
+  ) as HTMLInputElement | null;
+  if (smartTimerToggle) {
+    localStorage.setItem("gym_smart_timer", String(smartTimerToggle.checked));
+  }
 
   const encryptToggle = document.getElementById(
     "encrypt-toggle",
@@ -438,7 +451,7 @@ function exportToCSV(): void {
     const group = ex ? ex.muscle : "-";
 
     exerciseLogs[id].forEach((s) => {
-      const date = new Date(s.date).toLocaleDateString();
+      const date = new Date(s.date).toLocaleDateString("uk-UA");
       const oneRM = calculate1RM(s.weight, s.reps);
       csv += `${date},"${name}",${group},${s.weight},${s.reps},${oneRM}\n`;
     });
@@ -452,6 +465,8 @@ function exportToCSV(): void {
     "download",
     `gym_data_${new Date().toISOString().split("T")[0]}.csv`,
   );
+  document.body.appendChild(link);
+  link.click();
   document.body.removeChild(link);
 }
 

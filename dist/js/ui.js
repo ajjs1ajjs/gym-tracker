@@ -350,10 +350,11 @@ function renderProgressionChart(id) {
     const metric = metricSelect?.value || "weight";
     // Group logs by date to compute metric per day
     const entries = {};
-    // Group logs by date string
+    // Group logs by standard YYYY-MM-DD date key
     const groupedByDate = {};
     logs.forEach((l) => {
-        const d = new Date(l.date).toLocaleDateString();
+        const dateObj = new Date(l.date);
+        const d = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`;
         if (!groupedByDate[d])
             groupedByDate[d] = [];
         groupedByDate[d].push(l);
@@ -373,16 +374,14 @@ function renderProgressionChart(id) {
             entries[d] = dayLogs.reduce((sum, l) => sum + l.weight * l.reps, 0);
         }
     });
-    const labels = Object.keys(entries)
-        .sort((a, b) => {
-        const parseDate = (str) => {
-            const parts = str.split("."); // DD.MM.YYYY
-            return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-        };
-        return +parseDate(a) - +parseDate(b);
-    })
+    const sortedKeys = Object.keys(entries)
+        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
         .slice(-7);
-    const datasets = labels.map((l) => entries[l]);
+    const datasets = sortedKeys.map((key) => entries[key]);
+    const labels = sortedKeys.map((key) => {
+        const parts = key.split("-");
+        return `${parts[2]}.${parts[1]}`;
+    });
     let labelText = "Максимальна вага (кг)";
     let borderColor = "#28a745";
     let backgroundColor = "rgba(40, 167, 69, 0.15)";
@@ -670,8 +669,22 @@ function renderHeatmap() {
             activity[d] = (activity[d] || 0) + 1;
         }
     });
+    const archive = localStorage.getItem("completionArchive");
+    if (archive) {
+        const archiveData = safeJSONParse(archive, {});
+        Object.keys(archiveData).forEach((dateStr) => {
+            const d = new Date(dateStr).toDateString();
+            const completedExercises = Object.values(archiveData[dateStr]);
+            activity[d] = (activity[d] || 0) + completedExercises.filter((val) => val.completed).length;
+        });
+    }
     const now = new Date();
     const days = [];
+    const ukLocale = new Intl.DateTimeFormat("uk-UA", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    });
     for (let i = 364; i >= 0; i--) {
         const d = new Date();
         d.setDate(now.getDate() - i);
@@ -686,7 +699,7 @@ function renderHeatmap() {
             level = 3;
         if (count > 9)
             level = 4;
-        days.push(`<div class="heatmap-day level-${level}" title="${d.toLocaleDateString()}: ${count} вправ"></div>`);
+        days.push(`<div class="heatmap-day level-${level}" title="${ukLocale.format(d)}: ${count} вправ"></div>`);
     }
     container.innerHTML = days.join("");
 }
@@ -1120,6 +1133,11 @@ if (typeof document !== "undefined") {
         };
         calc1rmWeight?.addEventListener("input", triggerCalculation);
         calc1rmReps?.addEventListener("input", triggerCalculation);
+        // Initialize smart timer toggle state on startup
+        const smartTimerToggle = document.getElementById("smart-timer-toggle");
+        if (smartTimerToggle) {
+            smartTimerToggle.checked = localStorage.getItem("gym_smart_timer") !== "false";
+        }
     });
 }
 export { updateStats, renderMuscleGroups, filterByGroup, renderExercises, openModal, closeModal, toggleExercise, toggleFromModal, updateModalState, renderExerciseSetsLog, logSet, toggleProgressionChart, renderProgressionChart, renderHistory, filterHistory, renderHistoryChart, renderHeatmap, renderPlans, openPlanModal, closePlanModal, toggleExerciseOption, savePlan, deletePlan, startWorkout, finishWorkout, resetProgress, toggleDropdown, initTheme, calculatePlates, openPlateModal, closePlateModal, switchTab, switchLogbookTab, openCustomExerciseModal, closeCustomExerciseModal, saveCustomExercise, };
