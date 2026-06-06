@@ -91,31 +91,37 @@
     </header>
 
     <nav class="bottom-nav">
-      <button class="nav-item active" data-tab="exercises">
+      <button class="nav-item active" data-tab="exercises" title="Alt+1">
         <span class="nav-icon">🏋️</span>
         <span class="nav-label">Вправи</span>
       </button>
-      <button class="nav-item" data-tab="logbook">
+      <button class="nav-item" data-tab="logbook" title="Alt+2">
         <span class="nav-icon">📔</span>
         <span class="nav-label">Журнал</span>
       </button>
-      <button class="nav-item" data-tab="history">
+      <button class="nav-item" data-tab="history" title="Alt+3">
         <span class="nav-icon">📅</span>
         <span class="nav-label">Історія</span>
       </button>
-      <button class="nav-item" data-tab="plans">
+      <button class="nav-item" data-tab="plans" title="Alt+4">
         <span class="nav-icon">📋</span>
         <span class="nav-label">Плани</span>
       </button>
-      <button class="nav-item" data-tab="body">
+      <button class="nav-item" data-tab="body" title="Alt+5">
         <span class="nav-icon">⚖️</span>
         <span class="nav-label">Тіло</span>
       </button>
     </nav>
+    <div class="keyboard-hint">
+      <kbd>Alt+1-5</kbd> Таби &nbsp;·&nbsp; <kbd>Esc</kbd> Закрити &nbsp;·&nbsp; <kbd>T</kbd> Таймер &nbsp;·&nbsp; <kbd>Ctrl+Enter</kbd> Додати сет
+    </div>
 
     <div class="main-layout">
       <aside class="sidebar">
         <h3>Групи м'язів</h3>
+        <div class="search-box">
+          <input type="text" id="exercise-search" placeholder="🔍 Пошук вправ..." />
+        </div>
         <div class="muscle-groups" id="muscle-groups"></div>
         <button class="btn-add-custom-ex" id="open-custom-ex-btn">
           + Створити вправу

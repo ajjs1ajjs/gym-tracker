@@ -303,6 +303,32 @@ header h1 {
   letter-spacing: 1px;
 }
 
+.search-box {
+  margin-bottom: 15px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.search-box input:focus {
+  border-color: var(--accent);
+}
+
+.search-box input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
 .muscle-groups {
   display: flex;
   flex-direction: column;
@@ -809,6 +835,96 @@ main {
   padding: 5px 12px;
   border-radius: 20px;
   font-size: 0.85rem;
+}
+
+/* History table on desktop */
+.history-table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.history-table thead th {
+  text-align: left;
+  padding: 12px 16px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--border);
+}
+
+.history-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+}
+
+.history-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.history-table tbody td {
+  padding: 12px 16px;
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.history-table tbody td:first-child {
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.history-table .history-item-count {
+  display: inline-block;
+}
+
+@media (max-width: 600px) {
+  .history-table thead { display: none; }
+  .history-table tbody tr { display: block; padding: 12px; }
+  .history-table tbody td {
+    display: block;
+    padding: 4px 0;
+    border: none;
+  }
+  .history-table tbody td::before {
+    content: attr(data-label);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 2px;
+  }
+}
+
+/* Keyboard hints */
+.keyboard-hint {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  .keyboard-hint {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+  }
+  .keyboard-hint kbd {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: inherit;
+    font-size: 0.65rem;
+  }
 }
 
 /* Plans Section */
@@ -1696,12 +1812,28 @@ body.light-theme .btn-copy-last:hover {
 
   /* Wider exercise cards on desktop */
   .exercises-grid {
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 24px;
   }
 
   .card-image {
-    height: 200px;
+    height: 210px;
+  }
+
+  .card-content h3 {
+    font-size: 1.15rem;
+  }
+
+  .card-content {
+    padding: 18px;
+  }
+
+  .exercise-card {
+    border-radius: 18px;
+  }
+
+  .history-table tbody td {
+    padding: 14px 16px;
   }
 
   /* Floating navigation dock - wider */
@@ -1755,5 +1887,29 @@ body.light-theme .btn-copy-last:hover {
 
   .header-top {
     max-width: 1200px;
+  }
+}
+
+/* Very wide screens: even bigger modal and heatmap */
+@media (min-width: 1400px) {
+  .modal-content {
+    max-width: 960px;
+  }
+
+  .modal-content img {
+    height: 300px;
+  }
+
+  .exercises-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+
+  .heatmap-day {
+    width: 18px;
+    height: 18px;
+  }
+
+  #plans-list {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
   }
 }

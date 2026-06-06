@@ -7,6 +7,7 @@ let progressionChart = null;
 let historyChartInstance = null;
 let muscleChartInstance = null;
 let updateStatsTimeout = null;
+let exerciseSearchQuery = "";
 function updateStats() {
     if (updateStatsTimeout)
         clearTimeout(updateStatsTimeout);
@@ -81,6 +82,18 @@ function filterByGroup(groupId) {
     renderMuscleGroups();
     renderExercises();
 }
+function setSearchQuery(query) {
+    exerciseSearchQuery = query.toLowerCase().trim();
+    renderMuscleGroups();
+    renderExercises();
+}
+function matchesSearch(ex) {
+    if (!exerciseSearchQuery)
+        return true;
+    const name = ex.name.toLowerCase();
+    const muscle = (ex.muscle || "").toLowerCase();
+    return name.includes(exerciseSearchQuery) || muscle.includes(exerciseSearchQuery);
+}
 function renderExercises() {
     const container = document.getElementById("exercises-list");
     if (!container)
@@ -89,15 +102,19 @@ function renderExercises() {
         ? trainingData.filter((g) => g.id === selectedMuscleGroup)
         : trainingData;
     container.innerHTML = filteredGroups
-        .map((group) => `
+        .map((group) => {
+        const filteredExs = group.exercises.filter(matchesSearch);
+        if (filteredExs.length === 0)
+            return "";
+        return `
         <div class="exercise-group">
             <h2 class="group-title">${escapeHtml(group.icon)} ${escapeHtml(group.name)}</h2>
             <div class="exercises-grid">
-                ${group.exercises
-        .map((ex) => {
-        const state = completionState[ex.id];
-        const isCompleted = !!state;
-        return `
+                ${filteredExs
+            .map((ex) => {
+            const state = completionState[ex.id];
+            const isCompleted = !!state;
+            return `
                         <div class="exercise-card ${isCompleted ? "completed" : ""}" data-ex-id="${ex.id}">
                             <div class="card-image">
                                 <img src="${escapeHtml(ex.image)}" alt="${escapeHtml(ex.name)}" loading="lazy">
@@ -116,11 +133,12 @@ function renderExercises() {
                             </div>
                         </div>
                     `;
-    })
-        .join("")}
+        })
+            .join("")}
             </div>
         </div>
-    `)
+    `;
+    })
         .join("");
 }
 function toggleExercise(id) {
@@ -440,44 +458,12 @@ function renderHistory() {
             '<div class="history-item"><p>Історія тренувань порожня</p></div>';
         return;
     }
-    const allEx = getAllExercises();
     const page = parseInt(historyList.dataset.page || "1");
     const perPage = 20;
     const start = (page - 1) * perPage;
     const end = start + perPage;
     const pageWorkouts = workouts.slice(start, end);
-    historyList.innerHTML = pageWorkouts
-        .map((w) => {
-        const exerciseNames = w.exercises
-            .map((id) => {
-            const ex = allEx.find((e) => e.id === id);
-            return ex ? ex.name : "";
-        })
-            .filter((n) => n)
-            .join(", ");
-        let sessionVolume = 0;
-        w.exercises.forEach((exId) => {
-            const logs = exerciseLogs[exId] || [];
-            logs.forEach((s) => {
-                if (new Date(s.date).toDateString() === new Date(w.date).toDateString()) {
-                    sessionVolume += (s.weight || 0) * (s.reps || 0);
-                }
-            });
-        });
-        return `
-            <div class="history-item">
-                <div>
-                    <div class="history-item-date">${formatDate(w.date)}</div>
-                    <div class="history-item-exercises">${escapeHtml(exerciseNames.substring(0, 100))}${exerciseNames.length > 100 ? "..." : ""}</div>
-                </div>
-                <div style="text-align:right;">
-                    <div class="history-item-count">${w.count} вправ</div>
-                    <div style="font-size:0.8rem; color:var(--success);">${sessionVolume} кг</div>
-                </div>
-            </div>
-        `;
-    })
-        .join("");
+    renderHistoryTableView(pageWorkouts);
     if (workouts.length > perPage) {
         const totalPages = Math.ceil(workouts.length / perPage);
         const nav = document.createElement("div");
@@ -1110,6 +1096,118 @@ function saveCustomExercise() {
     closeCustomExerciseModal();
     celebration();
 }
+function initKeyboardShortcuts() {
+    document.addEventListener("keydown", (e) => {
+        const tag = e.target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT")
+            return;
+        const modal = document.getElementById("exercise-modal");
+        const modalVisible = modal?.style.display === "flex";
+        if (e.key === "Escape") {
+            if (modalVisible)
+                closeModal();
+            return;
+        }
+        if (e.altKey && ["1", "2", "3", "4", "5"].includes(e.key)) {
+            e.preventDefault();
+            const tabs = {
+                "1": "exercises",
+                "2": "logbook",
+                "3": "history",
+                "4": "plans",
+                "5": "body",
+            };
+            switchTab(tabs[e.key]);
+            return;
+        }
+        if (!modalVisible)
+            return;
+        if (e.key === "Enter" && e.ctrlKey) {
+            e.preventDefault();
+            logSet();
+        }
+        if (e.key === "t" || e.key === "T") {
+            e.preventDefault();
+            openTimerModal();
+            startTimer();
+        }
+    });
+}
+function renderHistoryTableView(workouts) {
+    const historyList = document.getElementById("history-list");
+    if (!historyList)
+        return;
+    const isDesktop = window.innerWidth > 900;
+    const allEx = getAllExercises();
+    historyList.innerHTML = isDesktop
+        ? `<div class="history-table-wrapper"><table class="history-table">
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Вправи</th>
+            <th>Кількість</th>
+            <th>Об'єм (кг)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${workouts.map((w) => {
+            const exerciseNames = w.exercises
+                .map((id) => {
+                const ex = allEx.find((e) => e.id === id);
+                return ex ? ex.name : "";
+            })
+                .filter((n) => n)
+                .join(", ");
+            let sessionVolume = 0;
+            w.exercises.forEach((exId) => {
+                const logs = exerciseLogs[exId] || [];
+                logs.forEach((s) => {
+                    if (new Date(s.date).toDateString() === new Date(w.date).toDateString()) {
+                        sessionVolume += (s.weight || 0) * (s.reps || 0);
+                    }
+                });
+            });
+            return `<tr>
+              <td data-label="Дата">${formatDate(w.date)}</td>
+              <td data-label="Вправи">${escapeHtml(exerciseNames.substring(0, 80))}${exerciseNames.length > 80 ? "..." : ""}</td>
+              <td data-label="Кількість"><span class="history-item-count">${w.count}</span></td>
+              <td data-label="Об'єм">${sessionVolume} кг</td>
+            </tr>`;
+        }).join("")}
+        </tbody>
+      </table></div>`
+        : workouts.map((w) => {
+            const exerciseNames = w.exercises
+                .map((id) => {
+                const ex = allEx.find((e) => e.id === id);
+                return ex ? ex.name : "";
+            })
+                .filter((n) => n)
+                .join(", ");
+            let sessionVolume = 0;
+            w.exercises.forEach((exId) => {
+                const logs = exerciseLogs[exId] || [];
+                logs.forEach((s) => {
+                    if (new Date(s.date).toDateString() === new Date(w.date).toDateString()) {
+                        sessionVolume += (s.weight || 0) * (s.reps || 0);
+                    }
+                });
+            });
+            return `
+          <div class="history-item">
+            <div>
+              <div class="history-item-date">${formatDate(w.date)}</div>
+              <div class="history-item-exercises">${escapeHtml(exerciseNames.substring(0, 100))}${exerciseNames.length > 100 ? "..." : ""}</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="history-item-count">${w.count} вправ</div>
+              <div style="font-size:0.8rem; color:var(--success);">${sessionVolume} кг</div>
+            </div>
+          </div>
+        `;
+        })
+            .join("");
+}
 if (typeof document !== "undefined") {
     document.addEventListener("DOMContentLoaded", () => {
         document
@@ -1138,6 +1236,13 @@ if (typeof document !== "undefined") {
         if (smartTimerToggle) {
             smartTimerToggle.checked = localStorage.getItem("gym_smart_timer") !== "false";
         }
+        // Exercise search
+        const searchInput = document.getElementById("exercise-search");
+        if (searchInput) {
+            searchInput.addEventListener("input", () => setSearchQuery(searchInput.value));
+        }
+        // Keyboard shortcuts
+        initKeyboardShortcuts();
     });
 }
 export { updateStats, renderMuscleGroups, filterByGroup, renderExercises, openModal, closeModal, toggleExercise, toggleFromModal, updateModalState, renderExerciseSetsLog, logSet, toggleProgressionChart, renderProgressionChart, renderHistory, filterHistory, renderHistoryChart, renderHeatmap, renderPlans, openPlanModal, closePlanModal, toggleExerciseOption, savePlan, deletePlan, startWorkout, finishWorkout, resetProgress, toggleDropdown, initTheme, calculatePlates, openPlateModal, closePlateModal, switchTab, switchLogbookTab, openCustomExerciseModal, closeCustomExerciseModal, saveCustomExercise, };
