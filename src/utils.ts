@@ -223,6 +223,23 @@ function diffClass(difficulty: string): string {
   return DIFFICULTY_CLASS[difficulty] ?? difficulty;
 }
 
+function safeSetItem(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (e) {
+    if (
+      e instanceof DOMException &&
+      (e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED")
+    ) {
+      showToast("Недостатньо місця у сховищі. Зробіть експорт та очистіть дані.", "error", 6000);
+    } else {
+      showToast("Помилка збереження даних: " + (e as Error).message, "error");
+    }
+    return false;
+  }
+}
+
 function escapeHtml(str: string): string {
   const div = document.createElement("div");
   div.appendChild(document.createTextNode(str));
@@ -370,6 +387,7 @@ function getLastSessionSets(logs: LogEntry[]): LogEntry[] {
 
 export {
   safeJSONParse,
+  safeSetItem,
   formatDate,
   calculate1RM,
   vibrate,

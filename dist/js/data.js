@@ -1,5 +1,5 @@
 import { trainingData } from "./exercises.js";
-import { safeJSONParse, encryptData, decryptData, getEncryptionPassphrase, } from "./utils.js";
+import { safeJSONParse, safeSetItem, encryptData, decryptData, getEncryptionPassphrase, } from "./utils.js";
 let completionState = {};
 let exerciseLogs = {};
 let bodyWeightHistory = [];
@@ -67,10 +67,11 @@ function pruneOldArchiveEntries(archive) {
     }
 }
 function saveState() {
-    localStorage.setItem("trainingProgress", JSON.stringify(completionState));
-    localStorage.setItem("exerciseLogs", JSON.stringify(exerciseLogs));
-    localStorage.setItem("bodyWeightHistory", JSON.stringify(bodyWeightHistory));
-    localStorage.setItem("customExercises", JSON.stringify(customExercises));
+    const ok = safeSetItem("trainingProgress", JSON.stringify(completionState)) &&
+        safeSetItem("exerciseLogs", JSON.stringify(exerciseLogs)) &&
+        safeSetItem("bodyWeightHistory", JSON.stringify(bodyWeightHistory)) &&
+        safeSetItem("customExercises", JSON.stringify(customExercises));
+    return ok;
 }
 function isEncrypted(value) {
     return value.startsWith("#1#");
@@ -91,25 +92,60 @@ async function encryptLocalData(passphrase) {
 }
 async function decryptLocalData(passphrase) {
     try {
-        const keys = [
-            "trainingProgress",
-            "exerciseLogs",
-            "bodyWeightHistory",
-            "customExercises",
-            "workoutPlans",
-        ];
-        for (const key of keys) {
-            const raw = localStorage.getItem(key);
-            if (!raw)
-                continue;
-            if (!isEncrypted(raw))
-                continue;
-            const dec = await decryptData(raw, passphrase);
+        const rawProgress = localStorage.getItem("trainingProgress");
+        if (rawProgress && isEncrypted(rawProgress)) {
+            const dec = await decryptData(rawProgress, passphrase);
             if (dec === null)
                 return false;
-            const parsed = safeJSONParse(dec, null);
+            const parsed = safeJSONParse(dec, {});
             if (parsed === null)
                 return false;
+            Object.keys(completionState).forEach((k) => delete completionState[k]);
+            Object.assign(completionState, parsed);
+        }
+        const rawLogs = localStorage.getItem("exerciseLogs");
+        if (rawLogs && isEncrypted(rawLogs)) {
+            const dec = await decryptData(rawLogs, passphrase);
+            if (dec === null)
+                return false;
+            const parsed = safeJSONParse(dec, {});
+            if (parsed === null)
+                return false;
+            Object.keys(exerciseLogs).forEach((k) => delete exerciseLogs[k]);
+            Object.assign(exerciseLogs, parsed);
+        }
+        const rawBw = localStorage.getItem("bodyWeightHistory");
+        if (rawBw && isEncrypted(rawBw)) {
+            const dec = await decryptData(rawBw, passphrase);
+            if (dec === null)
+                return false;
+            const parsed = safeJSONParse(dec, []);
+            if (parsed === null)
+                return false;
+            bodyWeightHistory.length = 0;
+            bodyWeightHistory.push(...parsed);
+        }
+        const rawCe = localStorage.getItem("customExercises");
+        if (rawCe && isEncrypted(rawCe)) {
+            const dec = await decryptData(rawCe, passphrase);
+            if (dec === null)
+                return false;
+            const parsed = safeJSONParse(dec, []);
+            if (parsed === null)
+                return false;
+            customExercises.length = 0;
+            customExercises.push(...parsed);
+        }
+        const rawWp = localStorage.getItem("workoutPlans");
+        if (rawWp && isEncrypted(rawWp)) {
+            const dec = await decryptData(rawWp, passphrase);
+            if (dec === null)
+                return false;
+            const parsed = safeJSONParse(dec, []);
+            if (parsed === null)
+                return false;
+            workoutPlans.length = 0;
+            workoutPlans.push(...parsed);
         }
         return true;
     }
@@ -125,7 +161,12 @@ function loadEncryptedOnStartup() {
     if (!test || !isEncrypted(test))
         return false;
     decryptLocalData(passphrase).then((ok) => {
-        if (!ok) {
+        if (ok) {
+            saveState();
+            mergeCustomExercises();
+            console.log("Encrypted data loaded successfully on startup");
+        }
+        else {
             console.warn("Decryption failed on startup — wrong passphrase?");
         }
     });
@@ -199,7 +240,7 @@ function loadPlans() {
     }
 }
 function savePlans() {
-    localStorage.setItem("workoutPlans", JSON.stringify(workoutPlans));
+    return safeSetItem("workoutPlans", JSON.stringify(workoutPlans));
 }
 function getWorkoutHistory(period) {
     const exerciseDates = {};

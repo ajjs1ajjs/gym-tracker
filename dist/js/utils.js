@@ -212,6 +212,22 @@ const DIFFICULTY_CLASS = {
 function diffClass(difficulty) {
     return DIFFICULTY_CLASS[difficulty] ?? difficulty;
 }
+function safeSetItem(key, value) {
+    try {
+        localStorage.setItem(key, value);
+        return true;
+    }
+    catch (e) {
+        if (e instanceof DOMException &&
+            (e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED")) {
+            showToast("Недостатньо місця у сховищі. Зробіть експорт та очистіть дані.", "error", 6000);
+        }
+        else {
+            showToast("Помилка збереження даних: " + e.message, "error");
+        }
+        return false;
+    }
+}
 function escapeHtml(str) {
     const div = document.createElement("div");
     div.appendChild(document.createTextNode(str));
@@ -316,4 +332,4 @@ function getLastSessionSets(logs) {
     const lastDate = dates[0];
     return groups[lastDate];
 }
-export { safeJSONParse, formatDate, calculate1RM, vibrate, initAudio, playBeep, celebration, requestWakeLock, releaseWakeLock, diffClass, requestNotifications, showToast, escapeHtml, encryptData, decryptData, getEncryptionPassphrase, setEncryptionPassphrase, clearEncryptionPassphrase, getLastSessionSets, };
+export { safeJSONParse, safeSetItem, formatDate, calculate1RM, vibrate, initAudio, playBeep, celebration, requestWakeLock, releaseWakeLock, diffClass, requestNotifications, showToast, escapeHtml, encryptData, decryptData, getEncryptionPassphrase, setEncryptionPassphrase, clearEncryptionPassphrase, getLastSessionSets, };

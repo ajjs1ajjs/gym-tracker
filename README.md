@@ -1,100 +1,139 @@
-# 💪 GymProgress - Ultimate Workout Tracker
+# 💪 GymProgress — Трекер тренувань / Workout Tracker
 
 [![PWA](https://img.shields.io/badge/PWA-Ready-red.svg)](https://ajjs1ajjs.github.io/gym-tracker/)
 [![Version](https://img.shields.io/badge/version-3.0.0--premium-gold.svg)](https://github.com/ajjs1ajjs/gym-tracker/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-**GymProgress** — це потужний, приватний та повністю безкоштовний Progressive Web App (PWA) для відстежування ваших тренувань. Жодних підписок, жодної реклами, 100% серверлес архітектура.
-
 ---
 
-## 🌟 Ключові особливості
+## 🇺🇀 Українська
 
-### 📈 Професійне відстежування
+**GymProgress** — потужний, приватний та повністю безкоштовний Progressive Web App (PWA) для відстежування тренувань. Жодних підписок, жодної реклами, 100% серверлес архітектура.
 
-- **Детальне логування:** Записуйте вагу, повтори та автоматично розраховуйте **1RM (Одноповторний максимум)**.
-- **Об'єм (Тоннаж):** Відстежуйте сумарну підняту вагу за кожне тренування та за весь час.
-- **Графіки прогресії:** Візуалізуйте свій силовий прогрес за допомогою динамічних графіків (Chart.js).
+### 🌟 Ключові особливості
 
-### ⌚️ Спритна автоматизація
+- **Детальне логування** — вага, повтори, автоматичний 1RM
+- **Графіки прогресії** — візуалізація силового прогресу (Chart.js)
+- **Smart Timer** — автоматичний запуск таймера відпочинку після підходу
+- **Wake Lock API** — екран не гасне під час тренування
+- **Трекер ваги тіла** — динамічний графік змін
+- **Калькулятор млинців** — розрахунок дисків для штанги
+- **Калькулятор 1RM** — одноповторний максимум та відсотки
+- **Калькулятор калорій та БЖУ** — норма на основі Mifflin-St Jeor
+- **Трекер води** — денна норма споживання
+- **Heatmap активності** — календар тренувань у стилі GitHub
+- **Плани тренувань** — створюйте власні плани
+- **Cloud Sync** — синхронізація через GitHub Gist
+- **AES-256-GCM шифрування** — захист даних
+- **Експорт JSON / CSV / Apple Health**
+- **100% Offline** — працює без інтернету
+- **Дві теми** — темна (neon) та світла
 
-- **Smart Timer:** Таймер відпочинку запускається автоматично після запису кожного підходу.
-- **Wake Lock API:** Екран телефону не гасне під час активного тренування.
-- **Тактильний відгук:** Відчуйте вібрацію та звукові сигнали при завершенні таймера чи вправ.
-
-### ⚖️ Контроль тіла та інструменти
-
-- **Трекер ваги тіла:** Записуйте свою вагу та аналізуйте тренди на графіку.
-- **Калькулятор млинців:** Миттєво дізнайтеся, які млинці повісити на штангу для потрібної ваги.
-- **Heatmap активності:** Візуальний календар ваших тренувань у стилі GitHub.
-
-### 🔒 Приватність та Хмара
-
-- **Cloud Sync:** Безпечна синхронізація даних у ваші приватні **GitHub Gists**.
-- **Експорт даних:** Завантажуйте свою історію у форматах **JSON** або **Excel (CSV)**.
-- **100% Offline:** Працює без інтернету після першого завантаження.
-
----
-
-## 📱 Встановлення (PWA)
-
-Додаток працює прямо в браузері, але найкраще відчувається як встановлений застосунок:
-
-1. Відкрийте [GymProgress](https://ajjs1ajjs.github.io/gym-tracker/) в Chrome або Safari.
-2. Натисніть **"Додати до початкового екрана"** або іконку **Install**.
-3. Додаток з'явиться поруч з іншими вашими програмами.
-
----
-
-## 🎨 Теми
-
-- **Dark Neon (За замовчуванням):** Преміальний темний дизайн з синіми акцентами — ідеально для залу.
-- **Clean Light:** Світла тема для кращої видимості на вулиці.
-
----
-
-## 🛠 Технологічний стек
-
-- **Vanilla JS & HTML5** (Без фреймворків — максимальна швидкість)
-- **CSS Variables & Glassmorphism** (Rich aesthetics)
-- **Chart.js** (Візуалізація даних)
-- **Web Audio API & Vibration API** (Нативні відчуття)
-- **Service Workers** (Офлайн режим)
-
----
-
-## 📁 Структура проекту
+### 📁 Структура проекту
 
 ```
 gym-tracker/
-├── index.html          # Головна сторінка та UI
-├── style.css           # Дизайн система та теми
-├── manifest.json       # Конфігурація PWA
-├── sw.js               # Service Worker для офлайну
-├── js/                 # Модульна JS архітектура
-│   ├── main.js         # Вхідна точка, event delegation
-│   ├── exercises.js    # Бібліотека вправ (дані)
-│   ├── data.js         # Стан програми, localStorage
-│   ├── ui.js           # Рендеринг та UI-логіка
-│   ├── utils.js        # Допоміжні функції
-│   ├── timer.js        # Таймер відпочинку
-│   ├── logbook.js      # Журнал тренувань
-│   ├── sync.js         # GitHub Gist синхронізація
-│   └── stats.js        # Вага тіла та виміри
-├── __tests__/          # Jest тести
-│   ├── utils.test.js
-│   ├── exercises.test.js
-│   └── data.test.js
-└── images/             # Бібліотека вправ
+├── src/                 # Вихідний код TypeScript
+│   ├── main.ts          # Вхідна точка, event delegation
+│   ├── exercises.ts     # Бібліотека вправ (дані)
+│   ├── data.ts          # Стан програми, localStorage
+│   ├── ui.ts            # Рендеринг та UI-логіка
+│   ├── utils.ts         # Допоміжні функції
+│   ├── timer.ts         # Таймер відпочинку
+│   ├── logbook.ts       # Журнал тренувань
+│   ├── sync.ts          # GitHub Gist синхронізація
+│   ├── stats.ts         # Вага тіла, вода, калорії
+│   └── global.d.ts      # Типи для зовнішніх бібліотек
+├── __tests__/           # Jest тести
+├── images/              # Зображення вправ
+├── dist/                # Збірка (генерується)
+├── index.html           # Головна сторінка
+├── style.css            # Дизайн-система
+├── sw.js                # Service Worker
+├── manifest.json        # PWA конфігурація
+├── tsconfig.json        # Налаштування TypeScript
+└── package.json         # Залежності та скрипти
+```
+
+### 🔧 Команди
+
+```bash
+npm install          # Встановити залежності
+npm run build        # Зібрати проект
+npm test             # Запустити тести
+npm run lint         # Перевірка коду
+npm run lint:fix     # Автоматичне виправлення
+npm run format       # Форматування Prettier
 ```
 
 ---
 
-## 📝 Ліцензія
+## 🇬🇧 English
 
-Розповсюджується під ліцензією MIT. Дивіться `LICENSE` для деталей.
+**GymProgress** is a powerful, private, and completely free Progressive Web App (PWA) for tracking your workouts. No subscriptions, no ads, 100% serverless architecture.
+
+### 🌟 Key Features
+
+- **Detailed logging** — weight, reps, automatic 1RM calculation
+- **Progression charts** — visualize your strength progress (Chart.js)
+- **Smart Timer** — auto-start rest timer after each set
+- **Wake Lock API** — screen stays on during workouts
+- **Body weight tracker** — dynamic trend chart
+- **Plate calculator** — barbell plate distribution calculator
+- **1RM calculator** — one-rep max with percentage table
+- **Calorie & Macro calculator** — based on Mifflin-St Jeor formula
+- **Water tracker** — daily hydration goal
+- **Activity heatmap** — GitHub-style workout calendar
+- **Workout plans** — create and manage custom plans
+- **Cloud Sync** — via GitHub Gist
+- **AES-256-GCM encryption** — data protection
+- **Export JSON / CSV / Apple Health**
+- **100% Offline** — works without internet
+- **Two themes** — dark neon & light
+
+### 📁 Project Structure
+
+```
+gym-tracker/
+├── src/                 # TypeScript source code
+│   ├── main.ts          # Entry point, event delegation
+│   ├── exercises.ts     # Exercise library (data)
+│   ├── data.ts          # App state, localStorage
+│   ├── ui.ts            # Rendering & UI logic
+│   ├── utils.ts         # Helper functions
+│   ├── timer.ts         # Rest timer
+│   ├── logbook.ts       # Workout logbook
+│   ├── sync.ts          # GitHub Gist sync
+│   ├── stats.ts         # Body weight, water, calories
+│   └── global.d.ts      # External library types
+├── __tests__/           # Jest tests
+├── images/              # Exercise images
+├── dist/                # Build output (generated)
+├── index.html           # Main page
+├── style.css            # Design system
+├── sw.js                # Service Worker
+├── manifest.json        # PWA config
+├── tsconfig.json        # TypeScript config
+└── package.json         # Dependencies & scripts
+```
+
+### 🔧 Commands
+
+```bash
+npm install          # Install dependencies
+npm run build        # Build the project
+npm test             # Run tests
+npm run lint         # Lint code
+npm run lint:fix     # Auto-fix lint issues
+npm run format       # Prettier formatting
+```
 
 ---
 
-💪 **Тренуйтеся розумніше, а не важче!**
-**⭐ Поставте зірочку проекту, якщо він став вам у пригоді!**
+### 📝 Ліцензія / License
+
+MIT License. Дивіться [LICENSE](./LICENSE) для деталей / See [LICENSE](./LICENSE) for details.
+
+---
+
+💪 **Тренуйтеся розумніше, а не важче! / Train smarter, not harder!**
