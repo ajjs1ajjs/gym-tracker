@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#00d4ff" />
+    <meta
+      name="description"
+      content="Додаток для відстежування тренувань та прогресу"
+    />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="images/icon-192.png" />
+    <title>GymProgress - Тренування</title>
+    <link rel="stylesheet" href="style.css" />
+    <script
+      src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div id="toast-container"></div>
+    <div id="update-banner" class="update-banner hidden">
+      <span>📦 Доступне оновлення</span>
+      <button id="update-btn">Оновити</button>
+      <button id="update-dismiss-btn" class="btn-close">&times;</button>
+    </div>
+    <header>
+      <div class="header-top">
+        <h1>💪 GymProgress</h1>
+        <div class="header-actions">
+          <button class="btn-theme" id="theme-toggle" title="Змінити тему">
+            🌙
+          </button>
+          <button class="btn-timer" id="header-timer-btn" title="Таймер">
+            ⏱
+          </button>
+          <span
+            id="offline-indicator"
+            class="offline-indicator hidden"
+            title="Немає з'єднання"
+            >📡</span
+          >
+          <div class="dropdown">
+            <button class="btn-settings">🛠️</button>
+            <div class="dropdown-content" id="header-dropdown">
+              <button data-action="plate">🧮 Ваги</button>
+              <button data-action="export">📤 Експорт (Бекап)</button>
+              <button data-action="export-health">🍎 Експорт (Apple Health)</button>
+              <label class="btn-import-label">
+                📥 Імпорт
+                <input type="file" accept=".json" hidden />
+              </label>
+              <button data-action="settings">⚙️ Налаштування</button>
+              <button class="btn-reset" data-action="reset">
+                🔴 Скинути все
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-bar">
+        <div class="stat-main">
+          <span class="stat-value" id="progress-percent">0%</span>
+          <div class="progress-container">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat">
+            <span class="stat-value" id="completed-exercises">0</span>
+            <span class="stat-label">Вправ</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="total-workouts">0</span>
+            <span class="stat-label">Сесій</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="total-volume">0кг</span>
+            <span class="stat-label">Вага</span>
+          </div>
+        </div>
+        <button class="btn-finish-workout" id="finish-workout-btn">
+          Завершити
+        </button>
+      </div>
+    </header>
+
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-tab="exercises" title="Alt+1">
+        <span class="nav-icon">🏋️</span>
+        <span class="nav-label">Вправи</span>
+      </button>
+      <button class="nav-item" data-tab="logbook" title="Alt+2">
+        <span class="nav-icon">📔</span>
+        <span class="nav-label">Журнал</span>
+      </button>
+      <button class="nav-item" data-tab="history" title="Alt+3">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Історія</span>
+      </button>
+      <button class="nav-item" data-tab="plans" title="Alt+4">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Плани</span>
+      </button>
+      <button class="nav-item" data-tab="body" title="Alt+5">
+        <span class="nav-icon">⚖️</span>
+        <span class="nav-label">Тіло</span>
+      </button>
+    </nav>
+    <div class="keyboard-hint">
+      <kbd>Alt+1-5</kbd> Таби &nbsp;·&nbsp; <kbd>Esc</kbd> Закрити &nbsp;·&nbsp; <kbd>T</kbd> Таймер &nbsp;·&nbsp; <kbd>Ctrl+Enter</kbd> Додати сет
+    </div>
+
+    <div class="main-layout">
+      <aside class="sidebar">
+        <h3>Групи м'язів</h3>
+        <div class="search-box">
+          <input type="text" id="exercise-search" placeholder="🔍 Пошук вправ..." />
+        </div>
+        <div class="muscle-groups" id="muscle-groups"></div>
+        <button class="btn-add-custom-ex" id="open-custom-ex-btn">
+          + Створити вправу
+        </button>
+      </aside>
+
+      <main>
+        <div class="exercises-wrapper" id="exercises-list"></div>
+      </main>
+    </div>
+
+    <div class="modal" id="exercise-modal">
+      <div class="modal-content">
+        <span class="modal-close" id="modal-close-btn">&times;</span>
+        <img id="modal-image" src="" alt="" />
+        <h2 id="modal-title"></h2>
+        <div class="modal-meta">
+          <span class="muscle-tag" id="modal-muscle"></span>
+          <span class="difficulty-tag" id="modal-difficulty"></span>
+        </div>
+        <div class="modal-body-grid">
+          <div>
+            <p class="modal-description" id="modal-description"></p>
+            <div class="modal-instructions">
+              <h4>Як виконувати:</h4>
+              <ul id="modal-instructions"></ul>
+            </div>
+            <div class="modal-sets">
+              <h4>Підходи та повтори:</h4>
+              <p id="modal-sets"></p>
+            </div>
+          </div>
+          <div>
+            <div class="modal-progression">
+              <h4>Лог підходів (сьогодні)</h4>
+              <div id="exercise-sets-log"></div>
+              <div
+                id="modal-last-session-container"
+                class="last-session-container"
+                style="display: none"
+              ></div>
+              <div class="set-input-row">
+                <input
+                  type="number"
+                  id="set-weight"
+                  placeholder="Вага (кг)"
+                  step="0.5"
+                />
+                <input type="number" id="set-reps" placeholder="Повтори" step="1" />
+                <button id="set-log-btn">+ Додати</button>
+              </div>
+              <button class="btn-toggle-chart" id="progression-toggle-btn">
+                📈 Показати прогрес
+              </button>
+              <div
+                class="progression-chart-container"
+                id="progression-chart-wrapper"
+                style="display: none"
+              >
+                <div
+                  class="chart-metric-selector"
+                  style="
+                    margin-bottom: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    gap: 8px;
+                  "
+                >
+                  <label
+                    for="progression-metric"
+                    style="font-size: 0.85rem; color: var(--text-secondary)"
+                    >Показник:</label
+                  >
+                  <select
+                    id="progression-metric"
+                    style="
+                      background: var(--bg-solid);
+                      color: var(--text-primary);
+                      border: 1px solid var(--border);
+                      border-radius: 6px;
+                      padding: 4px 8px;
+                      font-size: 0.85rem;
+                      cursor: pointer;
+                    "
+                  >
+                    <option value="weight">Максимальна вага (кг)</option>
+                    <option value="1rm">Розрахунковий 1RM (кг)</option>
+                    <option value="volume">Сумарний об'єм (кг)</option>
+                  </select>
+                </div>
+                <canvas id="progression-chart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-checkin">
+          <button id="modal-checkin-btn">✓ Відмітити виконаним</button>
+          <p class="checkin-date" id="checkin-date"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="timer-modal">
+      <div class="modal-content timer-modal-content">
+        <span class="modal-close" id="timer-modal-close">&times;</span>
+        <h2>⏱ Таймер відпочинку</h2>
+        <div class="timer-display" id="timer-display">01:30</div>
+        <div class="timer-presets">
+          <button class="timer-preset" data-seconds="30">30с</button>
+          <button class="timer-preset" data-seconds="60">1хв</button>
+          <button class="timer-preset active" data-seconds="90">1.5хв</button>
+          <button class="timer-preset" data-seconds="120">2хв</button>
+          <button class="timer-preset" data-seconds="180">3хв</button>
+        </div>
+        <div class="timer-controls">
+          <button class="timer-btn start" id="timer-start-btn">▶ Старт</button>
+          <button
+            class="timer-btn pause"
+            id="timer-pause-btn"
+            style="display: none"
+          >
+            ⏸ Пауза
+          </button>
+          <button class="timer-btn reset" id="timer-reset-btn">
+            ↻ Скинути
+          </button>
+        </div>
+        <div
+          class="form-group"
+          style="margin-top: 25px; text-align: left; padding: 0 20px"
+        >
+          <label
+            style="
+              color: var(--accent);
+              font-size: 0.85rem;
+              display: block;
+              margin-bottom: 5px;
+            "
+            >🎵 Звук завершення:</label
+          >
+          <select
+            id="timer-sound-select"
+            style="
+              width: 100%;
+              padding: 8px;
+              border-radius: 6px;
+              background: var(--bg-solid);
+              color: var(--text-primary);
+              border: 1px solid var(--border);
+              font-size: 0.85rem;
+              cursor: pointer;
+            "
+          >
+            <option value="classic">Класичний біп</option>
+            <option value="double">Подвійний сигнал</option>
+            <option value="low">Низький тон</option>
+            <option value="gong">Спортивний гонг</option>
+            <option value="melody">Мелодія успіху</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <section class="history-section" id="history-section" style="display: none">
+      <div class="section-container">
+        <h2>📅 Історія тренувань</h2>
+        <div class="history-filters">
+          <select id="history-period">
+            <option value="all">Весь час</option>
+            <option value="week">Цей тиждень</option>
+            <option value="month">Цей місяць</option>
+          </select>
+        </div>
+        <div class="history-chart-container">
+          <canvas id="history-chart"></canvas>
+        </div>
+        <h3 style="margin-top: 25px; margin-bottom: 15px">
+          📊 Розподіл за групами м'язів
+        </h3>
+        <div
+          class="history-chart-container"
+          style="
+            height: 320px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+          "
+        >
+          <canvas id="muscle-distribution-chart"></canvas>
+        </div>
+        <h3>🔥 Графік активності</h3>
+        <div class="heatmap-container" id="activity-heatmap"></div>
+        <div class="history-list" id="history-list"></div>
+      </div>
+    </section>
+
+    <section class="plans-section" id="plans-section" style="display: none">
+      <div class="section-container">
+        <h2>📋 Плани тренувань</h2>
+        <button class="btn-add-plan" data-action="add-plan">
+          + Новий план
+        </button>
+        <div class="plans-list" id="plans-list"></div>
+      </div>
+    </section>
+
+    <section class="body-section" id="body-section" style="display: none">
+      <div class="section-container">
+        <div class="body-dashboard-grid">
+          <!-- Column 1: Weight and body tracker -->
+          <div class="body-card">
+            <h2 style="margin-top: 0; margin-bottom: 20px">
+              ⚖️ Вага тіла та виміри
+            </h2>
+            <div class="body-input-row">
+              <input
+                type="number"
+                id="body-weight-input"
+                placeholder="Сьогоднішня вага (кг)"
+                step="0.1"
+              />
+              <button class="btn-save-weight" data-action="save-body-weight">
+                Зберегти
+              </button>
+            </div>
+            <div class="body-chart-container">
+              <canvas id="body-chart"></canvas>
+            </div>
+            <div class="body-history-list" id="body-history-list"></div>
+          </div>
+
+          <!-- Column 2: Water & Calorie tracking -->
+          <div class="body-sidebar-column">
+            <!-- Water Tracker -->
+            <div class="body-card">
+              <h2 style="margin-top: 0; margin-bottom: 15px">💧 Трекер води</h2>
+              <div class="water-progress-container">
+                <div class="water-progress-text" id="water-progress-text">
+                  0 / 2000 мл (0%)
+                </div>
+                <div class="water-progress-bar-wrapper">
+                  <div
+                    class="water-progress-bar"
+                    id="water-progress-bar"
+                    style="width: 0%"
+                  ></div>
+                </div>
+              </div>
+              <div class="water-controls">
+                <button class="btn-water-add" data-ml="250">+250 мл</button>
+                <button class="btn-water-add" data-ml="500">+500 мл</button>
+                <button class="btn-water-add" data-ml="1000">+1000 мл</button>
+                <button class="btn-water-reset" id="btn-water-reset">
+                  Скинути
+                </button>
+              </div>
+              <div
+                style="
+                  margin-top: 15px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  gap: 10px;
+                "
+              >
+                <label style="font-size: 0.85rem; color: var(--text-secondary)"
+                  >Ціль води (мл):</label
+                >
+                <input
+                  type="number"
+                  id="water-goal-input"
+                  value="2000"
+                  min="500"
+                  max="10000"
+                  step="250"
+                  style="
+                    width: 90px;
+                    padding: 6px 10px;
+                    border-radius: 6px;
+                    background: var(--bg-solid);
+                    color: var(--text-primary);
+                    border: 1px solid var(--border);
+                    font-size: 0.85rem;
+                  "
+                />
+              </div>
+            </div>
+
+            <!-- Calorie & Macros Calculator -->
+            <div class="body-card">
+              <h2 style="margin-top: 0; margin-bottom: 15px">
+                🔥 Калькулятор калорій та БЖУ
+              </h2>
+              <div class="calorie-form">
+                <div class="form-row">
+                  <div class="form-group-half">
+                    <label>Стать</label>
+                    <select id="cal-gender">
+                      <option value="male">Чоловік</option>
+                      <option value="female">Жінка</option>
+                    </select>
+                  </div>
+                  <div class="form-group-half">
+                    <label>Вік (років)</label>
+                    <input
+                      type="number"
+                      id="cal-age"
+                      placeholder="25"
+                      min="1"
+                      max="120"
+                    />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group-half">
+                    <label>Ріст (см)</label>
+                    <input
+                      type="number"
+                      id="cal-height"
+                      placeholder="175"
+                      min="50"
+                      max="250"
+                    />
+                  </div>
+                  <div class="form-group-half">
+                    <label>Вага (кг)</label>
+                    <input
+                      type="number"
+                      id="cal-weight"
+                      placeholder="70"
+                      min="10"
+                      max="300"
+                      step="0.1"
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Активність</label>
+                  <select id="cal-activity">
+                    <option value="1.2">Мінімальна (сидячий спосіб)</option>
+                    <option value="1.375">
+                      Помірна (1-3 тренування/тиждень)
+                    </option>
+                    <option value="1.55">
+                      Середня (3-5 тренувань/тиждень)
+                    </option>
+                    <option value="1.725">
+                      Висока (6-7 тренувань/тиждень)
+                    </option>
+                    <option value="1.9">
+                      Екстремальна (важка праця/тренування)
+                    </option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Ціль</label>
+                  <select id="cal-goal">
+                    <option value="loss">Схуднення (-500 ккал)</option>
+                    <option value="maintenance" selected>Підтримка ваги</option>
+                    <option value="gain">Набір маси (+300 ккал)</option>
+                  </select>
+                </div>
+                <button
+                  class="btn-calculate-calories"
+                  id="btn-calculate-calories"
+                >
+                  Розрахувати
+                </button>
+              </div>
+
+              <!-- Results container -->
+              <div
+                class="calorie-results"
+                id="calorie-results"
+                style="display: none; margin-top: 20px"
+              >
+                <div class="calorie-target-display">
+                  <div class="calorie-label">Денна норма калорій</div>
+                  <div class="calorie-value" id="cal-result-calories">
+                    0 ккал
+                  </div>
+                </div>
+                <div class="macros-grid">
+                  <div class="macro-box protein">
+                    <div class="macro-label">Білки</div>
+                    <div class="macro-value" id="cal-result-protein">0 г</div>
+                    <div class="macro-pct" id="cal-result-protein-pct">0%</div>
+                  </div>
+                  <div class="macro-box fat">
+                    <div class="macro-label">Жири</div>
+                    <div class="macro-value" id="cal-result-fat">0 г</div>
+                    <div class="macro-pct" id="cal-result-fat-pct">0%</div>
+                  </div>
+                  <div class="macro-box carb">
+                    <div class="macro-label">Вуглеводи</div>
+                    <div class="macro-value" id="cal-result-carb">0 г</div>
+                    <div class="macro-pct" id="cal-result-carb-pct">0%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="logbook-section" id="logbook-section" style="display: none">
+      <div class="section-container">
+        <h2>📔 Журнал тренувань</h2>
+
+        <div class="header-tabs" style="margin-bottom: 20px">
+          <button
+            class="tab-btn active"
+            id="logbook-tab-log"
+            data-logbook-tab="log"
+          >
+            Запис підходів
+          </button>
+          <button
+            class="tab-btn"
+            id="logbook-tab-history"
+            data-logbook-tab="history"
+          >
+            Історія журналу
+          </button>
+        </div>
+
+        <div id="logbook-view-log">
+          <div class="form-group" style="margin-bottom: 20px">
+            <label>Назва нової вправи:</label>
+            <div style="display: flex; gap: 10px">
+              <input
+                type="text"
+                id="logbook-custom-ex"
+                placeholder="Наприклад: Підтягування з вагою"
+                style="
+                  flex: 1;
+                  padding: 10px;
+                  border-radius: 5px;
+                  border: 1px solid var(--border);
+                  background: var(--card-bg);
+                  color: var(--text-primary);
+                "
+              />
+              <button
+                class="btn-save-plan"
+                data-action="create-logbook-ex"
+                style="width: auto; margin-top: 0"
+              >
+                Створити
+              </button>
+            </div>
+          </div>
+
+          <hr
+            style="
+              border: none;
+              border-top: 1px solid var(--border, #333);
+              margin: 25px 0;
+            "
+          />
+
+          <div class="form-group">
+            <label>Оберіть вправу для запису:</label>
+            <input
+              type="text"
+              id="logbook-ex-search"
+              placeholder="Пошук вправи..."
+              style="
+                width: 100%;
+                padding: 8px 10px;
+                margin-bottom: 8px;
+                border-radius: 5px;
+                background: var(--card-bg);
+                color: var(--text-primary);
+                border: 1px solid var(--border);
+                box-sizing: border-box;
+              "
+            />
+            <div style="display: flex; gap: 10px; align-items: center">
+              <select
+                id="logbook-ex-select"
+                style="
+                  flex: 1;
+                  padding: 10px;
+                  border-radius: 5px;
+                  background: var(--card-bg);
+                  color: var(--text-primary);
+                  border: 1px solid var(--border);
+                "
+              ></select>
+              <button
+                id="btn-delete-logbook-ex"
+                style="
+                  width: auto;
+                  padding: 10px 15px;
+                  border-radius: 5px;
+                  background: rgba(239, 68, 68, 0.1);
+                  color: #ef4444;
+                  border: 1px solid #ef4444;
+                  cursor: pointer;
+                "
+                title="Видалити обрану вправу"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+
+          <div
+            id="logbook-sets-container"
+            style="
+              margin-top: 15px;
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+            "
+          ></div>
+
+          <div
+            id="logbook-last-session-container"
+            class="last-session-container"
+            style="display: none; margin-top: 15px"
+          ></div>
+
+          <div class="set-input-row" style="margin-top: 15px">
+            <input
+              type="number"
+              id="logbook-weight"
+              placeholder="Вага (кг)"
+              step="0.5"
+            />
+            <input
+              type="number"
+              id="logbook-reps"
+              placeholder="Повтори"
+              step="1"
+            />
+            <button id="btn-add-logbook-set">+ Додати</button>
+          </div>
+
+          <button
+            id="btn-save-logbook"
+            class="btn-save-plan"
+            style="margin-top: 20px; width: 100%"
+          >
+            Зберегти результати
+          </button>
+          <div
+            id="logbook-toast"
+            style="
+              display: none;
+              text-align: center;
+              color: #28a745;
+              font-weight: bold;
+              margin-top: 10px;
+            "
+          >
+            Успішно збережено
+          </div>
+        </div>
+
+        <div id="logbook-view-history" style="display: none">
+          <div class="form-group" style="margin-bottom: 20px">
+            <label>Оберіть вправу для історії:</label>
+            <input
+              type="text"
+              id="logbook-history-search"
+              placeholder="Пошук вправи..."
+              style="
+                width: 100%;
+                padding: 8px 10px;
+                margin-bottom: 8px;
+                border-radius: 5px;
+                background: var(--card-bg);
+                color: var(--text-primary);
+                border: 1px solid var(--border);
+                box-sizing: border-box;
+              "
+            />
+            <select
+              id="logbook-history-select"
+              style="
+                width: 100%;
+                padding: 10px;
+                border-radius: 5px;
+                background: var(--card-bg);
+                color: var(--text-primary);
+                border: 1px solid var(--border);
+              "
+            ></select>
+          </div>
+
+          <div class="history-list" id="logbook-history-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="modal" id="plan-modal">
+      <div class="modal-content">
+        <span class="modal-close" id="plan-modal-close">&times;</span>
+        <h2 id="plan-modal-title">Новий план тренувань</h2>
+        <div class="plan-form">
+          <div class="form-group">
+            <label>Назва плану:</label>
+            <input type="text" id="plan-name" placeholder="Назва плану" />
+          </div>
+          <div class="form-group">
+            <label>Оберіть вправи:</label>
+            <div class="plan-exercises-select" id="plan-exercises-select"></div>
+          </div>
+          <button class="btn-save-plan" id="plan-save-btn">
+            Зберегти план
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="plate-modal">
+      <div class="modal-content plate-modal-content">
+        <span class="modal-close" id="plate-modal-close">&times;</span>
+        <h2 id="calculator-modal-title">🧮 Калькулятор</h2>
+        <div
+          class="header-tabs"
+          style="margin-bottom: 20px; display: flex; gap: 10px"
+        >
+          <button class="tab-btn active" id="btn-calc-tab-plate">
+            🧮 Млинці
+          </button>
+          <button class="tab-btn" id="btn-calc-tab-1rm">
+            🏆 1RM & Відсотки
+          </button>
+        </div>
+
+        <div id="calc-view-plate">
+          <div class="form-group">
+            <label>Вага на штанзі (кг):</label>
+            <input
+              type="number"
+              id="plate-weight-input"
+              value="100"
+              step="2.5"
+            />
+          </div>
+          <div class="plate-visualizer" id="plate-visualizer"></div>
+          <div class="plate-results" id="plate-results"></div>
+        </div>
+
+        <div id="calc-view-1rm" style="display: none">
+          <div class="form-group" style="display: flex; gap: 15px">
+            <div style="flex: 1">
+              <label>Вага (кг):</label>
+              <input
+                type="number"
+                id="calc-1rm-weight"
+                value="80"
+                step="2.5"
+                style="
+                  width: 100%;
+                  padding: 10px;
+                  border-radius: 6px;
+                  background: var(--card-bg);
+                  color: var(--text-primary);
+                  border: 1px solid var(--border);
+                "
+              />
+            </div>
+            <div style="flex: 1">
+              <label>Повтори:</label>
+              <input
+                type="number"
+                id="calc-1rm-reps"
+                value="5"
+                step="1"
+                min="1"
+                max="30"
+                style="
+                  width: 100%;
+                  padding: 10px;
+                  border-radius: 6px;
+                  background: var(--card-bg);
+                  color: var(--text-primary);
+                  border: 1px solid var(--border);
+                "
+              />
+            </div>
+          </div>
+
+          <div
+            class="calc-1rm-result"
+            style="
+              text-align: center;
+              margin: 20px 0;
+              background: rgba(0, 212, 255, 0.08);
+              padding: 15px;
+              border-radius: 10px;
+              border: 1px solid var(--accent-dim);
+            "
+          >
+            <span style="font-size: 0.9rem; color: var(--text-secondary)"
+              >Розрахунковий 1RM:</span
+            >
+            <div
+              id="calc-1rm-value"
+              style="
+                font-size: 2.2rem;
+                font-weight: bold;
+                color: var(--accent);
+                margin-top: 5px;
+              "
+            >
+              93 кг
+            </div>
+          </div>
+
+          <h3
+            style="font-size: 1rem; color: var(--accent); margin-bottom: 10px"
+          >
+            Відсотки від 1RM:
+          </h3>
+          <table
+            class="splits-table"
+            style="width: 100%; border-collapse: collapse; font-size: 0.95rem"
+          >
+            <thead>
+              <tr
+                style="
+                  border-bottom: 1px solid var(--border);
+                  text-align: left;
+                  color: var(--text-secondary);
+                "
+              >
+                <th style="padding: 8px 0; font-weight: 500">Відсоток</th>
+                <th style="padding: 8px 0; font-weight: 500; text-align: right">
+                  Вага (кг)
+                </th>
+              </tr>
+            </thead>
+            <tbody id="splits-tbody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="settings-modal">
+      <div class="modal-content">
+        <span class="modal-close" id="settings-modal-close">&times;</span>
+        <h2>⚙️ Налаштування синхронізації</h2>
+        <p>Використовуйте GitHub Gist для збереження даних у хмарі.</p>
+        <div class="form-group">
+          <label>GitHub Personal Access Token:</label>
+          <input
+            type="password"
+            id="github-token"
+            placeholder="ghp_xxxxxxxxxxxx"
+          />
+        </div>
+        <div class="form-group">
+          <label>Gist ID (опціонально):</label>
+          <input
+            type="text"
+            id="gist-id"
+            placeholder="Залиште пустим для нової синхронізації"
+          />
+        </div>
+        <div
+          class="form-group"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <label style="margin: 0">Автостарт таймера:</label>
+          <input
+            type="checkbox"
+            id="smart-timer-toggle"
+            style="width: 25px; height: 25px"
+            checked
+          />
+        </div>
+        <div class="form-group">
+          <label
+            style="display: flex; align-items: center; gap: 10px; margin: 0"
+          >
+            <input
+              type="checkbox"
+              id="encrypt-toggle"
+              style="width: 25px; height: 25px"
+            />
+            🔒 Шифрувати дані (AES-256-GCM)
+          </label>
+          <input
+            type="password"
+            id="encrypt-passphrase"
+            placeholder="Пароль (мінімум 8 символів)"
+            disabled
+            style="margin-top: 8px"
+          />
+        </div>
+        <div class="settings-actions">
+          <button class="btn-save-settings" data-action="save-settings">
+            Зберегти налаштування
+          </button>
+          <button class="btn-sync" data-action="sync-upload">
+            ☁️ Синхронізувати зараз
+          </button>
+          <button
+            class="btn-sync"
+            style="background: #28a745; margin-left: 10px"
+            data-action="sync-download"
+          >
+            📥 Завантажити з хмари
+          </button>
+        </div>
+        <div
+          style="
+            margin-top: 20px;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+            display: flex;
+            gap: 10px;
+          "
+        >
+          <button class="btn-plate" style="flex: 1" data-action="export">
+            💾 Експорт JSON
+          </button>
+          <button
+            class="btn-plate"
+            style="flex: 1; background: var(--success); color: white"
+            data-action="export-csv"
+          >
+            📊 Експорт Excel/CSV
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="custom-exercise-modal">
+      <div class="modal-content">
+        <span class="modal-close" id="custom-ex-modal-close">&times;</span>
+        <h2>➕ Створити вправу</h2>
+        <div class="form-group">
+          <label>Назва вправи:</label>
+          <input
+            type="text"
+            id="ce-name"
+            placeholder="Наприклад: Підйом на біцепс"
+          />
+        </div>
+        <div class="form-group">
+          <label>Група м'язів:</label>
+          <select
+            id="ce-muscle"
+            style="
+              width: 100%;
+              padding: 10px;
+              border-radius: 5px;
+              background: var(--card-bg);
+              color: var(--text-primary);
+            "
+          >
+            <option value="Груди">Груди</option>
+            <option value="Спина">Спина</option>
+            <option value="Ноги">Ноги</option>
+            <option value="Плечі">Плечі</option>
+            <option value="Руки">Руки</option>
+            <option value="Прес">Прес</option>
+            <option value="Кардіо">Кардіо</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Опис (опціонально):</label>
+          <textarea
+            id="ce-desc"
+            rows="3"
+            style="
+              width: 100%;
+              padding: 10px;
+              border-radius: 5px;
+              background: var(--card-bg);
+              color: var(--text-primary);
+            "
+          ></textarea>
+        </div>
+        <button class="btn-save-plan" data-action="save-custom-ex">
+          Зберегти вправу
+        </button>
+      </div>
+    </div>
+
+    <script type="module" src="dist/js/main.js"></script>
+  </body>
+</html>
