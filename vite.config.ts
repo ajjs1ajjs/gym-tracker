@@ -36,6 +36,7 @@ function copyStaticAssets() {
 }
 
 export default defineConfig({
+  base: "/gym-tracker/",
   root: ".",
   build: {
     outDir: "dist",
