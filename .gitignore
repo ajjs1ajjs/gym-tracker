@@ -47,3 +47,15 @@ logs/
 tmp/
 temp/
 *.tmp
+
+# Secrets
+.env
+.env.*
+*.key
+*.pem
+*.crt
+*.pfx
+*.jwt.secret
+*.autodoc.key
+credentials.txt
+master.key
