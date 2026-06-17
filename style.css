@@ -1913,3 +1913,16 @@ body.light-theme .btn-copy-last:hover {
     grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
   }
 }
+
+/* ---- Utility classes ---- */
+.flex-1 { flex: 1; }
+.btn-green { background: #28a745; }
+.btn-success { background: var(--success); color: white; }
+.flex-gap { display: flex; gap: 10px; }
+.flex-center-gap { display: flex; align-items: center; gap: 10px; }
+.text-small { font-size: 0.85rem; color: var(--text-secondary); }
+.mt-15 { margin-top: 15px; }
+.mt-20 { margin-top: 20px; }
+.mb-15 { margin-bottom: 15px; }
+.mb-20 { margin-bottom: 20px; }
+.w-full { width: 100%; }

@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { trainingData } from "./exercises.js";
 import {
   safeJSONParse,
@@ -5,6 +6,7 @@ import {
   encryptData,
   decryptData,
   getEncryptionPassphrase,
+  getDateKey,
 } from "./utils.js";
 import type {
   CompletionEntry,
@@ -38,7 +40,38 @@ function mergeCustomExercises(): void {
   });
 }
 
+function migrateDateKeys(): void {
+  const lastDate = localStorage.getItem("lastSessionDate");
+  if (lastDate && lastDate.includes(" ")) {
+    const parsed = new Date(lastDate);
+    if (!isNaN(parsed.getTime())) {
+      const newKey = getDateKey(parsed);
+      localStorage.setItem("lastSessionDate", newKey);
+    }
+  }
+  const archive = localStorage.getItem("completionArchive");
+  if (archive) {
+    try {
+      const parsed = JSON.parse(archive);
+      const migrated: Record<string, unknown> = {};
+      let changed = false;
+      for (const key of Object.keys(parsed)) {
+        const d = new Date(key);
+        const newKey = d instanceof Date && !isNaN(d.getTime()) ? getDateKey(d) : key;
+        if (newKey !== key) changed = true;
+        migrated[newKey] = parsed[key];
+      }
+      if (changed) {
+        localStorage.setItem("completionArchive", JSON.stringify(migrated));
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }
+}
+
 function loadState(): void {
+  migrateDateKeys();
   const saved = localStorage.getItem("trainingProgress");
   if (saved) {
     completionState = safeJSONParse(saved, {}) as Record<
@@ -48,7 +81,7 @@ function loadState(): void {
   }
 
   const lastDate = localStorage.getItem("lastSessionDate");
-  const today = new Date().toDateString();
+  const today = getDateKey(new Date());
 
   if (lastDate && lastDate !== today) {
     const yesterdayArchive = localStorage.getItem("completionArchive");
@@ -90,7 +123,7 @@ function pruneOldArchiveEntries(
 ): void {
   const cutoff = new Date();
   cutoff.setFullYear(cutoff.getFullYear() - 2);
-  const cutoffStr = cutoff.toDateString();
+  const cutoffStr = getDateKey(cutoff);
   let pruned = 0;
   Object.keys(archive).forEach((dateStr) => {
     if (new Date(dateStr) < new Date(cutoffStr)) {
@@ -258,8 +291,8 @@ function migrateLegacyLogbook(): void {
           muscle: "Груди",
           muscleGroup: "Груди",
           difficulty: "Середній",
-          description: "Користувацька вправа з Журналу",
-          instructions: ["Користувацька вправа"],
+          description: t('custom_exercise.default_description'),
+          instructions: [t('custom_exercise.default_instructions')],
           sets: "3 x 10",
           image:
             "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=300&auto=format&fit=crop",
@@ -330,7 +363,7 @@ function getWorkoutHistory(
   const processEntry = (state: Record<string, CompletionEntry>) => {
     allEx.forEach((ex) => {
       if (state[ex.id] && state[ex.id].date) {
-        const dateStr = new Date(state[ex.id].date).toDateString();
+        const dateStr = getDateKey(new Date(state[ex.id].date));
         if (processedDates.has(dateStr)) return;
         processedDates.add(dateStr);
         if (!exerciseDates[dateStr]) {
@@ -345,7 +378,7 @@ function getWorkoutHistory(
 
     allEx.forEach((ex) => {
       if (state[ex.id] && state[ex.id].date) {
-        const dateStr = new Date(state[ex.id].date).toDateString();
+        const dateStr = getDateKey(new Date(state[ex.id].date));
         exerciseDates[dateStr].exercises.push(ex.id);
         exerciseDates[dateStr].count++;
       }

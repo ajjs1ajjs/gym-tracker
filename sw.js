@@ -1,21 +1,5 @@
 const CACHE_NAME = "gym-tracker-v5";
-const urlsToCache = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./js/main.js",
-  "./js/ui.js",
-  "./js/data.js",
-  "./js/utils.js",
-  "./js/timer.js",
-  "./js/logbook.js",
-  "./js/sync.js",
-  "./js/stats.js",
-  "./js/exercises.js",
-  "./manifest.json",
-  "./images/icon-192.png",
-  "./images/icon-512.png",
-];
+const urlsToCache = /*PRECACHE*/ [];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

@@ -1,3 +1,5 @@
+import { loadLocale, applyHtmlTranslations } from "./i18n.js";
+import uk from "./locales/uk.js";
 import {
   loadState,
   loadPlans,
@@ -34,6 +36,7 @@ import {
   startWorkout,
   filterHistory,
   toggleExerciseOption,
+  renderExerciseSetsLog,
 } from "./ui.js";
 import {
   openTimerModal,
@@ -67,6 +70,8 @@ import LogbookModule from "./logbook.js";
 let plateDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function init(): Promise<void> {
+  loadLocale(uk);
+  applyHtmlTranslations();
   loadState();
   loadPlans();
   await loadEncryptedOnStartup();
@@ -76,6 +81,12 @@ async function init(): Promise<void> {
   renderExercises();
   initTheme();
   requestNotifications();
+  LogbookModule.setCallbacks({
+    renderExerciseSetsLog,
+    updateStats,
+    renderExercises,
+    renderMuscleGroups,
+  });
   LogbookModule.init();
 
   // --- Header ---

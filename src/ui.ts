@@ -29,23 +29,36 @@ import {
   showToast,
   escapeHtml,
   getLastSessionSets,
+  getDateKey,
 } from "./utils.js";
 import { openTimerModal, startTimer } from "./timer.js";
 import {
   renderBodyStats,
   renderWaterTracker,
   loadCalorieParams,
+  destroyBodyChart,
 } from "./stats.js";
 import LogbookModule from "./logbook.js";
+import { t } from "./i18n.js";
 import type { CompletionEntry, Exercise } from "./types.js";
+import type { Chart as ChartJS } from "chart.js";
+import {
+  calculatePlates,
+  calculate1RMSplits,
+  switchCalcTab,
+  openPlateModal,
+  closePlateModal,
+} from "./plates.js";
+import { renderHeatmap } from "./renderers/heatmap.js";
 
-let progressionChart: { destroy(): void } | null = null;
-let historyChartInstance: { destroy(): void } | null = null;
-let muscleChartInstance: { destroy(): void } | null = null;
+let progressionChart: ChartJS | null = null;
+let historyChartInstance: ChartJS | null = null;
+let muscleChartInstance: ChartJS | null = null;
 
 let updateStatsTimeout: ReturnType<typeof setTimeout> | null = null;
 let exerciseSearchQuery = "";
 let logSetDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 function updateStats(): void {
   if (updateStatsTimeout) clearTimeout(updateStatsTimeout);
@@ -60,7 +73,7 @@ function updateStats(): void {
       if (completionState[ex.id]) {
         completed++;
         if (completionState[ex.id].date) {
-          workoutDates.add(new Date(completionState[ex.id].date).toDateString());
+          workoutDates.add(getDateKey(new Date(completionState[ex.id].date)));
         }
       }
     });
@@ -174,9 +187,9 @@ function renderExercises(): void {
                                     <span class="muscle-tag">${escapeHtml(ex.muscle)}</span>
                                     <span class="difficulty-tag ${diffClass(ex.difficulty)}">${escapeHtml(ex.difficulty)}</span>
                                 </div>
-                                ${state ? `<p class="completed-date">Виконано: ${formatDate(state.date)}</p>` : ""}
+                                ${state ? `<p class="completed-date">${t('exercise.completed_date', formatDate(state.date))}</p>` : ""}
                                 <button class="check-btn ${isCompleted ? "checked" : ""}" data-check-id="${ex.id}">
-                                    ${isCompleted ? "✓ Виконано" : "○ Відмітити"}
+                                    ${isCompleted ? t('exercise.check_mark') : t('exercise.check_pending')}
                                 </button>
                             </div>
                         </div>
@@ -254,12 +267,12 @@ function openModal(id: string | number): void {
 
   const checkinBtn = document.getElementById("modal-checkin-btn");
   if (checkinBtn) {
-    checkinBtn.textContent = isCompleted ? "✓ Виконано" : "○ Відмітити";
+    checkinBtn.textContent = isCompleted ? t('exercise.check_mark') : t('exercise.check_pending');
     checkinBtn.className = isCompleted ? "btn-completed" : "";
   }
   const checkinDate = document.getElementById("checkin-date");
   if (checkinDate) {
-    checkinDate.textContent = state ? `Дата: ${formatDate(state.date)}` : "";
+    checkinDate.textContent = state ? t('exercise.checkin_date', formatDate(state.date)) : "";
   }
 
   const lastSessionContainer = document.getElementById(
@@ -274,8 +287,8 @@ function openModal(id: string | number): void {
         .map((s) => `${s.weight}кг x ${s.reps}`)
         .join(", ");
       lastSessionContainer.innerHTML = `
-        <span>📋 Минулий раз: ${lastSets.length} підх. (${setsStr})</span>
-        <button class="btn-copy-last" id="btn-copy-last-modal">Скопіювати</button>
+        <span>${t('exercise.last_session', String(lastSets.length), setsStr)}</span>
+        <button class="btn-copy-last" id="btn-copy-last-modal">${t('exercise.copy_last')}</button>
       `;
       const copyBtn = document.getElementById("btn-copy-last-modal");
       if (copyBtn) {
@@ -292,7 +305,7 @@ function openModal(id: string | number): void {
           saveState();
           renderExerciseSetsLog(id);
           updateStats();
-          showToast("Підходи скопійовано!", "success");
+          showToast(t('toast.sets_copied'), "success");
           vibrate(50);
           lastSessionContainer.style.display = "none";
         };
@@ -330,10 +343,10 @@ function renderExerciseSetsLog(id: string | number): void {
   const logContainer = document.getElementById("exercise-sets-log");
   if (!logContainer) return;
   const logs = exerciseLogs[id] || [];
-  const today = new Date().toDateString();
+  const today = getDateKey(new Date());
 
   const todaySets = logs.filter(
-    (l) => new Date(l.date).toDateString() === today,
+    (l) => getDateKey(new Date(l.date)) === today,
   );
 
   let max1RM = 0;
@@ -345,21 +358,21 @@ function renderExerciseSetsLog(id: string | number): void {
     todaySets.length > 0
       ? `
             <div style="margin-bottom:10px; color:var(--success); font-weight:bold; font-size:0.9rem;">
-                🏆 Кращий 1RM сьогодні: ${max1RM}кг
+                ${t('exercise.best_1rm_today', String(max1RM))}
             </div>
             ${todaySets
               .map((s, i) => {
                 const oneRM = calculate1RM(s.weight, s.reps);
                 return `
                     <div class="exercise-set-item">
-                        <span>Підхід ${i + 1} <small style="color:#888;">(1RM: ${oneRM}кг)</small></span>
-                        <span>${s.weight} кг x ${s.reps}</span>
+                        <span>${t('exercise.set_n', String(i + 1))} <small style="color:#888;">${t('exercise.set_1rm', String(oneRM))}</small></span>
+                        <span>${t('exercise.set_detail', String(s.weight), String(s.reps))}</span>
                     </div>
                 `;
               })
               .join("")}
         `
-      : '<p style="color:var(--text-secondary); font-size:0.8rem;">Підходів за сьогодні немає</p>';
+      : `<p style="color:var(--text-secondary); font-size:0.8rem;">${t('exercise.no_sets_today')}</p>`;
 }
 
 function logSet(): void {
@@ -375,12 +388,12 @@ function logSet(): void {
   const reps = parseInt(repsInput.value);
 
   if (isNaN(weight) || isNaN(reps)) {
-    showToast("Введіть вагу та повтори", "warning");
+    showToast(t('toast.enter_weight_reps'), "warning");
     return;
   }
 
   if (weight <= 0 || reps <= 0) {
-    showToast("Вага та повтори мають бути більше 0", "warning");
+    showToast(t('toast.weight_reps_positive'), "warning");
     return;
   }
 
@@ -417,11 +430,11 @@ function toggleProgressionChart(): void {
 
   if (wrapper.style.display === "none") {
     wrapper.style.display = "block";
-    btn.textContent = "▲ Сховати прогрес";
+    btn.textContent = t('exercise.hide_progress');
     if (selectedExerciseId) renderProgressionChart(selectedExerciseId);
   } else {
     wrapper.style.display = "none";
-    btn.textContent = "📈 Показати прогрес";
+    btn.textContent = t('exercise.show_progress');
   }
 }
 
@@ -484,16 +497,16 @@ function renderProgressionChart(id: string | number): void {
     return `${parts[2]}.${parts[1]}`;
   });
 
-  let labelText = "Максимальна вага (кг)";
+  let labelText = t('exercise.chart_label_weight');
   let borderColor = "#28a745";
   let backgroundColor = "rgba(40, 167, 69, 0.15)";
 
   if (metric === "1rm") {
-    labelText = "Розрахунковий 1RM (кг)";
+    labelText = t('exercise.chart_label_1rm');
     borderColor = "#ffc107";
     backgroundColor = "rgba(255, 193, 7, 0.15)";
   } else if (metric === "volume") {
-    labelText = "Загальний об'єм (кг)";
+    labelText = t('exercise.chart_label_volume');
     borderColor = "#00d4ff";
     backgroundColor = "rgba(0, 212, 255, 0.15)";
   }
@@ -543,7 +556,7 @@ function renderHistory(): void {
       muscleChartInstance = null;
     }
     historyList.innerHTML =
-      '<div class="history-item"><p>Історія тренувань порожня</p></div>';
+      `<div class="history-item"><p>${t('history.empty')}</p></div>`;
     return;
   }
 
@@ -620,7 +633,7 @@ function renderHistoryChart(workouts: { date: string; count: number }[]): void {
       }),
       datasets: [
         {
-          label: "Виконано вправ",
+          label: t('history.exercises_done'),
           data: last7.map((w) => w.count),
           backgroundColor: "rgba(0, 212, 255, 0.2)",
           borderColor: "#00d4ff",
@@ -681,7 +694,7 @@ function renderMuscleDistributionChart(
     w.exercises.forEach((exId) => {
       const ex = allEx.find((e) => e.id === exId);
       if (ex) {
-        const group = ex.muscleGroup || ex.muscle || "Інші";
+        const group = ex.muscleGroup || ex.muscle || t('muscle_group.other');
         muscleCounts[group] = (muscleCounts[group] || 0) + 1;
       }
     });
@@ -738,7 +751,7 @@ function renderMuscleDistributionChart(
         },
         tooltip: {
           callbacks: {
-            label: function (context) {
+            label: function (context: { chart: ChartJS; raw: unknown; dataset: { data: number[] }; label: string }) {
               const value = context.raw as number;
               const total = (context.dataset.data as number[]).reduce(
                 (a, b) => a + b,
@@ -755,58 +768,7 @@ function renderMuscleDistributionChart(
   });
 }
 
-function renderHeatmap(): void {
-  const container = document.getElementById("activity-heatmap");
-  if (!container) return;
-
-  const activity: Record<string, number> = {};
-
-  Object.values(completionState).forEach((val: CompletionEntry) => {
-    if (val.date) {
-      const d = new Date(val.date).toDateString();
-      activity[d] = (activity[d] || 0) + 1;
-    }
-  });
-
-  const archive = localStorage.getItem("completionArchive");
-  if (archive) {
-    const archiveData = safeJSONParse(archive, {}) as Record<
-      string,
-      Record<string, CompletionEntry>
-    >;
-    Object.keys(archiveData).forEach((dateStr) => {
-      const d = new Date(dateStr).toDateString();
-      const completedExercises = Object.values(archiveData[dateStr]);
-      activity[d] = (activity[d] || 0) + completedExercises.filter((val) => val.completed).length;
-    });
-  }
-
-  const now = new Date();
-  const days: string[] = [];
-  const ukLocale = new Intl.DateTimeFormat("uk-UA", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-
-  for (let i = 364; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(now.getDate() - i);
-    const dayStr = d.toDateString();
-    const count = activity[dayStr] || 0;
-    let level = 0;
-    if (count > 0) level = 1;
-    if (count > 3) level = 2;
-    if (count > 6) level = 3;
-    if (count > 9) level = 4;
-
-    days.push(
-      `<div class="heatmap-day level-${level}" title="${ukLocale.format(d)}: ${count} вправ"></div>`,
-    );
-  }
-
-  container.innerHTML = days.join("");
-}
+// ---- Heatmap moved to renderers/heatmap.ts ----
 
 function renderPlans(): void {
   const container = document.getElementById("plans-list");
@@ -814,7 +776,7 @@ function renderPlans(): void {
 
   if (workoutPlans.length === 0) {
     container.innerHTML =
-      '<div class="plan-card"><h3>Немає планів</h3><p>Створіть свій перший план тренувань!</p></div>';
+      `<div class="plan-card"><h3>${t('plans.none')}</h3><p>${t('plans.none_desc')}</p></div>`;
     return;
   }
 
@@ -846,8 +808,8 @@ function renderPlans(): void {
                     ${exerciseNames.length > 5 ? `<span class="plan-exercise-mini">+${exerciseNames.length - 5}</span>` : ""}
                 </div>
                 <div class="plan-card-actions">
-                    <button class="btn-start-plan" data-plan-index="${planIndex}">▶ Почати тренування</button>
-                    <button class="btn-delete-plan" data-plan-index="${planIndex}">🗑 Видалити</button>
+                    <button class="btn-start-plan" data-plan-index="${planIndex}">${t('plans.start')}</button>
+                    <button class="btn-delete-plan" data-plan-index="${planIndex}">${t('plans.delete')}</button>
                 </div>
             </div>
         `;
@@ -891,7 +853,7 @@ function savePlan(): void {
   const nameInput = document.getElementById("plan-name") as HTMLInputElement;
   const name = (nameInput?.value || "").trim();
   if (!name) {
-    showToast("Введіть назву плану", "warning");
+    showToast(t('toast.enter_plan_name'), "warning");
     return;
   }
 
@@ -905,7 +867,7 @@ function savePlan(): void {
   });
 
   if (exerciseIds.length === 0) {
-    showToast("Оберіть хоча б одну вправу", "warning");
+    showToast(t('toast.select_exercise'), "warning");
     return;
   }
 
@@ -923,7 +885,7 @@ function savePlan(): void {
 }
 
 function deletePlan(index: number): void {
-  if (confirm("Видалити цей план?")) {
+  if (confirm(t('confirm.delete_plan'))) {
     workoutPlans.splice(index, 1);
     savePlans();
     renderPlans();
@@ -936,37 +898,40 @@ function startWorkout(planIndex: number): void {
 
   const planExIds = plan.exercises;
   if (!planExIds.length) {
-    showToast("План не містить вправ", "warning");
+    showToast(t('toast.plan_no_exercises'), "warning");
     return;
   }
 
   setSelectedExerciseId(planExIds[0]);
   openModal(planExIds[0]);
 
+  const modalContent = document.querySelector(".modal-content");
+  if (!modalContent) return;
+
+  const existing = modalContent.querySelector(".workout-progress");
+  if (existing) existing.remove();
+
   const planInfo = document.createElement("div");
   planInfo.className = "workout-progress";
   planInfo.innerHTML = `
-        <p style="margin: 10px 20px; color: #00d4ff;">План: ${escapeHtml(plan.name)} (${planExIds.length} вправ)</p>
+        <p style="margin: 10px 20px; color: #00d4ff;">${t('plans.workout_progress', escapeHtml(plan.name), String(planExIds.length))}</p>
     `;
 
-  const modalContent = document.querySelector(".modal-content");
-  if (modalContent) {
-    modalContent.insertBefore(
-      planInfo,
-      modalContent.querySelector(".modal-checkin"),
-    );
-  }
+  modalContent.insertBefore(
+    planInfo,
+    modalContent.querySelector(".modal-checkin"),
+  );
 }
 
 function finishWorkout(): void {
   const completedCount = Object.keys(completionState).length;
   if (completedCount === 0) {
-    showToast("Ви ще не відмітили жодної вправи сьогодні!", "warning");
+    showToast(t('toast.no_completed_exercises'), "warning");
     return;
   }
 
-  if (confirm(`Завершити тренування? Ви виконали ${completedCount} вправ.`)) {
-    const today = new Date().toDateString();
+  if (confirm(t('confirm.finish_workout', String(completedCount)))) {
+    const today = getDateKey(new Date());
     const archive = localStorage.getItem("completionArchive");
     const archiveData: Record<string, Record<string, CompletionEntry>> = archive
       ? (safeJSONParse(archive, {}) as Record<
@@ -994,12 +959,12 @@ function finishWorkout(): void {
     renderExercises();
 
     celebration();
-    showToast("Тренування збережено в історію! Гарна робота! 💪", "success");
+    showToast(t('toast.workout_saved'), "success");
 
     const completedDays = Object.keys(archiveData).length;
     if (completedDays % 10 === 0) {
       showToast(
-        `💾 Виконано ${completedDays} тренувань! Зробіть експорт.`,
+        t('toast.workout_milestone', String(completedDays)),
         "info",
         6000,
       );
@@ -1008,7 +973,7 @@ function finishWorkout(): void {
 }
 
 function resetProgress(): void {
-  if (confirm("Скинути весь прогрес? Цю дію не можна відновити.")) {
+  if (confirm(t('confirm.reset_progress'))) {
     resetCompletionState();
     saveState();
     updateStats();
@@ -1046,120 +1011,7 @@ function initTheme(): void {
   }
 }
 
-function calculatePlates(): void {
-  const weightInput = document.getElementById(
-    "plate-weight-input",
-  ) as HTMLInputElement;
-  const totalWeight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
-  const barWeight = 20;
-  let weightToDistribute = (totalWeight - barWeight) / 2;
-
-  if (weightToDistribute < 0) weightToDistribute = 0;
-
-  const availablePlates = [25, 20, 15, 10, 5, 2.5, 1.25];
-  const result: number[] = [];
-
-  let temp = weightToDistribute;
-  availablePlates.forEach((p) => {
-    const count = Math.floor(temp / p);
-    if (count > 0) {
-      for (let i = 0; i < count; i++) result.push(p);
-      temp %= p;
-    }
-  });
-
-  const visualizer = document.getElementById("plate-visualizer");
-  if (visualizer) {
-    visualizer.innerHTML = `
-        <div class="barbell">
-            <div class="plates-stack">
-                ${result.map((p) => `<div class="plate p${String(p).replace(".", "_")}" title="${p}kg">${p}</div>`).join("")}
-            </div>
-        </div>
-    `;
-  }
-
-  const resultsArea = document.getElementById("plate-results");
-  if (resultsArea) {
-    resultsArea.innerHTML =
-      result.length > 0
-        ? `<p>З кожного боку: ${result.join("kg, ")}kg</p>`
-        : `<p>Тільки гриф (20кг)</p>`;
-  }
-}
-
-function calculate1RMSplits(): void {
-  const wInput = document.getElementById(
-    "calc-1rm-weight",
-  ) as HTMLInputElement | null;
-  const rInput = document.getElementById(
-    "calc-1rm-reps",
-  ) as HTMLInputElement | null;
-  if (!wInput || !rInput) return;
-
-  const w = parseFloat(wInput.value) || 0;
-  const r = parseInt(rInput.value) || 0;
-
-  let oneRM = 0;
-  if (w > 0 && r > 0) {
-    oneRM = calculate1RM(w, r);
-  }
-
-  const valueDisplay = document.getElementById("calc-1rm-value");
-  if (valueDisplay) {
-    valueDisplay.textContent = `${oneRM} кг`;
-  }
-
-  const tbody = document.getElementById("splits-tbody");
-  if (tbody) {
-    if (oneRM === 0) {
-      tbody.innerHTML = `<tr><td colspan="2" style="text-align:center; padding: 15px; color: var(--text-secondary);">Введіть вагу та повтори</td></tr>`;
-      return;
-    }
-
-    const percentages = [100, 95, 90, 85, 80, 75, 70, 65, 60, 50];
-    tbody.innerHTML = percentages
-      .map((pct) => {
-        const splitWeight = Math.round(oneRM * (pct / 100) * 10) / 10;
-        return `
-          <tr style="border-bottom: 1px solid var(--border);">
-            <td style="padding: 8px 0; color: var(--text-primary); font-weight: 500;">${pct}%</td>
-            <td style="padding: 8px 0; color: var(--accent); font-weight: bold; text-align: right;">${splitWeight} кг</td>
-          </tr>
-        `;
-      })
-      .join("");
-  }
-}
-
-function switchCalcTab(tabId: "plate" | "1rm"): void {
-  const btnPlate = document.getElementById("btn-calc-tab-plate");
-  const btn1rm = document.getElementById("btn-calc-tab-1rm");
-  const viewPlate = document.getElementById("calc-view-plate");
-  const view1rm = document.getElementById("calc-view-1rm");
-
-  if (btnPlate) btnPlate.classList.toggle("active", tabId === "plate");
-  if (btn1rm) btn1rm.classList.toggle("active", tabId === "1rm");
-  if (viewPlate) viewPlate.style.display = tabId === "plate" ? "block" : "none";
-  if (view1rm) view1rm.style.display = tabId === "1rm" ? "block" : "none";
-
-  if (tabId === "1rm") {
-    calculate1RMSplits();
-  }
-  vibrate(20);
-}
-
-function openPlateModal(): void {
-  const modal = document.getElementById("plate-modal");
-  if (modal) modal.style.display = "flex";
-  switchCalcTab("plate");
-  calculatePlates();
-}
-
-function closePlateModal(): void {
-  const modal = document.getElementById("plate-modal");
-  if (modal) modal.style.display = "none";
-}
+// ---- Plates moved to plates.ts ----
 
 function switchTab(tabId: string): void {
   setSelectedMuscleGroup(null);
@@ -1183,6 +1035,10 @@ function switchTab(tabId: string): void {
     bodySection,
     logbookSection,
   ];
+
+  if (muscleChartInstance) { muscleChartInstance.destroy(); muscleChartInstance = null; }
+  if (historyChartInstance) { historyChartInstance.destroy(); historyChartInstance = null; }
+  destroyBodyChart();
 
   sections.forEach((s) => {
     if (s) s.style.display = "none";
@@ -1257,7 +1113,7 @@ function saveCustomExercise(): void {
   const description = (descInput?.value || "").trim();
 
   if (!name) {
-    showToast("Введіть назву вправи", "warning");
+    showToast(t('toast.enter_exercise_name'), "warning");
     return;
   }
 
@@ -1268,7 +1124,7 @@ function saveCustomExercise(): void {
     muscleGroup: muscleGroup,
     difficulty: "Середній",
     description: description,
-    instructions: ["Користувацька вправа"],
+    instructions: [t('custom_exercise.default_instructions')],
     sets: "3 x 10",
     image:
       "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=300&auto=format&fit=crop",
@@ -1333,10 +1189,10 @@ function renderHistoryTableView(workouts: { date: string; count: number; exercis
     ? `<div class="history-table-wrapper"><table class="history-table">
         <thead>
           <tr>
-            <th>Дата</th>
-            <th>Вправи</th>
-            <th>Кількість</th>
-            <th>Об'єм (кг)</th>
+            <th>${t('history.table_date')}</th>
+            <th>${t('history.table_exercises')}</th>
+            <th>${t('history.table_count')}</th>
+            <th>${t('history.table_volume')}</th>
           </tr>
         </thead>
         <tbody>
@@ -1353,17 +1209,17 @@ function renderHistoryTableView(workouts: { date: string; count: number; exercis
             w.exercises.forEach((exId) => {
               const logs = exerciseLogs[exId] || [];
               logs.forEach((s) => {
-                if (new Date(s.date).toDateString() === new Date(w.date).toDateString()) {
+                if (getDateKey(new Date(s.date)) === getDateKey(new Date(w.date))) {
                   sessionVolume += (s.weight || 0) * (s.reps || 0);
                 }
               });
             });
 
             return `<tr>
-              <td data-label="Дата">${formatDate(w.date)}</td>
-              <td data-label="Вправи">${escapeHtml(exerciseNames.substring(0, 80))}${exerciseNames.length > 80 ? "..." : ""}</td>
-              <td data-label="Кількість"><span class="history-item-count">${w.count}</span></td>
-              <td data-label="Об'єм">${sessionVolume} кг</td>
+              <td data-label="${t('history.table_date')}">${formatDate(w.date)}</td>
+              <td data-label="${t('history.table_exercises')}">${escapeHtml(exerciseNames.substring(0, 80))}${exerciseNames.length > 80 ? "..." : ""}</td>
+              <td data-label="${t('history.table_count')}"><span class="history-item-count">${w.count}</span></td>
+              <td data-label="${t('history.table_volume')}">${sessionVolume} кг</td>
             </tr>`;
           }).join("")}
         </tbody>
@@ -1381,7 +1237,7 @@ function renderHistoryTableView(workouts: { date: string; count: number; exercis
         w.exercises.forEach((exId) => {
           const logs = exerciseLogs[exId] || [];
           logs.forEach((s) => {
-            if (new Date(s.date).toDateString() === new Date(w.date).toDateString()) {
+            if (getDateKey(new Date(s.date)) === getDateKey(new Date(w.date))) {
               sessionVolume += (s.weight || 0) * (s.reps || 0);
             }
           });
@@ -1394,7 +1250,7 @@ function renderHistoryTableView(workouts: { date: string; count: number; exercis
               <div class="history-item-exercises">${escapeHtml(exerciseNames.substring(0, 100))}${exerciseNames.length > 100 ? "..." : ""}</div>
             </div>
             <div style="text-align:right;">
-              <div class="history-item-count">${w.count} вправ</div>
+              <div class="history-item-count">${w.count} ${t('history.exercises_label')}</div>
               <div style="font-size:0.8rem; color:var(--success);">${sessionVolume} кг</div>
             </div>
           </div>
@@ -1438,7 +1294,10 @@ if (typeof document !== "undefined") {
     // Exercise search
     const searchInput = document.getElementById("exercise-search") as HTMLInputElement | null;
     if (searchInput) {
-      searchInput.addEventListener("input", () => setSearchQuery(searchInput.value));
+      searchInput.addEventListener("input", () => {
+        if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => setSearchQuery(searchInput.value), 200);
+      });
     }
 
     // Keyboard shortcuts
@@ -1475,12 +1334,14 @@ export {
   resetProgress,
   toggleDropdown,
   initTheme,
-  calculatePlates,
-  openPlateModal,
-  closePlateModal,
   switchTab,
   switchLogbookTab,
   openCustomExerciseModal,
   closeCustomExerciseModal,
   saveCustomExercise,
+  calculatePlates,
+  openPlateModal,
+  closePlateModal,
+  calculate1RMSplits,
+  switchCalcTab,
 };

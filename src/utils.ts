@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import type { LogEntry } from "./types.js";
 
 function safeJSONParse(str: string, fallback: unknown = null): unknown {
@@ -232,9 +233,9 @@ function safeSetItem(key: string, value: string): boolean {
       e instanceof DOMException &&
       (e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED")
     ) {
-      showToast("Недостатньо місця у сховищі. Зробіть експорт та очистіть дані.", "error", 6000);
+      showToast(t('toast.storage_full'), "error", 6000);
     } else {
-      showToast("Помилка збереження даних: " + (e as Error).message, "error");
+      showToast(t('toast.save_error', (e as Error).message), "error");
     }
     return false;
   }
@@ -385,6 +386,13 @@ function getLastSessionSets(logs: LogEntry[]): LogEntry[] {
   return groups[lastDate];
 }
 
+function getDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export {
   safeJSONParse,
   safeSetItem,
@@ -406,4 +414,5 @@ export {
   setEncryptionPassphrase,
   clearEncryptionPassphrase,
   getLastSessionSets,
+  getDateKey,
 };

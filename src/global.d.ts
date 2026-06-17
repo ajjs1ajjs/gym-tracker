@@ -1,12 +1,8 @@
 /* eslint-disable */
 
-// ---- External libs ----
-interface Chart {
-  destroy(): void;
-}
-declare var Chart: {
-  new (ctx: CanvasRenderingContext2D, config: Record<string, unknown>): Chart;
-};
+// ---- External libs (loaded from CDN, types from chart.js npm) ----
+type _Chart = import("chart.js").Chart;
+declare var Chart: { new (ctx: CanvasRenderingContext2D | null, config: any): _Chart; prototype: _Chart };
 
 declare function confetti(config: Record<string, unknown>): void;
 
@@ -29,12 +25,7 @@ interface Element {
   checked?: boolean;
 }
 
-// ---- Patch EventTarget ----
-interface EventTarget {
-  closest?(selectors: string): Element | null;
-  dataset?: DOMStringMap;
-  id?: string;
-}
+
 
 // ---- Window globals set by main.ts ----
 interface Window {
@@ -87,9 +78,6 @@ interface Window {
 }
 
 // ---- Canvas helpers ----
-interface HTMLElement {
-  getContext?: (id: string) => CanvasRenderingContext2D | null;
-}
 interface HTMLCanvasElement {
   width: number;
   height: number;

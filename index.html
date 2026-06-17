@@ -8,54 +8,63 @@
       name="description"
       content="Додаток для відстежування тренувань та прогресу"
     />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.github.com; font-src 'self' data:"
+    />
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="images/icon-192.png" />
-    <title>GymProgress - Тренування</title>
+    <title data-i18n="app.title">GymProgress - Тренування</title>
     <link rel="stylesheet" href="style.css" />
     <script
       src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"
+      defer
       crossorigin="anonymous"
+      integrity="sha384-HAH79XdRvHr6axVGh4xQWVCp14kcd32bNk4Xu0sHDHtFQ42n6BAM8ykvB47dGz6D"
     ></script>
     <script
       src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+      defer
       crossorigin="anonymous"
+      integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g"
     ></script>
   </head>
   <body>
     <div id="toast-container"></div>
     <div id="update-banner" class="update-banner hidden">
-      <span>📦 Доступне оновлення</span>
-      <button id="update-btn">Оновити</button>
+      <span data-i18n="update.available">📦 Доступне оновлення</span>
+      <button id="update-btn" data-i18n="update.button">Оновити</button>
       <button id="update-dismiss-btn" class="btn-close">&times;</button>
     </div>
     <header>
       <div class="header-top">
         <h1>💪 GymProgress</h1>
         <div class="header-actions">
-          <button class="btn-theme" id="theme-toggle" title="Змінити тему">
+          <button class="btn-theme" id="theme-toggle" title="Змінити тему" data-i18n="header.theme">
             🌙
           </button>
-          <button class="btn-timer" id="header-timer-btn" title="Таймер">
+          <button class="btn-timer" id="header-timer-btn" title="Таймер" data-i18n="header.timer">
             ⏱
           </button>
           <span
             id="offline-indicator"
             class="offline-indicator hidden"
             title="Немає з'єднання"
+            data-i18n="header.offline"
             >📡</span
           >
           <div class="dropdown">
             <button class="btn-settings">🛠️</button>
             <div class="dropdown-content" id="header-dropdown">
-              <button data-action="plate">🧮 Ваги</button>
-              <button data-action="export">📤 Експорт (Бекап)</button>
-              <button data-action="export-health">🍎 Експорт (Apple Health)</button>
-              <label class="btn-import-label">
+              <button data-action="plate" data-i18n="dropdown.plates">🧮 Ваги</button>
+              <button data-action="export" data-i18n="dropdown.export">📤 Експорт (Бекап)</button>
+              <button data-action="export-health" data-i18n="dropdown.export_health">🍎 Експорт (Apple Health)</button>
+              <label class="btn-import-label" data-i18n="dropdown.import">
                 📥 Імпорт
                 <input type="file" accept=".json" hidden />
               </label>
-              <button data-action="settings">⚙️ Налаштування</button>
-              <button class="btn-reset" data-action="reset">
+              <button data-action="settings" data-i18n="dropdown.settings">⚙️ Налаштування</button>
+              <button class="btn-reset" data-action="reset" data-i18n="dropdown.reset">
                 🔴 Скинути все
               </button>
             </div>
@@ -73,18 +82,18 @@
         <div class="stats-grid">
           <div class="stat">
             <span class="stat-value" id="completed-exercises">0</span>
-            <span class="stat-label">Вправ</span>
+            <span class="stat-label" data-i18n="stats.exercises">Вправ</span>
           </div>
           <div class="stat">
             <span class="stat-value" id="total-workouts">0</span>
-            <span class="stat-label">Сесій</span>
+            <span class="stat-label" data-i18n="stats.sessions">Сесій</span>
           </div>
           <div class="stat">
             <span class="stat-value" id="total-volume">0кг</span>
-            <span class="stat-label">Вага</span>
+            <span class="stat-label" data-i18n="stats.volume">Вага</span>
           </div>
         </div>
-        <button class="btn-finish-workout" id="finish-workout-btn">
+        <button class="btn-finish-workout" id="finish-workout-btn" data-i18n="stats.finish">
           Завершити
         </button>
       </div>
@@ -93,37 +102,37 @@
     <nav class="bottom-nav">
       <button class="nav-item active" data-tab="exercises" title="Alt+1">
         <span class="nav-icon">🏋️</span>
-        <span class="nav-label">Вправи</span>
+        <span class="nav-label" data-i18n="nav.exercises">Вправи</span>
       </button>
       <button class="nav-item" data-tab="logbook" title="Alt+2">
         <span class="nav-icon">📔</span>
-        <span class="nav-label">Журнал</span>
+        <span class="nav-label" data-i18n="nav.logbook">Журнал</span>
       </button>
       <button class="nav-item" data-tab="history" title="Alt+3">
         <span class="nav-icon">📅</span>
-        <span class="nav-label">Історія</span>
+        <span class="nav-label" data-i18n="nav.history">Історія</span>
       </button>
       <button class="nav-item" data-tab="plans" title="Alt+4">
         <span class="nav-icon">📋</span>
-        <span class="nav-label">Плани</span>
+        <span class="nav-label" data-i18n="nav.plans">Плани</span>
       </button>
       <button class="nav-item" data-tab="body" title="Alt+5">
         <span class="nav-icon">⚖️</span>
-        <span class="nav-label">Тіло</span>
+        <span class="nav-label" data-i18n="nav.body">Тіло</span>
       </button>
     </nav>
-    <div class="keyboard-hint">
+    <div class="keyboard-hint" data-i18n="keyboard.hint">
       <kbd>Alt+1-5</kbd> Таби &nbsp;·&nbsp; <kbd>Esc</kbd> Закрити &nbsp;·&nbsp; <kbd>T</kbd> Таймер &nbsp;·&nbsp; <kbd>Ctrl+Enter</kbd> Додати сет
     </div>
 
     <div class="main-layout">
       <aside class="sidebar">
-        <h3>Групи м'язів</h3>
+        <h3 data-i18n="sidebar.muscle_groups">Групи м'язів</h3>
         <div class="search-box">
-          <input type="text" id="exercise-search" placeholder="🔍 Пошук вправ..." />
+          <input type="text" id="exercise-search" placeholder="🔍 Пошук вправ..." data-i18n="sidebar.search" />
         </div>
         <div class="muscle-groups" id="muscle-groups"></div>
-        <button class="btn-add-custom-ex" id="open-custom-ex-btn">
+        <button class="btn-add-custom-ex" id="open-custom-ex-btn" data-i18n="sidebar.create_exercise">
           + Створити вправу
         </button>
       </aside>
@@ -146,17 +155,17 @@
           <div>
             <p class="modal-description" id="modal-description"></p>
             <div class="modal-instructions">
-              <h4>Як виконувати:</h4>
+              <h4 data-i18n="exercise.how_to">Як виконувати:</h4>
               <ul id="modal-instructions"></ul>
             </div>
             <div class="modal-sets">
-              <h4>Підходи та повтори:</h4>
+              <h4 data-i18n="exercise.sets_reps">Підходи та повтори:</h4>
               <p id="modal-sets"></p>
             </div>
           </div>
           <div>
             <div class="modal-progression">
-              <h4>Лог підходів (сьогодні)</h4>
+              <h4 data-i18n="exercise.log_today">Лог підходів (сьогодні)</h4>
               <div id="exercise-sets-log"></div>
               <div
                 id="modal-last-session-container"
@@ -169,11 +178,12 @@
                   id="set-weight"
                   placeholder="Вага (кг)"
                   step="0.5"
+                  data-i18n="exercise.weight"
                 />
-                <input type="number" id="set-reps" placeholder="Повтори" step="1" />
-                <button id="set-log-btn">+ Додати</button>
+                <input type="number" id="set-reps" placeholder="Повтори" step="1" data-i18n="exercise.reps" />
+                <button id="set-log-btn" data-i18n="exercise.add_set">+ Додати</button>
               </div>
-              <button class="btn-toggle-chart" id="progression-toggle-btn">
+              <button class="btn-toggle-chart" id="progression-toggle-btn" data-i18n="exercise.show_progress">
                 📈 Показати прогрес
               </button>
               <div
@@ -194,7 +204,7 @@
                   <label
                     for="progression-metric"
                     style="font-size: 0.85rem; color: var(--text-secondary)"
-                    >Показник:</label
+                    data-i18n="exercise.metric_label">Показник:</label
                   >
                   <select
                     id="progression-metric"
@@ -208,9 +218,9 @@
                       cursor: pointer;
                     "
                   >
-                    <option value="weight">Максимальна вага (кг)</option>
-                    <option value="1rm">Розрахунковий 1RM (кг)</option>
-                    <option value="volume">Сумарний об'єм (кг)</option>
+                    <option value="weight" data-i18n="exercise.metric_weight">Максимальна вага (кг)</option>
+                    <option value="1rm" data-i18n="exercise.metric_1rm">Розрахунковий 1RM (кг)</option>
+                    <option value="volume" data-i18n="exercise.metric_volume">Сумарний об'єм (кг)</option>
                   </select>
                 </div>
                 <canvas id="progression-chart"></canvas>
@@ -219,7 +229,7 @@
           </div>
         </div>
         <div class="modal-checkin">
-          <button id="modal-checkin-btn">✓ Відмітити виконаним</button>
+          <button id="modal-checkin-btn" data-i18n="exercise.checkin">✓ Відмітити виконаним</button>
           <p class="checkin-date" id="checkin-date"></p>
         </div>
       </div>
@@ -228,7 +238,7 @@
     <div class="modal" id="timer-modal">
       <div class="modal-content timer-modal-content">
         <span class="modal-close" id="timer-modal-close">&times;</span>
-        <h2>⏱ Таймер відпочинку</h2>
+        <h2 data-i18n="modal.timer.title">⏱ Таймер відпочинку</h2>
         <div class="timer-display" id="timer-display">01:30</div>
         <div class="timer-presets">
           <button class="timer-preset" data-seconds="30">30с</button>
@@ -238,22 +248,20 @@
           <button class="timer-preset" data-seconds="180">3хв</button>
         </div>
         <div class="timer-controls">
-          <button class="timer-btn start" id="timer-start-btn">▶ Старт</button>
+          <button class="timer-btn start" id="timer-start-btn" data-i18n="modal.timer.start">▶ Старт</button>
           <button
             class="timer-btn pause"
             id="timer-pause-btn"
             style="display: none"
+            data-i18n="modal.timer.pause"
           >
             ⏸ Пауза
           </button>
-          <button class="timer-btn reset" id="timer-reset-btn">
+          <button class="timer-btn reset" id="timer-reset-btn" data-i18n="modal.timer.reset">
             ↻ Скинути
           </button>
         </div>
-        <div
-          class="form-group"
-          style="margin-top: 25px; text-align: left; padding: 0 20px"
-        >
+        <div class="form-group mb-20">
           <label
             style="
               color: var(--accent);
@@ -261,7 +269,7 @@
               display: block;
               margin-bottom: 5px;
             "
-            >🎵 Звук завершення:</label
+            data-i18n="modal.timer.sound_label">🎵 Звук завершення:</label
           >
           <select
             id="timer-sound-select"
@@ -276,11 +284,11 @@
               cursor: pointer;
             "
           >
-            <option value="classic">Класичний біп</option>
-            <option value="double">Подвійний сигнал</option>
-            <option value="low">Низький тон</option>
-            <option value="gong">Спортивний гонг</option>
-            <option value="melody">Мелодія успіху</option>
+            <option value="classic" data-i18n="modal.timer.sound_classic">Класичний біп</option>
+            <option value="double" data-i18n="modal.timer.sound_double">Подвійний сигнал</option>
+            <option value="low" data-i18n="modal.timer.sound_low">Низький тон</option>
+            <option value="gong" data-i18n="modal.timer.sound_gong">Спортивний гонг</option>
+            <option value="melody" data-i18n="modal.timer.sound_melody">Мелодія успіху</option>
           </select>
         </div>
       </div>
@@ -288,18 +296,18 @@
 
     <section class="history-section" id="history-section" style="display: none">
       <div class="section-container">
-        <h2>📅 Історія тренувань</h2>
+        <h2 data-i18n="history.title">📅 Історія тренувань</h2>
         <div class="history-filters">
           <select id="history-period">
-            <option value="all">Весь час</option>
-            <option value="week">Цей тиждень</option>
-            <option value="month">Цей місяць</option>
+            <option value="all" data-i18n="history.filter_all">Весь час</option>
+            <option value="week" data-i18n="history.filter_week">Цей тиждень</option>
+            <option value="month" data-i18n="history.filter_month">Цей місяць</option>
           </select>
         </div>
         <div class="history-chart-container">
           <canvas id="history-chart"></canvas>
         </div>
-        <h3 style="margin-top: 25px; margin-bottom: 15px">
+        <h3 style="margin-top: 25px; margin-bottom: 15px" data-i18n="history.muscle_distribution">
           📊 Розподіл за групами м'язів
         </h3>
         <div
@@ -314,7 +322,7 @@
         >
           <canvas id="muscle-distribution-chart"></canvas>
         </div>
-        <h3>🔥 Графік активності</h3>
+        <h3 data-i18n="history.heatmap">🔥 Графік активності</h3>
         <div class="heatmap-container" id="activity-heatmap"></div>
         <div class="history-list" id="history-list"></div>
       </div>
@@ -322,8 +330,8 @@
 
     <section class="plans-section" id="plans-section" style="display: none">
       <div class="section-container">
-        <h2>📋 Плани тренувань</h2>
-        <button class="btn-add-plan" data-action="add-plan">
+        <h2 data-i18n="plans.title">📋 Плани тренувань</h2>
+        <button class="btn-add-plan" data-action="add-plan" data-i18n="plans.new">
           + Новий план
         </button>
         <div class="plans-list" id="plans-list"></div>
@@ -335,7 +343,7 @@
         <div class="body-dashboard-grid">
           <!-- Column 1: Weight and body tracker -->
           <div class="body-card">
-            <h2 style="margin-top: 0; margin-bottom: 20px">
+            <h2 style="margin-top: 0; margin-bottom: 20px" data-i18n="body.title">
               ⚖️ Вага тіла та виміри
             </h2>
             <div class="body-input-row">
@@ -344,8 +352,9 @@
                 id="body-weight-input"
                 placeholder="Сьогоднішня вага (кг)"
                 step="0.1"
+                data-i18n="body.weight_input_placeholder"
               />
-              <button class="btn-save-weight" data-action="save-body-weight">
+              <button class="btn-save-weight" data-action="save-body-weight" data-i18n="body.save">
                 Зберегти
               </button>
             </div>
@@ -359,7 +368,7 @@
           <div class="body-sidebar-column">
             <!-- Water Tracker -->
             <div class="body-card">
-              <h2 style="margin-top: 0; margin-bottom: 15px">💧 Трекер води</h2>
+              <h2 style="margin-top: 0; margin-bottom: 15px" data-i18n="water.title">💧 Трекер води</h2>
               <div class="water-progress-container">
                 <div class="water-progress-text" id="water-progress-text">
                   0 / 2000 мл (0%)
@@ -373,10 +382,10 @@
                 </div>
               </div>
               <div class="water-controls">
-                <button class="btn-water-add" data-ml="250">+250 мл</button>
-                <button class="btn-water-add" data-ml="500">+500 мл</button>
-                <button class="btn-water-add" data-ml="1000">+1000 мл</button>
-                <button class="btn-water-reset" id="btn-water-reset">
+                <button class="btn-water-add" data-ml="250" data-i18n="water.add_250">+250 мл</button>
+                <button class="btn-water-add" data-ml="500" data-i18n="water.add_500">+500 мл</button>
+                <button class="btn-water-add" data-ml="1000" data-i18n="water.add_1000">+1000 мл</button>
+                <button class="btn-water-reset" id="btn-water-reset" data-i18n="water.reset">
                   Скинути
                 </button>
               </div>
@@ -389,7 +398,7 @@
                   gap: 10px;
                 "
               >
-                <label style="font-size: 0.85rem; color: var(--text-secondary)"
+                <label style="font-size: 0.85rem; color: var(--text-secondary)" data-i18n="water.goal_label"
                   >Ціль води (мл):</label
                 >
                 <input
@@ -414,20 +423,20 @@
 
             <!-- Calorie & Macros Calculator -->
             <div class="body-card">
-              <h2 style="margin-top: 0; margin-bottom: 15px">
+              <h2 style="margin-top: 0; margin-bottom: 15px" data-i18n="calories.title">
                 🔥 Калькулятор калорій та БЖУ
               </h2>
               <div class="calorie-form">
                 <div class="form-row">
                   <div class="form-group-half">
-                    <label>Стать</label>
+                    <label data-i18n="calories.gender_label">Стать</label>
                     <select id="cal-gender">
-                      <option value="male">Чоловік</option>
-                      <option value="female">Жінка</option>
+                      <option value="male" data-i18n="calories.gender_male">Чоловік</option>
+                      <option value="female" data-i18n="calories.gender_female">Жінка</option>
                     </select>
                   </div>
                   <div class="form-group-half">
-                    <label>Вік (років)</label>
+                    <label data-i18n="calories.age_label">Вік (років)</label>
                     <input
                       type="number"
                       id="cal-age"
@@ -439,7 +448,7 @@
                 </div>
                 <div class="form-row">
                   <div class="form-group-half">
-                    <label>Ріст (см)</label>
+                    <label data-i18n="calories.height_label">Ріст (см)</label>
                     <input
                       type="number"
                       id="cal-height"
@@ -449,7 +458,7 @@
                     />
                   </div>
                   <div class="form-group-half">
-                    <label>Вага (кг)</label>
+                    <label data-i18n="calories.weight_label">Вага (кг)</label>
                     <input
                       type="number"
                       id="cal-weight"
@@ -461,34 +470,35 @@
                   </div>
                 </div>
                 <div class="form-group">
-                  <label>Активність</label>
+                  <label data-i18n="calories.activity_label">Активність</label>
                   <select id="cal-activity">
-                    <option value="1.2">Мінімальна (сидячий спосіб)</option>
-                    <option value="1.375">
+                    <option value="1.2" data-i18n="calories.activity_minimal">Мінімальна (сидячий спосіб)</option>
+                    <option value="1.375" data-i18n="calories.activity_low">
                       Помірна (1-3 тренування/тиждень)
                     </option>
-                    <option value="1.55">
+                    <option value="1.55" data-i18n="calories.activity_medium">
                       Середня (3-5 тренувань/тиждень)
                     </option>
-                    <option value="1.725">
+                    <option value="1.725" data-i18n="calories.activity_high">
                       Висока (6-7 тренувань/тиждень)
                     </option>
-                    <option value="1.9">
+                    <option value="1.9" data-i18n="calories.activity_extreme">
                       Екстремальна (важка праця/тренування)
                     </option>
                   </select>
                 </div>
                 <div class="form-group">
-                  <label>Ціль</label>
+                  <label data-i18n="calories.goal_label">Ціль</label>
                   <select id="cal-goal">
-                    <option value="loss">Схуднення (-500 ккал)</option>
-                    <option value="maintenance" selected>Підтримка ваги</option>
-                    <option value="gain">Набір маси (+300 ккал)</option>
+                    <option value="loss" data-i18n="calories.goal_loss">Схуднення (-500 ккал)</option>
+                    <option value="maintenance" selected data-i18n="calories.goal_maintenance">Підтримка ваги</option>
+                    <option value="gain" data-i18n="calories.goal_gain">Набір маси (+300 ккал)</option>
                   </select>
                 </div>
                 <button
                   class="btn-calculate-calories"
                   id="btn-calculate-calories"
+                  data-i18n="calories.calculate"
                 >
                   Розрахувати
                 </button>
@@ -501,24 +511,24 @@
                 style="display: none; margin-top: 20px"
               >
                 <div class="calorie-target-display">
-                  <div class="calorie-label">Денна норма калорій</div>
+                  <div class="calorie-label" data-i18n="calories.result_label">Денна норма калорій</div>
                   <div class="calorie-value" id="cal-result-calories">
                     0 ккал
                   </div>
                 </div>
                 <div class="macros-grid">
                   <div class="macro-box protein">
-                    <div class="macro-label">Білки</div>
+                    <div class="macro-label" data-i18n="calories.protein">Білки</div>
                     <div class="macro-value" id="cal-result-protein">0 г</div>
                     <div class="macro-pct" id="cal-result-protein-pct">0%</div>
                   </div>
                   <div class="macro-box fat">
-                    <div class="macro-label">Жири</div>
+                    <div class="macro-label" data-i18n="calories.fat">Жири</div>
                     <div class="macro-value" id="cal-result-fat">0 г</div>
                     <div class="macro-pct" id="cal-result-fat-pct">0%</div>
                   </div>
                   <div class="macro-box carb">
-                    <div class="macro-label">Вуглеводи</div>
+                    <div class="macro-label" data-i18n="calories.carbs">Вуглеводи</div>
                     <div class="macro-value" id="cal-result-carb">0 г</div>
                     <div class="macro-pct" id="cal-result-carb-pct">0%</div>
                   </div>
@@ -532,13 +542,14 @@
 
     <section class="logbook-section" id="logbook-section" style="display: none">
       <div class="section-container">
-        <h2>📔 Журнал тренувань</h2>
+        <h2 data-i18n="logbook.title">📔 Журнал тренувань</h2>
 
         <div class="header-tabs" style="margin-bottom: 20px">
           <button
             class="tab-btn active"
             id="logbook-tab-log"
             data-logbook-tab="log"
+            data-i18n="logbook.tab_log"
           >
             Запис підходів
           </button>
@@ -546,6 +557,7 @@
             class="tab-btn"
             id="logbook-tab-history"
             data-logbook-tab="history"
+            data-i18n="logbook.tab_history"
           >
             Історія журналу
           </button>
@@ -553,7 +565,7 @@
 
         <div id="logbook-view-log">
           <div class="form-group" style="margin-bottom: 20px">
-            <label>Назва нової вправи:</label>
+            <label data-i18n="logbook.create_title">Назва нової вправи:</label>
             <div style="display: flex; gap: 10px">
               <input
                 type="text"
@@ -567,11 +579,13 @@
                   background: var(--card-bg);
                   color: var(--text-primary);
                 "
+                data-i18n="logbook.create_placeholder"
               />
               <button
                 class="btn-save-plan"
                 data-action="create-logbook-ex"
                 style="width: auto; margin-top: 0"
+                data-i18n="logbook.create_button"
               >
                 Створити
               </button>
@@ -587,7 +601,7 @@
           />
 
           <div class="form-group">
-            <label>Оберіть вправу для запису:</label>
+            <label data-i18n="logbook.select_label">Оберіть вправу для запису:</label>
             <input
               type="text"
               id="logbook-ex-search"
@@ -602,6 +616,7 @@
                 border: 1px solid var(--border);
                 box-sizing: border-box;
               "
+              data-i18n="logbook.select_search"
             />
             <div style="display: flex; gap: 10px; align-items: center">
               <select
@@ -627,6 +642,7 @@
                   cursor: pointer;
                 "
                 title="Видалити обрану вправу"
+                data-i18n="logbook.delete_exercise_title"
               >
                 🗑️
               </button>
@@ -655,14 +671,16 @@
               id="logbook-weight"
               placeholder="Вага (кг)"
               step="0.5"
+              data-i18n="exercise.weight"
             />
             <input
               type="number"
               id="logbook-reps"
               placeholder="Повтори"
               step="1"
+              data-i18n="exercise.reps"
             />
-            <button id="btn-add-logbook-set">+ Додати</button>
+            <button id="btn-add-logbook-set" data-i18n="exercise.add_set">+ Додати</button>
           </div>
 
           <button
@@ -681,6 +699,7 @@
               font-weight: bold;
               margin-top: 10px;
             "
+            data-i18n="logbook.saved"
           >
             Успішно збережено
           </div>
@@ -688,7 +707,7 @@
 
         <div id="logbook-view-history" style="display: none">
           <div class="form-group" style="margin-bottom: 20px">
-            <label>Оберіть вправу для історії:</label>
+            <label data-i18n="logbook.history_select_label">Оберіть вправу для історії:</label>
             <input
               type="text"
               id="logbook-history-search"
@@ -703,6 +722,7 @@
                 border: 1px solid var(--border);
                 box-sizing: border-box;
               "
+              data-i18n="logbook.history_select_search"
             />
             <select
               id="logbook-history-select"
@@ -725,17 +745,17 @@
     <div class="modal" id="plan-modal">
       <div class="modal-content">
         <span class="modal-close" id="plan-modal-close">&times;</span>
-        <h2 id="plan-modal-title">Новий план тренувань</h2>
+        <h2 id="plan-modal-title" data-i18n="plans.modal_title">Новий план тренувань</h2>
         <div class="plan-form">
           <div class="form-group">
-            <label>Назва плану:</label>
-            <input type="text" id="plan-name" placeholder="Назва плану" />
+            <label data-i18n="plans.name_label">Назва плану:</label>
+            <input type="text" id="plan-name" placeholder="Назва плану" data-i18n="plans.name_placeholder" />
           </div>
           <div class="form-group">
-            <label>Оберіть вправи:</label>
+            <label data-i18n="plans.exercises_label">Оберіть вправи:</label>
             <div class="plan-exercises-select" id="plan-exercises-select"></div>
           </div>
-          <button class="btn-save-plan" id="plan-save-btn">
+          <button class="btn-save-plan" id="plan-save-btn" data-i18n="plans.save">
             Зберегти план
           </button>
         </div>
@@ -745,22 +765,22 @@
     <div class="modal" id="plate-modal">
       <div class="modal-content plate-modal-content">
         <span class="modal-close" id="plate-modal-close">&times;</span>
-        <h2 id="calculator-modal-title">🧮 Калькулятор</h2>
+        <h2 id="calculator-modal-title" data-i18n="calc.title">🧮 Калькулятор</h2>
         <div
           class="header-tabs"
           style="margin-bottom: 20px; display: flex; gap: 10px"
         >
-          <button class="tab-btn active" id="btn-calc-tab-plate">
+          <button class="tab-btn active" id="btn-calc-tab-plate" data-i18n="calc.tab_plates">
             🧮 Млинці
           </button>
-          <button class="tab-btn" id="btn-calc-tab-1rm">
+          <button class="tab-btn" id="btn-calc-tab-1rm" data-i18n="calc.tab_1rm">
             🏆 1RM & Відсотки
           </button>
         </div>
 
         <div id="calc-view-plate">
           <div class="form-group">
-            <label>Вага на штанзі (кг):</label>
+            <label data-i18n="calc.plate_weight_label">Вага на штанзі (кг):</label>
             <input
               type="number"
               id="plate-weight-input"
@@ -775,7 +795,7 @@
         <div id="calc-view-1rm" style="display: none">
           <div class="form-group" style="display: flex; gap: 15px">
             <div style="flex: 1">
-              <label>Вага (кг):</label>
+              <label data-i18n="calc.1rm_weight_label">Вага (кг):</label>
               <input
                 type="number"
                 id="calc-1rm-weight"
@@ -792,7 +812,7 @@
               />
             </div>
             <div style="flex: 1">
-              <label>Повтори:</label>
+              <label data-i18n="calc.1rm_reps_label">Повтори:</label>
               <input
                 type="number"
                 id="calc-1rm-reps"
@@ -823,7 +843,7 @@
               border: 1px solid var(--accent-dim);
             "
           >
-            <span style="font-size: 0.9rem; color: var(--text-secondary)"
+            <span style="font-size: 0.9rem; color: var(--text-secondary)" data-i18n="calc.1rm_result_label"
               >Розрахунковий 1RM:</span
             >
             <div
@@ -841,6 +861,7 @@
 
           <h3
             style="font-size: 1rem; color: var(--accent); margin-bottom: 10px"
+            data-i18n="calc.1rm_percentages"
           >
             Відсотки від 1RM:
           </h3>
@@ -856,8 +877,8 @@
                   color: var(--text-secondary);
                 "
               >
-                <th style="padding: 8px 0; font-weight: 500">Відсоток</th>
-                <th style="padding: 8px 0; font-weight: 500; text-align: right">
+                <th style="padding: 8px 0; font-weight: 500" data-i18n="calc.1rm_percent">Відсоток</th>
+                <th style="padding: 8px 0; font-weight: 500; text-align: right" data-i18n="calc.1rm_weight">
                   Вага (кг)
                 </th>
               </tr>
@@ -873,22 +894,24 @@
     <div class="modal" id="settings-modal">
       <div class="modal-content">
         <span class="modal-close" id="settings-modal-close">&times;</span>
-        <h2>⚙️ Налаштування синхронізації</h2>
-        <p>Використовуйте GitHub Gist для збереження даних у хмарі.</p>
+        <h2 data-i18n="settings.title">⚙️ Налаштування синхронізації</h2>
+        <p data-i18n="settings.description">Використовуйте GitHub Gist для збереження даних у хмарі.</p>
         <div class="form-group">
-          <label>GitHub Personal Access Token:</label>
+          <label data-i18n="settings.token_label">GitHub Personal Access Token:</label>
           <input
             type="password"
             id="github-token"
             placeholder="ghp_xxxxxxxxxxxx"
+            data-i18n="settings.token_placeholder"
           />
         </div>
         <div class="form-group">
-          <label>Gist ID (опціонально):</label>
+          <label data-i18n="settings.gist_label">Gist ID (опціонально):</label>
           <input
             type="text"
             id="gist-id"
             placeholder="Залиште пустим для нової синхронізації"
+            data-i18n="settings.gist_placeholder"
           />
         </div>
         <div
@@ -899,7 +922,7 @@
             align-items: center;
           "
         >
-          <label style="margin: 0">Автостарт таймера:</label>
+          <label style="margin: 0" data-i18n="settings.smart_timer">Автостарт таймера:</label>
           <input
             type="checkbox"
             id="smart-timer-toggle"
@@ -910,6 +933,7 @@
         <div class="form-group">
           <label
             style="display: flex; align-items: center; gap: 10px; margin: 0"
+            data-i18n="settings.encrypt_label"
           >
             <input
               type="checkbox"
@@ -924,39 +948,32 @@
             placeholder="Пароль (мінімум 8 символів)"
             disabled
             style="margin-top: 8px"
+            data-i18n="settings.encrypt_placeholder"
           />
         </div>
         <div class="settings-actions">
-          <button class="btn-save-settings" data-action="save-settings">
+          <button class="btn-save-settings" data-action="save-settings" data-i18n="settings.save">
             Зберегти налаштування
           </button>
-          <button class="btn-sync" data-action="sync-upload">
+          <button class="btn-sync" data-action="sync-upload" data-i18n="settings.sync">
             ☁️ Синхронізувати зараз
           </button>
           <button
-            class="btn-sync"
-            style="background: #28a745; margin-left: 10px"
+            class="btn-sync btn-green"
             data-action="sync-download"
+            data-i18n="settings.download"
           >
             📥 Завантажити з хмари
           </button>
         </div>
-        <div
-          style="
-            margin-top: 20px;
-            border-top: 1px solid var(--border);
-            padding-top: 20px;
-            display: flex;
-            gap: 10px;
-          "
-        >
-          <button class="btn-plate" style="flex: 1" data-action="export">
+        <div class="flex-gap" style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px;">
+          <button class="btn-plate flex-1" data-action="export" data-i18n="settings.export_json">
             💾 Експорт JSON
           </button>
           <button
-            class="btn-plate"
-            style="flex: 1; background: var(--success); color: white"
+            class="btn-plate flex-1 btn-success"
             data-action="export-csv"
+            data-i18n="settings.export_csv"
           >
             📊 Експорт Excel/CSV
           </button>
@@ -967,56 +984,43 @@
     <div class="modal" id="custom-exercise-modal">
       <div class="modal-content">
         <span class="modal-close" id="custom-ex-modal-close">&times;</span>
-        <h2>➕ Створити вправу</h2>
+        <h2 data-i18n="custom_exercise.title">➕ Створити вправу</h2>
         <div class="form-group">
-          <label>Назва вправи:</label>
+          <label data-i18n="custom_exercise.name_label">Назва вправи:</label>
           <input
             type="text"
             id="ce-name"
             placeholder="Наприклад: Підйом на біцепс"
+            data-i18n="custom_exercise.name_placeholder"
           />
         </div>
         <div class="form-group">
-          <label>Група м'язів:</label>
+          <label data-i18n="custom_exercise.muscle_label">Група м'язів:</label>
           <select
             id="ce-muscle"
-            style="
-              width: 100%;
-              padding: 10px;
-              border-radius: 5px;
-              background: var(--card-bg);
-              color: var(--text-primary);
-            "
           >
-            <option value="Груди">Груди</option>
-            <option value="Спина">Спина</option>
-            <option value="Ноги">Ноги</option>
-            <option value="Плечі">Плечі</option>
-            <option value="Руки">Руки</option>
-            <option value="Прес">Прес</option>
-            <option value="Кардіо">Кардіо</option>
+            <option value="Груди" data-i18n="muscle_group.chest">Груди</option>
+            <option value="Спина" data-i18n="muscle_group.back">Спина</option>
+            <option value="Ноги" data-i18n="muscle_group.legs">Ноги</option>
+            <option value="Плечі" data-i18n="muscle_group.shoulders">Плечі</option>
+            <option value="Руки" data-i18n="muscle_group.arms">Руки</option>
+            <option value="Прес" data-i18n="muscle_group.abs">Прес</option>
+            <option value="Кардіо" data-i18n="muscle_group.cardio">Кардіо</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Опис (опціонально):</label>
+          <label data-i18n="custom_exercise.desc_label">Опис (опціонально):</label>
           <textarea
             id="ce-desc"
             rows="3"
-            style="
-              width: 100%;
-              padding: 10px;
-              border-radius: 5px;
-              background: var(--card-bg);
-              color: var(--text-primary);
-            "
           ></textarea>
         </div>
-        <button class="btn-save-plan" data-action="save-custom-ex">
+        <button class="btn-save-plan" data-action="save-custom-ex" data-i18n="custom_exercise.save">
           Зберегти вправу
         </button>
       </div>
     </div>
 
-    <script type="module" src="dist/js/main.js"></script>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

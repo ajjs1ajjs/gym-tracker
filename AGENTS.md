@@ -2,30 +2,37 @@
 
 ## Контекст проекту / Project Context
 
-GymProgress — це PWA для відстежування тренувань на чистому TypeScript без фреймворків.
+GymProgress — PWA для тренувань. TypeScript + Vite. Білд ~74ms.
 
 ## Команди / Commands
 
 | Команда | Опис |
 |---------|------|
-| `npm run build` | TypeScript компіляція + копіювання асетів + фікс шляхів |
+| `npm run dev` | Vite dev server з HMR |
+| `npm start` | Vite dev server |
+| `npm run build` | Vite build + SW кеш |
+| `npm run preview` | Serve dist/ |
 | `npm run clean` | Очищення dist/ |
-| `npm run rebuild` | clean + build |
-| `npm test` | Запуск Jest тестів |
-| `npm run lint` | ESLint перевірка |
-| `npm run lint:fix` | Автоматичне виправлення |
-| `npm run format` | Prettier форматування |
+| `npm test` | Jest (63 тести) |
+| `npm run lint` | ESLint |
+| `npm run format` | Prettier |
+| `npx cypress run` | E2E (19 тестів) |
 
-## Архітектура / Architecture
+## Архітектура
 
-- `src/` — TypeScript вихідний код
-- `dist/` — збірка (генерується)
-- JS файли після збірки: `dist/js/*.js`
-- Service Worker шукає кеш за шляхом `./js/` (відносно `dist/sw.js`)
-- Індекси вправ — числові (`number`), кастомні — `Date.now()` або `"lb_" + Date.now()`
+- `src/` — TS код, бандлиться Vite
+- `dist/` — збірка (Vite)
+- `src/plates.ts` — калькулятор млинців
+- `src/renderers/` — renderers/heatmap.ts
+- `src/locales/` — i18n (525 ключів)
+- `src/i18n.ts` — `t('key')`
+- Vite plugin копіює sw.js, manifest.json, style.css, images/
 
-## Важливо / Important
+## Important
 
-- `decryptLocalData` має присвоювати дані в модульні змінні після дешифрування
-- Після змін у `src/` завжди запускати `npm run build` для оновлення `dist/`
-- Тести пишуться на JavaScript у `__tests__/`
+- Build: `npm run build`
+- Dev: `npm start` (Vite HMR)
+- Tests: `npm test` (Jest 63) + `npx cypress run` (E2E 19)
+- Синтаксис i18n: `t('toast.saved')`, HTML: `data-i18n="nav.exercises"`
+- Для нової мови: створити `src/locales/{lang}.ts`, додати `loadLocale()` в main.ts
+- `generate-sw-cache.js` — SW precache з dist/

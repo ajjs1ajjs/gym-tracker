@@ -1,7 +1,9 @@
 import { bodyWeightHistory, saveState } from "./data.js";
-import { formatDate, vibrate, showToast } from "./utils.js";
+import { t } from "./i18n.js";
+import { formatDate, vibrate, showToast, getDateKey } from "./utils.js";
+import type { Chart as ChartJS } from "chart.js";
 
-let bodyChart: Chart | null = null;
+let bodyChart: ChartJS | null = null;
 
 function saveBodyWeight() {
   const input = document.getElementById(
@@ -10,7 +12,7 @@ function saveBodyWeight() {
   if (!input) return;
   const weight = parseFloat(input.value);
   if (!weight || weight <= 0) {
-    showToast("Введіть коректну вагу", "warning");
+    showToast(t('toast.enter_valid_weight'), "warning");
     return;
   }
 
@@ -64,7 +66,7 @@ function renderBodyChart() {
       labels: data.map((i) => new Date(i.date).toLocaleDateString()),
       datasets: [
         {
-          label: "Вага тіла (кг)",
+          label: t('body.chart_label'),
           data: data.map((i) => i.weight),
           borderColor: "#00d4ff",
           backgroundColor: "rgba(0, 212, 255, 0.1)",
@@ -97,7 +99,7 @@ function saveWaterGoal(goal: number): void {
 }
 
 function getWaterLogForToday(): number {
-  const today = new Date().toDateString();
+  const today = getDateKey(new Date());
   const logsStr = localStorage.getItem("gym_water_logs");
   if (!logsStr) return 0;
   try {
@@ -109,7 +111,7 @@ function getWaterLogForToday(): number {
 }
 
 function addWater(ml: number): void {
-  const today = new Date().toDateString();
+  const today = getDateKey(new Date());
   const logsStr = localStorage.getItem("gym_water_logs");
   let logs: Record<string, number> = {};
   if (logsStr) {
@@ -126,7 +128,7 @@ function addWater(ml: number): void {
 }
 
 function resetWater(): void {
-  const today = new Date().toDateString();
+  const today = getDateKey(new Date());
   const logsStr = localStorage.getItem("gym_water_logs");
   let logs: Record<string, number> = {};
   if (logsStr) {
@@ -154,7 +156,7 @@ function renderWaterTracker(): void {
   ) as HTMLInputElement | null;
 
   if (textEl) {
-    textEl.textContent = `${current} / ${goal} мл (${pct}%)`;
+    textEl.textContent = t('water.text', String(current), String(goal), String(pct));
   }
   if (barEl) {
     barEl.style.width = `${pct}%`;
@@ -240,7 +242,7 @@ function calculateCalories(interactive = true): void {
 
   if (!age || age <= 0 || !height || height <= 0 || !weight || weight <= 0) {
     if (interactive)
-      showToast("Будь ласка, заповніть всі поля коректно", "warning");
+      showToast(t('toast.fill_all_fields'), "warning");
     return;
   }
 
@@ -298,21 +300,25 @@ function calculateCalories(interactive = true): void {
   const fatPctEl = document.getElementById("cal-result-fat-pct");
   const carbPctEl = document.getElementById("cal-result-carb-pct");
 
-  if (calValEl) calValEl.textContent = `${caloriesRounded} ккал`;
-  if (protValEl) protValEl.textContent = `${proteinG} г`;
-  if (fatValEl) fatValEl.textContent = `${fatG} г`;
-  if (carbValEl) carbValEl.textContent = `${carbG} г`;
+  if (calValEl) calValEl.textContent = t('calories.result_calories', String(caloriesRounded));
+  if (protValEl) protValEl.textContent = t('calories.result_grams', String(proteinG));
+  if (fatValEl) fatValEl.textContent = t('calories.result_grams', String(fatG));
+  if (carbValEl) carbValEl.textContent = t('calories.result_grams', String(carbG));
 
-  if (protPctEl) protPctEl.textContent = `${Math.round(proteinPct * 100)}%`;
-  if (fatPctEl) fatPctEl.textContent = `${Math.round(fatPct * 100)}%`;
-  if (carbPctEl) carbPctEl.textContent = `${Math.round(carbPct * 100)}%`;
+  if (protPctEl) protPctEl.textContent = t('calories.result_percent', String(Math.round(proteinPct * 100)));
+  if (fatPctEl) fatPctEl.textContent = t('calories.result_percent', String(Math.round(fatPct * 100)));
+  if (carbPctEl) carbPctEl.textContent = t('calories.result_percent', String(Math.round(carbPct * 100)));
 
   if (resultsDiv) resultsDiv.style.display = "block";
 
   if (interactive) {
     vibrate(40);
-    showToast("Норму калорій розраховано!", "success");
+    showToast(t('toast.calories_calculated'), "success");
   }
+}
+
+export function destroyBodyChart(): void {
+  if (bodyChart) { bodyChart.destroy(); bodyChart = null; }
 }
 
 export {

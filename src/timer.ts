@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { vibrate, playBeep } from "./utils.js";
 
 let timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -90,7 +91,7 @@ function startTimer(): void {
       timerInterval = null;
       timerRunning = false;
       if (Notification.permission === "granted") {
-        new Notification("GymProgress", { body: "Час відпочинку закінчився!" });
+        new Notification("GymProgress", { body: t('modal.timer.notification_body') });
       }
       playBeep();
       vibrate([500, 200, 500]);

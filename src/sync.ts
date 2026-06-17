@@ -11,6 +11,7 @@ import {
   encryptLocalData,
   decryptLocalData,
 } from "./data.js";
+import { t } from "./i18n.js";
 import {
   vibrate,
   safeJSONParse,
@@ -109,7 +110,10 @@ async function saveSettings(): Promise<void> {
   const gistInput = document.getElementById("gist-id") as HTMLInputElement;
   const gistId = (gistInput?.value || "").trim();
 
-  if (token) setStoredToken(token);
+  if (token) {
+    setStoredToken(token);
+    showToast(t('toast.warning_token'), "warning");
+  }
   if (gistId) setStoredGistId(gistId);
 
   const smartTimerToggle = document.getElementById(
@@ -128,12 +132,12 @@ async function saveSettings(): Promise<void> {
   if (encryptToggle?.checked) {
     const passphrase = encryptInput?.value;
     if (!passphrase || passphrase.length < 8 || passphrase === "********") {
-      showToast("Введіть пароль (мінімум 8 символів)", "warning");
+      showToast(t('toast.encrypt_too_short'), "warning");
       return;
     }
     setEncryptionPassphrase(passphrase);
     await encryptLocalData(passphrase);
-    showToast("🔒 Дані зашифровано!", "success");
+    showToast(t('toast.encrypt_enabled'), "success");
   } else {
     const passphrase = getEncryptionPassphrase() || encryptInput?.value;
     const dataEncrypted = isEncrypted(
@@ -141,7 +145,7 @@ async function saveSettings(): Promise<void> {
     );
     if (dataEncrypted && (!passphrase || passphrase === "********")) {
       showToast(
-        "Введіть поточний пароль для вимкнення шифрування",
+        t('toast.encrypt_disabled_prompt'),
         "warning",
       );
       if (encryptInput) {
@@ -153,15 +157,15 @@ async function saveSettings(): Promise<void> {
     if (passphrase && passphrase !== "********") {
       const ok = await decryptLocalData(passphrase);
       if (!ok) {
-        showToast("Неправильний пароль.", "error");
+        showToast(t('toast.wrong_password'), "error");
         return;
       }
     }
     clearEncryptionPassphrase();
-    showToast("🔓 Шифрування вимкнено", "info");
+    showToast(t('toast.encrypt_disabled'), "info");
   }
 
-  showToast("Налаштування збережено!", "success");
+  showToast(t('toast.settings_saved'), "success");
   vibrate(50);
 }
 
@@ -170,12 +174,12 @@ async function syncToCloud(): Promise<void> {
   const gistId = getStoredGistId();
 
   if (!token) {
-    showToast("Будь ласка, введіть GitHub Token у налаштуваннях", "warning");
+    showToast(t('toast.need_github_token'), "warning");
     openSettingsModal();
     return;
   }
 
-  showToast("⏳ Синхронізація...", "info", 60000);
+  showToast(t('toast.syncing'), "info", 60000);
 
   const data = {
     completionState,
@@ -220,20 +224,20 @@ async function syncToCloud(): Promise<void> {
         ) as HTMLInputElement;
         if (gistInput) gistInput.value = result.id;
       }
-      showToast("Синхронізація успішна! ✅", "success");
+      showToast(t('toast.sync_success'), "success");
       vibrate([50, 100, 50]);
     } else {
       const err = (await response.json().catch(() => ({}))) as {
         message?: string;
       };
       showToast(
-        "Помилка синхронізації: " + (err.message || `HTTP ${response.status}`),
+        t('toast.sync_error', err.message || `HTTP ${response.status}`),
         "error",
       );
     }
   } catch (e: unknown) {
     const err = e as { message: string };
-    showToast("Помилка мережі: " + err.message, "error");
+    showToast(t('toast.network_error', err.message), "error");
   }
 }
 
@@ -242,11 +246,11 @@ async function fetchFromCloud(): Promise<void> {
   const gistId = getStoredGistId();
 
   if (!token || !gistId) {
-    showToast("Налаштуйте Token та Gist ID для імпорту", "warning");
+    showToast(t('toast.need_token_and_gist'), "warning");
     return;
   }
 
-  showToast("⏳ Завантаження...", "info", 60000);
+  showToast(t('toast.downloading'), "info", 60000);
 
   try {
     const response = await fetch(`https://api.github.com/gists/${gistId}`, {
@@ -258,7 +262,7 @@ async function fetchFromCloud(): Promise<void> {
         files?: Record<string, { content: string }>;
       };
       if (!result.files?.["gym-data.json"]) {
-        showToast("Gist не містить файлу gym-data.json", "warning");
+        showToast(t('toast.no_gist_file'), "warning");
         return;
       }
       const content = result.files["gym-data.json"].content;
@@ -270,7 +274,7 @@ async function fetchFromCloud(): Promise<void> {
         customExercises?: Exercise[];
       };
 
-      if (confirm("Дані завантажено. Об'єднати з поточним прогресом? (Рекомендується)")) {
+      if (confirm(t('confirm.sync_merge'))) {
         const remoteCompletion = data.completionState || {};
         for (const [key, remoteVal] of Object.entries(remoteCompletion)) {
           const localVal = completionState[key];
@@ -335,18 +339,18 @@ async function fetchFromCloud(): Promise<void> {
         updateStats();
         renderMuscleGroups();
         renderExercises();
-        showToast("Дані оновлено!", "success");
+        showToast(t('toast.data_updated'), "success");
         vibrate([300, 100, 300]);
       }
     } else {
       showToast(
-        "Не вдалося завантажити дані (HTTP " + response.status + ")",
+        t('toast.fetch_error', String(response.status)),
         "error",
       );
     }
   } catch (e: unknown) {
     const err = e as { message: string };
-    showToast("Помилка мережі: " + err.message, "error");
+    showToast(t('toast.network_error', err.message), "error");
   }
 }
 
@@ -389,7 +393,7 @@ function importData(event: Event): void {
         customExercises?: Exercise[];
       };
 
-      if (!confirm("Об'єднати імпортовані дані з поточним прогресом?")) {
+      if (!confirm(t('confirm.import_merge'))) {
         return;
       }
 
@@ -458,9 +462,9 @@ function importData(event: Event): void {
       renderMuscleGroups();
       renderExercises();
       renderPlans();
-      showToast("Дані успішно імпортовано!", "success");
+      showToast(t('toast.import_success'), "success");
     } catch (_err) {
-      showToast("Помилка при читанні файлу. Перевірте формат.", "error");
+      showToast(t('toast.import_error'), "error");
     }
   };
   reader.readAsText(file);
@@ -468,12 +472,12 @@ function importData(event: Event): void {
 }
 
 function exportToCSV(): void {
-  let csv = "Дата,Вправа,Група,Вага,Повтори,1RM\n";
+  let csv = t('csv.headers') + "\n";
   const allEx = getAllExercises();
 
   Object.keys(exerciseLogs).forEach((id) => {
     const ex = allEx.find((e) => String(e.id) === String(id));
-    const name = ex ? ex.name : "Вправа " + id;
+    const name = ex ? ex.name : t('csv.fallback_exercise', id);
     const group = ex ? ex.muscle : "-";
 
     exerciseLogs[id].forEach((s) => {
@@ -497,7 +501,7 @@ function exportToCSV(): void {
 }
 
 function exportForAppleHealth(): void {
-  const csvHeaders = "Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,Notes,Workout Notes,RPE\n";
+  const csvHeaders = t('csv.apple_health_headers') + "\n";
   let csv = csvHeaders;
   const allEx = getAllExercises();
   
@@ -519,8 +523,8 @@ function exportForAppleHealth(): void {
   
   sortedDates.forEach(dateStr => {
     const strongDate = `${dateStr} 12:00:00`;
-    const workoutName = "GymProgress Workout";
-    const duration = "1h 0m";
+    const workoutName = t('csv.apple_health_workout_name');
+    const duration = t('csv.apple_health_duration');
     
     const dayLogs = groupedLogs[dateStr].sort((a, b) => a.time - b.time);
     const setOrders: Record<string, number> = {};
