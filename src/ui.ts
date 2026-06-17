@@ -1259,50 +1259,56 @@ function renderHistoryTableView(workouts: { date: string; count: number; exercis
       .join("");
 }
 
+function initUISubscriptions(): void {
+  document
+    .getElementById("progression-metric")
+    ?.addEventListener("change", () => {
+      if (selectedExerciseId) renderProgressionChart(selectedExerciseId);
+    });
+
+  // Calculator modal tabs listeners
+  document
+    .getElementById("btn-calc-tab-plate")
+    ?.addEventListener("click", () => switchCalcTab("plate"));
+  document
+    .getElementById("btn-calc-tab-1rm")
+    ?.addEventListener("click", () => switchCalcTab("1rm"));
+
+  // 1RM calculator input change listeners
+  const calc1rmWeight = document.getElementById("calc-1rm-weight");
+  const calc1rmReps = document.getElementById("calc-1rm-reps");
+
+  const triggerCalculation = () => {
+    calculate1RMSplits();
+  };
+  calc1rmWeight?.addEventListener("input", triggerCalculation);
+  calc1rmReps?.addEventListener("input", triggerCalculation);
+
+  // Initialize smart timer toggle state on startup
+  const smartTimerToggle = document.getElementById("smart-timer-toggle") as HTMLInputElement | null;
+  if (smartTimerToggle) {
+    smartTimerToggle.checked = localStorage.getItem("gym_smart_timer") !== "false";
+  }
+
+  // Exercise search
+  const searchInput = document.getElementById("exercise-search") as HTMLInputElement | null;
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => setSearchQuery(searchInput.value), 200);
+    });
+  }
+
+  // Keyboard shortcuts
+  initKeyboardShortcuts();
+}
+
 if (typeof document !== "undefined") {
-  document.addEventListener("DOMContentLoaded", () => {
-    document
-      .getElementById("progression-metric")
-      ?.addEventListener("change", () => {
-        if (selectedExerciseId) renderProgressionChart(selectedExerciseId);
-      });
-
-    // Calculator modal tabs listeners
-    document
-      .getElementById("btn-calc-tab-plate")
-      ?.addEventListener("click", () => switchCalcTab("plate"));
-    document
-      .getElementById("btn-calc-tab-1rm")
-      ?.addEventListener("click", () => switchCalcTab("1rm"));
-
-    // 1RM calculator input change listeners
-    const calc1rmWeight = document.getElementById("calc-1rm-weight");
-    const calc1rmReps = document.getElementById("calc-1rm-reps");
-
-    const triggerCalculation = () => {
-      calculate1RMSplits();
-    };
-    calc1rmWeight?.addEventListener("input", triggerCalculation);
-    calc1rmReps?.addEventListener("input", triggerCalculation);
-
-    // Initialize smart timer toggle state on startup
-    const smartTimerToggle = document.getElementById("smart-timer-toggle") as HTMLInputElement | null;
-    if (smartTimerToggle) {
-      smartTimerToggle.checked = localStorage.getItem("gym_smart_timer") !== "false";
-    }
-
-    // Exercise search
-    const searchInput = document.getElementById("exercise-search") as HTMLInputElement | null;
-    if (searchInput) {
-      searchInput.addEventListener("input", () => {
-        if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(() => setSearchQuery(searchInput.value), 200);
-      });
-    }
-
-    // Keyboard shortcuts
-    initKeyboardShortcuts();
-  });
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initUISubscriptions);
+  } else {
+    initUISubscriptions();
+  }
 }
 
 export {
