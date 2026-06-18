@@ -126,7 +126,9 @@ function pruneOldArchiveEntries(
   const cutoffStr = getDateKey(cutoff);
   let pruned = 0;
   Object.keys(archive).forEach((dateStr) => {
-    if (new Date(dateStr) < new Date(cutoffStr)) {
+    // FIX #2: Compare date strings directly instead of creating Date objects
+    // Safe for YYYY-MM-DD format and prevents Invalid Date errors
+    if (dateStr < cutoffStr) {
       delete archive[dateStr];
       pruned++;
     }
@@ -149,30 +151,43 @@ function isEncrypted(value: string): boolean {
   return value.startsWith("#1#");
 }
 
-async function encryptLocalData(passphrase: string): Promise<void> {
-  const keys: [string, unknown][] = [
-    ["trainingProgress", completionState],
-    ["exerciseLogs", exerciseLogs],
-    ["bodyWeightHistory", bodyWeightHistory],
-    ["customExercises", customExercises],
-    ["workoutPlans", workoutPlans],
-  ];
-  for (const [key, data] of keys) {
-    const plain = JSON.stringify(data);
-    const enc = await encryptData(plain, passphrase);
-    localStorage.setItem(key, enc);
-  }
+async function encryptLocalData(passphrase: string): Promise<boolean> {
+  try {
+    const keys: [string, unknown][] = [
+      ["trainingProgress", completionState],
+      ["exerciseLogs", exerciseLogs],
+      ["bodyWeightHistory", bodyWeightHistory],
+      ["customExercises", customExercises],
+      ["workoutPlans", workoutPlans],
+    ];
+    for (const [key, data] of keys) {
+      const plain = JSON.stringify(data);
+      const enc = await encryptData(plain, passphrase);
+      // FIX #1: Use safeSetItem to handle quota errors
+      if (!safeSetItem(key, enc)) {
+        console.error(`Failed to encrypt and save ${key} - storage may be full`);
+        return false;
+      }
+    }
 
-  const waterRaw = localStorage.getItem("gym_water_logs") || "{}";
-  const calRaw =
-    localStorage.getItem("gym_calorie_calculator_params") || "{}";
-  const extraKeys: [string, string][] = [
-    ["gym_water_logs", waterRaw],
-    ["gym_calorie_calculator_params", calRaw],
-  ];
-  for (const [key, raw] of extraKeys) {
-    const enc = await encryptData(raw, passphrase);
-    localStorage.setItem(key, enc);
+    const waterRaw = localStorage.getItem("gym_water_logs") || "{}";
+    const calRaw =
+      localStorage.getItem("gym_calorie_calculator_params") || "{}";
+    const extraKeys: [string, string][] = [
+      ["gym_water_logs", waterRaw],
+      ["gym_calorie_calculator_params", calRaw],
+    ];
+    for (const [key, raw] of extraKeys) {
+      const enc = await encryptData(raw, passphrase);
+      if (!safeSetItem(key, enc)) {
+        console.error(`Failed to encrypt and save ${key} - storage may be full`);
+        return false;
+      }
+    }
+    return true;
+  } catch (e) {
+    console.error("Error during encryption:", e);
+    return false;
   }
 }
 

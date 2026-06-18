@@ -70,8 +70,13 @@ function playBeep(soundName?: string): void {
   if (audioCtx.state === "suspended") {
     audioCtx.resume();
   }
-  const sound =
-    soundName || localStorage.getItem("gym_timer_sound") || "classic";
+  let sound = "classic";
+  try {
+    // FIX #9: Safe localStorage access (may fail in private mode)
+    sound = soundName || localStorage.getItem("gym_timer_sound") || "classic";
+  } catch (e) {
+    console.log("Could not access localStorage for sound setting:", e);
+  }
   const now = audioCtx.currentTime;
 
   try {
@@ -334,6 +339,11 @@ async function decryptData(
       c.charCodeAt(0),
     );
     if (combined[0] !== 1) return null;
+    // FIX #8: Validate buffer length to prevent corruption
+    if (combined.length < 29) {
+      console.error("Invalid encrypted data: buffer too short");
+      return null;
+    }
     const salt = combined.slice(1, 17);
     const iv = combined.slice(17, 29);
     const data = combined.slice(29);

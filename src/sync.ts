@@ -36,6 +36,10 @@ import type {
   BodyWeightEntry,
 } from "./types.js";
 
+// FIX #4: CRITICAL - Race condition prevention
+let isSyncing = false;
+let isFetching = false;
+
 const TOKEN_KEY = "gym_github_token";
 const GIST_KEY = "gym_gist_id";
 
@@ -179,6 +183,9 @@ async function syncToCloud(): Promise<void> {
     return;
   }
 
+  if (isSyncing) return;
+  isSyncing = true;
+
   showToast(t('toast.syncing'), "info", 60000);
 
   const data = {
@@ -238,6 +245,8 @@ async function syncToCloud(): Promise<void> {
   } catch (e: unknown) {
     const err = e as { message: string };
     showToast(t('toast.network_error', err.message), "error");
+  } finally {
+    isSyncing = false;
   }
 }
 
@@ -249,6 +258,9 @@ async function fetchFromCloud(): Promise<void> {
     showToast(t('toast.need_token_and_gist'), "warning");
     return;
   }
+
+  if (isFetching) return;
+  isFetching = true;
 
   showToast(t('toast.downloading'), "info", 60000);
 
@@ -351,6 +363,8 @@ async function fetchFromCloud(): Promise<void> {
   } catch (e: unknown) {
     const err = e as { message: string };
     showToast(t('toast.network_error', err.message), "error");
+  } finally {
+    isFetching = false;
   }
 }
 

@@ -27,6 +27,8 @@ let activeSets: ActiveSet[] = [];
 let _callbacks: LogbookCallbacks | null = null;
 
 export function setCallbacks(cb: LogbookCallbacks): void {
+  // FIX #12: Clear old callbacks to prevent memory leaks and stale references
+  _callbacks = null;
   _callbacks = cb;
 }
 
@@ -348,13 +350,24 @@ function renderHistory(): void {
   const sortedDates = Object.keys(groups).sort((a, b) => {
     const parseDate = (str: string) => {
       const parts = str.split(".");
-      return new Date(
-        Number(parts[2]),
-        Number(parts[1]) - 1,
-        Number(parts[0]),
-      );
+      // FIX #13: Validate date parts before creating Date
+      if (parts.length !== 3 || !parts.every((p) => /^\d+$/.test(p))) {
+        console.warn("Invalid date format:", str);
+        return new Date(0);
+      }
+      const year = Number(parts[2]);
+      const month = Number(parts[1]) - 1;
+      const day = Number(parts[0]);
+      const d = new Date(year, month, day);
+      if (isNaN(d.getTime())) {
+        console.warn("Invalid date after parsing:", str);
+        return new Date(0);
+      }
+      return d;
     };
-    return +parseDate(b) - +parseDate(a);
+    const dateA = parseDate(a);
+    const dateB = parseDate(b);
+    return +dateB - +dateA;
   });
 
   const allEx = getAllExercises();
