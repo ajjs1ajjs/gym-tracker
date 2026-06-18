@@ -61,6 +61,11 @@ let exerciseSearchQuery = "";
 let logSetDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
+// Active workout-plan walkthrough state (null when not running a plan).
+let activePlanExercises: (string | number)[] | null = null;
+let activePlanName = "";
+let activePlanIndex = 0;
+
 function updateStats(): void {
   if (updateStatsTimeout) clearTimeout(updateStatsTimeout);
   updateStatsTimeout = setTimeout(() => {
@@ -243,6 +248,9 @@ function openModal(id: string | number): void {
 
   if (!exercise) return;
 
+  // Clear any stale plan banner; showPlanStep() re-adds it for plan steps.
+  document.querySelector(".modal-content .workout-progress")?.remove();
+
   const state = completionState[id];
   const isCompleted = !!state;
 
@@ -327,11 +335,17 @@ function closeModal(): void {
   const modal = document.getElementById("exercise-modal");
   if (modal) modal.style.display = "none";
   setSelectedExerciseId(null);
+  activePlanExercises = null;
 }
 
 function updateModalState(): void {
   if (!selectedExerciseId) return;
-  openModal(selectedExerciseId);
+  // Re-render the plan step (with its banner) when a plan walkthrough is active.
+  if (activePlanExercises) {
+    showPlanStep(activePlanIndex);
+  } else {
+    openModal(selectedExerciseId);
+  }
 }
 
 function toggleFromModal(): void {
@@ -719,8 +733,16 @@ function renderMuscleDistributionChart(
     Кардіо: "#17a2b8",
   };
 
+  // Deterministic hue from the label so colors stay stable across re-renders.
+  const hueFromLabel = (label: string): number => {
+    let h = 0;
+    for (let i = 0; i < label.length; i++) {
+      h = (h * 31 + label.charCodeAt(i)) % 360;
+    }
+    return h;
+  };
   const backgroundColors = labels.map(
-    (label) => colorMap[label] || `hsl(${Math.random() * 360}, 75%, 60%)`,
+    (label) => colorMap[label] || `hsl(${hueFromLabel(label)}, 75%, 60%)`,
   );
 
   muscleChartInstance = new Chart(ctx, {
@@ -897,26 +919,71 @@ function startWorkout(planIndex: number): void {
   const plan = workoutPlans[planIndex];
   if (!plan) return;
 
-  const planExIds = plan.exercises;
-  if (!planExIds.length) {
+  if (!plan.exercises.length) {
     showToast(t('toast.plan_no_exercises'), "warning");
     return;
   }
 
-  setSelectedExerciseId(planExIds[0]);
-  openModal(planExIds[0]);
+  activePlanExercises = plan.exercises;
+  activePlanName = plan.name;
+  activePlanIndex = 0;
+  showPlanStep(0);
+}
+
+// Renders one step of an active plan: opens the exercise modal and inserts a
+// progress banner with a Next/Finish control.
+function showPlanStep(index: number): void {
+  if (!activePlanExercises) return;
+  const total = activePlanExercises.length;
+  if (index < 0 || index >= total) return;
+
+  activePlanIndex = index;
+  const exId = activePlanExercises[index];
+  setSelectedExerciseId(exId);
+  openModal(exId); // removes any stale banner
 
   const modalContent = document.querySelector(".modal-content");
   if (!modalContent) return;
-
-  const existing = modalContent.querySelector(".workout-progress");
-  if (existing) existing.remove();
+  modalContent.querySelector(".workout-progress")?.remove();
 
   const planInfo = document.createElement("div");
   planInfo.className = "workout-progress";
-  planInfo.innerHTML = `
-        <p style="margin: 10px 20px; color: #00d4ff;">${t('plans.workout_progress', escapeHtml(plan.name), String(planExIds.length))}</p>
-    `;
+
+  const label = document.createElement("p");
+  label.style.margin = "10px 20px";
+  label.style.color = "#00d4ff";
+  // textContent is XSS-safe regardless of the (user-defined) plan name.
+  label.textContent = t(
+    'plans.workout_progress',
+    activePlanName,
+    String(index + 1),
+    String(total),
+  );
+  planInfo.appendChild(label);
+
+  const isLast = index === total - 1;
+  const navBtn = document.createElement("button");
+  navBtn.className = "btn-plan-nav";
+  navBtn.style.margin = "0 20px 12px";
+  navBtn.style.padding = "10px 16px";
+  navBtn.style.border = "none";
+  navBtn.style.borderRadius = "8px";
+  navBtn.style.background = "var(--accent, #00d4ff)";
+  navBtn.style.color = "#001018";
+  navBtn.style.fontWeight = "bold";
+  navBtn.style.cursor = "pointer";
+  navBtn.textContent = isLast
+    ? t('plans.finish_plan')
+    : t('plans.next_exercise');
+  navBtn.addEventListener("click", () => {
+    if (isLast) {
+      finishWorkout();
+      closeModal();
+    } else {
+      showPlanStep(index + 1);
+    }
+  });
+  planInfo.appendChild(navBtn);
 
   modalContent.insertBefore(
     planInfo,

@@ -1,4 +1,11 @@
-import { bodyWeightHistory, saveState } from "./data.js";
+import {
+  bodyWeightHistory,
+  saveState,
+  getWaterLogs,
+  saveWaterLogs,
+  getCalorieParams,
+  setCalorieParams,
+} from "./data.js";
 import { t } from "./i18n.js";
 import { formatDate, vibrate, showToast, getDateKey } from "./utils.js";
 import type { Chart as ChartJS } from "chart.js";
@@ -100,46 +107,23 @@ function saveWaterGoal(goal: number): void {
 
 function getWaterLogForToday(): number {
   const today = getDateKey(new Date());
-  const logsStr = localStorage.getItem("gym_water_logs");
-  if (!logsStr) return 0;
-  try {
-    const logs = JSON.parse(logsStr) as Record<string, number>;
-    return logs[today] || 0;
-  } catch {
-    return 0;
-  }
+  return getWaterLogs()[today] || 0;
 }
 
 function addWater(ml: number): void {
   const today = getDateKey(new Date());
-  const logsStr = localStorage.getItem("gym_water_logs");
-  let logs: Record<string, number> = {};
-  if (logsStr) {
-    try {
-      logs = JSON.parse(logsStr) as Record<string, number>;
-    } catch {
-      logs = {};
-    }
-  }
+  const logs = getWaterLogs();
   logs[today] = (logs[today] || 0) + ml;
-  localStorage.setItem("gym_water_logs", JSON.stringify(logs));
+  saveWaterLogs();
   renderWaterTracker();
   vibrate(30);
 }
 
 function resetWater(): void {
   const today = getDateKey(new Date());
-  const logsStr = localStorage.getItem("gym_water_logs");
-  let logs: Record<string, number> = {};
-  if (logsStr) {
-    try {
-      logs = JSON.parse(logsStr) as Record<string, number>;
-    } catch {
-      logs = {};
-    }
-  }
+  const logs = getWaterLogs();
   logs[today] = 0;
-  localStorage.setItem("gym_water_logs", JSON.stringify(logs));
+  saveWaterLogs();
   renderWaterTracker();
   vibrate(20);
 }
@@ -178,10 +162,10 @@ interface CalorieParams {
 }
 
 function loadCalorieParams(): void {
-  const paramsStr = localStorage.getItem("gym_calorie_calculator_params");
-  if (!paramsStr) return;
+  const stored = getCalorieParams();
+  if (!stored) return;
   try {
-    const params = JSON.parse(paramsStr) as CalorieParams;
+    const params = stored as unknown as CalorieParams;
     const genderEl = document.getElementById(
       "cal-gender",
     ) as HTMLSelectElement | null;
@@ -247,7 +231,7 @@ function calculateCalories(interactive = true): void {
   }
 
   const params: CalorieParams = { gender, age, height, weight, activity, goal };
-  localStorage.setItem("gym_calorie_calculator_params", JSON.stringify(params));
+  setCalorieParams(params as unknown as Record<string, unknown>);
 
   // Mifflin-St Jeor
   let bmr = 0;

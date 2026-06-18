@@ -21,6 +21,12 @@ let completionState: Record<string, CompletionEntry> = {};
 // stable live binding, and so the archive can be encrypted at rest like the
 // rest of the journal instead of living as plaintext in localStorage.
 const completionArchive: Record<string, Record<string, CompletionEntry>> = {};
+// Nutrition state kept in memory so it can be encrypted at rest like the rest
+// of the journal (reads are synchronous, decryption is async — a localStorage
+// mirror would otherwise have to be plaintext during a session). water_goal is
+// intentionally left in plaintext localStorage: it is a non-sensitive target.
+let waterLogs: Record<string, number> = {};
+let calorieParams: Record<string, unknown> | null = null;
 let exerciseLogs: Record<string, LogEntry[]> = {};
 let bodyWeightHistory: BodyWeightEntry[] = [];
 let customExercises: Exercise[] = [];
@@ -110,9 +116,57 @@ function archivePreviousDayIfNeeded(): void {
   localStorage.setItem("lastSessionDate", today);
 }
 
+// Loads plaintext nutrition state into memory. Ciphertext is skipped here and
+// populated later by decryptLocalData() on unlock.
+function loadNutrition(): void {
+  const rawWater = localStorage.getItem("gym_water_logs");
+  if (rawWater && !isEncrypted(rawWater)) {
+    waterLogs = safeJSONParse(rawWater, {}) as Record<string, number>;
+  }
+  const rawCal = localStorage.getItem("gym_calorie_calculator_params");
+  if (rawCal && !isEncrypted(rawCal)) {
+    calorieParams = safeJSONParse(rawCal, null) as Record<
+      string,
+      unknown
+    > | null;
+  }
+}
+
+// Persists a single nutrition key, encrypting at rest when a passphrase is active.
+function persistNutritionKey(key: string, data: unknown): boolean {
+  const passphrase = getEncryptionPassphrase();
+  const json = JSON.stringify(data);
+  if (passphrase) {
+    void (async () => {
+      const enc = await encryptData(json, passphrase);
+      safeSetItem(key, enc);
+    })();
+    return true;
+  }
+  return safeSetItem(key, json);
+}
+
+function getWaterLogs(): Record<string, number> {
+  return waterLogs;
+}
+
+function saveWaterLogs(): boolean {
+  return persistNutritionKey("gym_water_logs", waterLogs);
+}
+
+function getCalorieParams(): Record<string, unknown> | null {
+  return calorieParams;
+}
+
+function setCalorieParams(params: Record<string, unknown>): boolean {
+  calorieParams = params;
+  return persistNutritionKey("gym_calorie_calculator_params", params);
+}
+
 function loadState(): void {
   migrateDateKeys();
   loadArchiveFromStorage();
+  loadNutrition();
 
   const saved = localStorage.getItem("trainingProgress");
   const encrypted = !!saved && isEncrypted(saved);
@@ -240,15 +294,12 @@ async function encryptLocalData(passphrase: string): Promise<boolean> {
       }
     }
 
-    const waterRaw = localStorage.getItem("gym_water_logs") || "{}";
-    const calRaw =
-      localStorage.getItem("gym_calorie_calculator_params") || "{}";
-    const extraKeys: [string, string][] = [
-      ["gym_water_logs", waterRaw],
-      ["gym_calorie_calculator_params", calRaw],
+    const extraKeys: [string, unknown][] = [
+      ["gym_water_logs", waterLogs],
+      ["gym_calorie_calculator_params", calorieParams ?? {}],
     ];
-    for (const [key, raw] of extraKeys) {
-      const enc = await encryptData(raw, passphrase);
+    for (const [key, data] of extraKeys) {
+      const enc = await encryptData(JSON.stringify(data), passphrase);
       if (!safeSetItem(key, enc)) {
         console.error(`Failed to encrypt and save ${key} - storage may be full`);
         return false;
@@ -329,14 +380,17 @@ async function decryptLocalData(passphrase: string): Promise<boolean> {
     if (rawWater && isEncrypted(rawWater)) {
       const dec = await decryptData(rawWater, passphrase);
       if (dec === null) return false;
-      localStorage.setItem("gym_water_logs", dec);
+      waterLogs = safeJSONParse(dec, {}) as Record<string, number>;
     }
 
     const rawCal = localStorage.getItem("gym_calorie_calculator_params");
     if (rawCal && isEncrypted(rawCal)) {
       const dec = await decryptData(rawCal, passphrase);
       if (dec === null) return false;
-      localStorage.setItem("gym_calorie_calculator_params", dec);
+      calorieParams = safeJSONParse(dec, null) as Record<
+        string,
+        unknown
+      > | null;
     }
 
     return true;
@@ -573,6 +627,10 @@ export {
   loadPlans,
   savePlans,
   getWorkoutHistory,
+  getWaterLogs,
+  saveWaterLogs,
+  getCalorieParams,
+  setCalorieParams,
   pruneOldLogs,
   resetCompletionState,
   markExerciseComplete,
