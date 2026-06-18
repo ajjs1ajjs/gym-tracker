@@ -4,136 +4,85 @@
 [![Version](https://img.shields.io/badge/version-3.0.0--premium-gold.svg)](https://github.com/ajjs1ajjs/gym-tracker/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
+Приватний, безкоштовний PWA для відстеження тренувань. Без підписок, без реклами,
+100% serverless — усі дані залишаються у вашому браузері.
+
+> A private, free, serverless PWA for tracking workouts. No subscriptions, no ads —
+> all data stays in your browser.
+
 ---
 
-## 🇺🇀 Українська
+## 🌟 Можливості / Features
 
-**GymProgress** — потужний, приватний та повністю безкоштовний Progressive Web App (PWA) для відстежування тренувань. Жодних підписок, жодної реклами, 100% серверлес архітектура.
+| | |
+|---|---|
+| 🇺🇦 | 🇬🇧 |
+| Детальне логування: вага, повтори, авто-1RM | Detailed logging: weight, reps, auto 1RM |
+| Графіки прогресії (Chart.js) | Progression charts (Chart.js) |
+| Smart Timer — авто-таймер відпочинку | Smart Timer — auto rest timer |
+| Wake Lock — екран не гасне | Wake Lock — screen stays on |
+| Трекер ваги тіла | Body weight tracker |
+| Калькулятор млинців / 1RM | Plate / 1RM calculator |
+| Калькулятор калорій та БЖУ (Mifflin-St Jeor) | Calorie & macro calculator |
+| Трекер води | Water tracker |
+| Heatmap активності у стилі GitHub | GitHub-style activity heatmap |
+| Плани тренувань | Custom workout plans |
+| Cloud Sync через GitHub Gist | Cloud Sync via GitHub Gist |
+| AES-256-GCM шифрування | AES-256-GCM encryption |
+| Експорт JSON / CSV / Apple Health | Export JSON / CSV / Apple Health |
+| 100% офлайн | 100% offline |
+| Темна / світла теми | Dark / light themes |
 
-### 🌟 Ключові особливості
+---
 
-- **Детальне логування** — вага, повтори, автоматичний 1RM
-- **Графіки прогресії** — візуалізація силового прогресу (Chart.js)
-- **Smart Timer** — автоматичний запуск таймера відпочинку після підходу
-- **Wake Lock API** — екран не гасне під час тренування
-- **Трекер ваги тіла** — динамічний графік змін
-- **Калькулятор млинців** — розрахунок дисків для штанги
-- **Калькулятор 1RM** — одноповторний максимум та відсотки
-- **Калькулятор калорій та БЖУ** — норма на основі Mifflin-St Jeor
-- **Трекер води** — денна норма споживання
-- **Heatmap активності** — календар тренувань у стилі GitHub
-- **Плани тренувань** — створюйте власні плани
-- **Cloud Sync** — синхронізація через GitHub Gist
-- **AES-256-GCM шифрування** — захист даних
-- **Експорт JSON / CSV / Apple Health**
-- **100% Offline** — працює без інтернету
-- **Дві теми** — темна (neon) та світла
-
-### 📁 Структура проекту
+## 📁 Структура / Project Structure
 
 ```
 gym-tracker/
-├── src/                 # Вихідний код TypeScript
-│   ├── main.ts          # Вхідна точка, event delegation
-│   ├── exercises.ts     # Бібліотека вправ (дані)
-│   ├── data.ts          # Стан програми, localStorage
-│   ├── ui.ts            # Рендеринг та UI-логіка
-│   ├── utils.ts         # Допоміжні функції
-│   ├── timer.ts         # Таймер відпочинку
-│   ├── logbook.ts       # Журнал тренувань
-│   ├── sync.ts          # GitHub Gist синхронізація
-│   ├── stats.ts         # Вага тіла, вода, калорії
-│   └── global.d.ts      # Типи для зовнішніх бібліотек
-├── __tests__/           # Jest тести
-├── images/              # Зображення вправ
-├── dist/                # Збірка (генерується)
-├── index.html           # Головна сторінка
-├── style.css            # Дизайн-система
-├── sw.js                # Service Worker
-├── manifest.json        # PWA конфігурація
-├── tsconfig.json        # Налаштування TypeScript
-└── package.json         # Залежності та скрипти
+├── src/
+│   ├── main.ts              # Вхідна точка, event delegation / entry point
+│   ├── exercises.ts         # Бібліотека вправ (дані) / exercise library
+│   ├── data.ts              # Стан, localStorage, шифрування / state & storage
+│   ├── ui.ts                # Рендеринг та UI-логіка / rendering & UI
+│   ├── sync.ts              # GitHub Gist синхронізація, експорт / sync & export
+│   ├── stats.ts             # Вага тіла, вода, калорії / body, water, calories
+│   ├── logbook.ts           # Журнал тренувань / workout logbook
+│   ├── timer.ts             # Таймер відпочинку / rest timer
+│   ├── plates.ts            # Калькулятор млинців і 1RM / plate & 1RM calc
+│   ├── utils.ts             # Допоміжні функції, крипто / helpers & crypto
+│   ├── i18n.ts              # Локалізація / i18n engine
+│   ├── types.ts             # Спільні типи / shared types
+│   ├── global.d.ts          # Типи зовнішніх бібліотек / external lib types
+│   ├── locales/uk.ts        # Переклади (525 ключів) / translations
+│   └── renderers/heatmap.ts # Рендер heatmap / heatmap renderer
+├── __tests__/               # Jest (63 тести)
+├── cypress/                 # E2E (19 тестів)
+├── images/                  # Зображення вправ / exercise images
+├── index.html               # Головна сторінка / main page
+├── style.css                # Дизайн-система / design system
+├── sw.js                    # Service Worker
+└── manifest.json            # PWA конфігурація / config
 ```
 
-### 🔧 Команди
+---
+
+## 🔧 Команди / Commands
 
 ```bash
-npm install          # Встановити залежності
-npm run build        # Зібрати проект
-npm test             # Запустити тести
-npm run lint         # Перевірка коду
-npm run lint:fix     # Автоматичне виправлення
-npm run format       # Форматування Prettier
+npm install          # Встановити залежності / install deps
+npm start            # Vite dev server (HMR)
+npm run build        # Зібрати проект + SW кеш / build + SW cache
+npm run preview      # Перегляд dist/ / serve dist/
+npm test             # Jest тести
+npm run lint         # ESLint
+npm run format       # Prettier
+npx cypress run      # E2E тести / E2E tests
 ```
 
 ---
 
-## 🇬🇧 English
+## 📝 Ліцензія / License
 
-**GymProgress** is a powerful, private, and completely free Progressive Web App (PWA) for tracking your workouts. No subscriptions, no ads, 100% serverless architecture.
-
-### 🌟 Key Features
-
-- **Detailed logging** — weight, reps, automatic 1RM calculation
-- **Progression charts** — visualize your strength progress (Chart.js)
-- **Smart Timer** — auto-start rest timer after each set
-- **Wake Lock API** — screen stays on during workouts
-- **Body weight tracker** — dynamic trend chart
-- **Plate calculator** — barbell plate distribution calculator
-- **1RM calculator** — one-rep max with percentage table
-- **Calorie & Macro calculator** — based on Mifflin-St Jeor formula
-- **Water tracker** — daily hydration goal
-- **Activity heatmap** — GitHub-style workout calendar
-- **Workout plans** — create and manage custom plans
-- **Cloud Sync** — via GitHub Gist
-- **AES-256-GCM encryption** — data protection
-- **Export JSON / CSV / Apple Health**
-- **100% Offline** — works without internet
-- **Two themes** — dark neon & light
-
-### 📁 Project Structure
-
-```
-gym-tracker/
-├── src/                 # TypeScript source code
-│   ├── main.ts          # Entry point, event delegation
-│   ├── exercises.ts     # Exercise library (data)
-│   ├── data.ts          # App state, localStorage
-│   ├── ui.ts            # Rendering & UI logic
-│   ├── utils.ts         # Helper functions
-│   ├── timer.ts         # Rest timer
-│   ├── logbook.ts       # Workout logbook
-│   ├── sync.ts          # GitHub Gist sync
-│   ├── stats.ts         # Body weight, water, calories
-│   └── global.d.ts      # External library types
-├── __tests__/           # Jest tests
-├── images/              # Exercise images
-├── dist/                # Build output (generated)
-├── index.html           # Main page
-├── style.css            # Design system
-├── sw.js                # Service Worker
-├── manifest.json        # PWA config
-├── tsconfig.json        # TypeScript config
-└── package.json         # Dependencies & scripts
-```
-
-### 🔧 Commands
-
-```bash
-npm install          # Install dependencies
-npm run build        # Build the project
-npm test             # Run tests
-npm run lint         # Lint code
-npm run lint:fix     # Auto-fix lint issues
-npm run format       # Prettier formatting
-```
-
----
-
-### 📝 Ліцензія / License
-
-MIT License. Дивіться [LICENSE](./LICENSE) для деталей / See [LICENSE](./LICENSE) for details.
-
----
+MIT — див. [LICENSE](LICENSE) / see [LICENSE](LICENSE).
 
 💪 **Тренуйтеся розумніше, а не важче! / Train smarter, not harder!**
