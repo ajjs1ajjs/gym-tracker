@@ -247,9 +247,15 @@ function safeSetItem(key: string, value: string): boolean {
 }
 
 function escapeHtml(str: string): string {
-  const div = document.createElement("div");
-  div.appendChild(document.createTextNode(str));
-  return div.innerHTML;
+  // NB: must escape quotes too — values are interpolated into double-quoted
+  // HTML attributes (e.g. src="...", data-id="..."), so an unescaped " allows
+  // attribute breakout / DOM-XSS via imported or synced data.
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function showToast(

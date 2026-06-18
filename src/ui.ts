@@ -1,12 +1,14 @@
 import {
   trainingData,
   completionState,
+  completionArchive,
   exerciseLogs,
   customExercises,
   selectedMuscleGroup,
   selectedExerciseId,
   getAllExercises,
   saveState,
+  saveArchive,
   savePlans,
   workoutPlans,
   getWorkoutHistory,
@@ -25,7 +27,6 @@ import {
   requestWakeLock,
   releaseWakeLock,
   diffClass,
-  safeJSONParse,
   showToast,
   escapeHtml,
   getLastSessionSets,
@@ -40,7 +41,7 @@ import {
 } from "./stats.js";
 import LogbookModule from "./logbook.js";
 import { t } from "./i18n.js";
-import type { CompletionEntry, Exercise } from "./types.js";
+import type { Exercise } from "./types.js";
 import type { Chart as ChartJS } from "chart.js";
 import {
   calculatePlates,
@@ -932,25 +933,12 @@ function finishWorkout(): void {
 
   if (confirm(t('confirm.finish_workout', String(completedCount)))) {
     const today = getDateKey(new Date());
-    const archive = localStorage.getItem("completionArchive");
-    const archiveData: Record<string, Record<string, CompletionEntry>> = archive
-      ? (safeJSONParse(archive, {}) as Record<
-          string,
-          Record<string, CompletionEntry>
-        >)
-      : {};
 
-    archiveData[today] = {
-      ...(archiveData[today] || {}),
-      ...Object.keys(completionState).reduce<Record<string, CompletionEntry>>(
-        (acc, k) => {
-          acc[k] = completionState[k];
-          return acc;
-        },
-        {},
-      ),
+    completionArchive[today] = {
+      ...(completionArchive[today] || {}),
+      ...completionState,
     };
-    localStorage.setItem("completionArchive", JSON.stringify(archiveData));
+    saveArchive();
 
     resetCompletionState();
     saveState();
@@ -961,7 +949,7 @@ function finishWorkout(): void {
     celebration();
     showToast(t('toast.workout_saved'), "success");
 
-    const completedDays = Object.keys(archiveData).length;
+    const completedDays = Object.keys(completionArchive).length;
     if (completedDays % 10 === 0) {
       showToast(
         t('toast.workout_milestone', String(completedDays)),

@@ -250,6 +250,89 @@ async function syncToCloud(): Promise<void> {
   }
 }
 
+interface RemoteData {
+  completionState?: Record<string, CompletionEntry>;
+  workoutPlans?: WorkoutPlan[];
+  exerciseLogs?: Record<string, LogEntry[]>;
+  bodyWeightHistory?: BodyWeightEntry[];
+  customExercises?: Exercise[];
+}
+
+// Merges remote backup data into the in-memory state (newest-wins for
+// completion, dedup-by-identity for logs/bodyweight, upsert-by-id for custom
+// exercises/plans). Skips malformed sections instead of throwing, so a partial
+// or corrupt payload can never leave the state half-merged.
+function mergeRemoteData(data: RemoteData): void {
+  const remoteCompletion = data.completionState || {};
+  for (const [key, remoteVal] of Object.entries(remoteCompletion)) {
+    const localVal = completionState[key];
+    if (!localVal) {
+      completionState[key] = remoteVal;
+    } else if (remoteVal.date && localVal.date) {
+      if (new Date(remoteVal.date) > new Date(localVal.date)) {
+        completionState[key] = remoteVal;
+      }
+    }
+  }
+
+  const remoteLogs = data.exerciseLogs || {};
+  for (const [key, remoteArr] of Object.entries(remoteLogs)) {
+    if (!Array.isArray(remoteArr)) continue;
+    if (!exerciseLogs[key]) {
+      exerciseLogs[key] = remoteArr;
+    } else {
+      const merged = [...exerciseLogs[key]];
+      for (const rLog of remoteArr) {
+        const exists = merged.some(
+          (l) =>
+            l.date === rLog.date &&
+            l.weight === rLog.weight &&
+            l.reps === rLog.reps,
+        );
+        if (!exists) merged.push(rLog);
+      }
+      merged.sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+      );
+      exerciseLogs[key] = merged;
+    }
+  }
+
+  if (Array.isArray(data.bodyWeightHistory)) {
+    const mergedBw = [...bodyWeightHistory];
+    for (const rBw of data.bodyWeightHistory) {
+      if (!mergedBw.some((l) => l.date === rBw.date)) mergedBw.push(rBw);
+    }
+    mergedBw.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
+    bodyWeightHistory.length = 0;
+    bodyWeightHistory.push(...mergedBw);
+  }
+
+  if (Array.isArray(data.customExercises)) {
+    for (const rCe of data.customExercises) {
+      const idx = customExercises.findIndex(
+        (ce) => String(ce.id) === String(rCe.id),
+      );
+      if (idx === -1) customExercises.push(rCe);
+      else customExercises[idx] = rCe;
+    }
+  }
+
+  if (Array.isArray(data.workoutPlans)) {
+    for (const rWp of data.workoutPlans) {
+      const idx = workoutPlans.findIndex(
+        (wp) => String(wp.id) === String(rWp.id),
+      );
+      if (idx === -1) workoutPlans.push(rWp);
+      else workoutPlans[idx] = rWp;
+    }
+  }
+
+  mergeCustomExercises();
+}
+
 async function fetchFromCloud(): Promise<void> {
   const token = getStoredToken();
   const gistId = getStoredGistId();
@@ -278,74 +361,10 @@ async function fetchFromCloud(): Promise<void> {
         return;
       }
       const content = result.files["gym-data.json"].content;
-      const data = safeJSONParse(content, {}) as {
-        completionState?: Record<string, CompletionEntry>;
-        workoutPlans?: WorkoutPlan[];
-        exerciseLogs?: Record<string, LogEntry[]>;
-        bodyWeightHistory?: BodyWeightEntry[];
-        customExercises?: Exercise[];
-      };
+      const data = safeJSONParse(content, {}) as RemoteData;
 
       if (confirm(t('confirm.sync_merge'))) {
-        const remoteCompletion = data.completionState || {};
-        for (const [key, remoteVal] of Object.entries(remoteCompletion)) {
-          const localVal = completionState[key];
-          if (!localVal) {
-            completionState[key] = remoteVal;
-          } else if (remoteVal.date && localVal.date) {
-            if (new Date(remoteVal.date) > new Date(localVal.date)) {
-              completionState[key] = remoteVal;
-            }
-          }
-        }
-
-        const remoteLogs = data.exerciseLogs || {};
-        for (const [key, remoteArr] of Object.entries(remoteLogs)) {
-          if (!exerciseLogs[key]) {
-            exerciseLogs[key] = remoteArr;
-          } else {
-            const localArr = exerciseLogs[key];
-            const merged = [...localArr];
-            for (const rLog of remoteArr) {
-              const exists = merged.some((l) => l.date === rLog.date && l.weight === rLog.weight && l.reps === rLog.reps);
-              if (!exists) merged.push(rLog);
-            }
-            merged.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-            exerciseLogs[key] = merged;
-          }
-        }
-
-        const remoteBw = data.bodyWeightHistory || [];
-        const mergedBw = [...bodyWeightHistory];
-        for (const rBw of remoteBw) {
-          const exists = mergedBw.some((l) => l.date === rBw.date);
-          if (!exists) mergedBw.push(rBw);
-        }
-        mergedBw.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        bodyWeightHistory.length = 0;
-        bodyWeightHistory.push(...mergedBw);
-
-        const remoteCe = data.customExercises || [];
-        for (const rCe of remoteCe) {
-          const existsIdx = customExercises.findIndex((ce) => String(ce.id) === String(rCe.id));
-          if (existsIdx === -1) {
-            customExercises.push(rCe);
-          } else {
-            customExercises[existsIdx] = rCe;
-          }
-        }
-
-        const remoteWp = data.workoutPlans || [];
-        for (const rWp of remoteWp) {
-          const existsIdx = workoutPlans.findIndex((wp) => String(wp.id) === String(rWp.id));
-          if (existsIdx === -1) {
-            workoutPlans.push(rWp);
-          } else {
-            workoutPlans[existsIdx] = rWp;
-          }
-        }
-
-        mergeCustomExercises();
+        mergeRemoteData(data);
         saveState();
         savePlans();
         updateStats();
@@ -399,77 +418,13 @@ function importData(event: Event): void {
   reader.onload = (e) => {
     try {
       const result = (e.target as FileReader).result as string;
-      const data = safeJSONParse(result, {}) as {
-        completionState?: Record<string, CompletionEntry>;
-        workoutPlans?: WorkoutPlan[];
-        exerciseLogs?: Record<string, LogEntry[]>;
-        bodyWeightHistory?: BodyWeightEntry[];
-        customExercises?: Exercise[];
-      };
+      const data = safeJSONParse(result, {}) as RemoteData;
 
       if (!confirm(t('confirm.import_merge'))) {
         return;
       }
 
-      const remoteCompletion = data.completionState || {};
-      for (const [key, remoteVal] of Object.entries(remoteCompletion)) {
-        const localVal = completionState[key];
-        if (!localVal) {
-          completionState[key] = remoteVal;
-        } else if (remoteVal.date && localVal.date) {
-          if (new Date(remoteVal.date) > new Date(localVal.date)) {
-            completionState[key] = remoteVal;
-          }
-        }
-      }
-
-      const remoteLogs = data.exerciseLogs || {};
-      for (const [key, remoteArr] of Object.entries(remoteLogs)) {
-        if (!exerciseLogs[key]) {
-          exerciseLogs[key] = remoteArr;
-        } else {
-          const localArr = exerciseLogs[key];
-          const merged = [...localArr];
-          for (const rLog of remoteArr) {
-            const exists = merged.some((l) => l.date === rLog.date && l.weight === rLog.weight && l.reps === rLog.reps);
-            if (!exists) merged.push(rLog);
-          }
-          merged.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-          exerciseLogs[key] = merged;
-        }
-      }
-
-      const remoteBw = data.bodyWeightHistory || [];
-      const mergedBw = [...bodyWeightHistory];
-      for (const rBw of remoteBw) {
-        const exists = mergedBw.some((l) => l.date === rBw.date);
-        if (!exists) mergedBw.push(rBw);
-      }
-      mergedBw.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      bodyWeightHistory.length = 0;
-      bodyWeightHistory.push(...mergedBw);
-
-      const remoteCe = data.customExercises || [];
-      for (const rCe of remoteCe) {
-        const existsIdx = customExercises.findIndex((ce) => String(ce.id) === String(rCe.id));
-        if (existsIdx === -1) {
-          customExercises.push(rCe);
-        } else {
-          customExercises[existsIdx] = rCe;
-        }
-      }
-
-      const remoteWp = data.workoutPlans || [];
-      for (const rWp of remoteWp) {
-        const existsIdx = workoutPlans.findIndex((wp) => String(wp.id) === String(rWp.id));
-        if (existsIdx === -1) {
-          workoutPlans.push(rWp);
-        } else {
-          workoutPlans[existsIdx] = rWp;
-        }
-      }
-
-      mergeCustomExercises();
+      mergeRemoteData(data);
       saveState();
       savePlans();
       updateStats();
@@ -485,6 +440,14 @@ function importData(event: Event): void {
   target.value = "";
 }
 
+// Wraps a value as a safe CSV cell: neutralizes formula injection
+// (=, +, -, @ prefixes that Excel/Sheets would execute) and escapes quotes.
+function csvCell(value: string | number): string {
+  let s = String(value);
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return `"${s.replace(/"/g, '""')}"`;
+}
+
 function exportToCSV(): void {
   let csv = t('csv.headers') + "\n";
   const allEx = getAllExercises();
@@ -497,7 +460,7 @@ function exportToCSV(): void {
     exerciseLogs[id].forEach((s) => {
       const date = new Date(s.date).toLocaleDateString("uk-UA");
       const oneRM = calculate1RM(s.weight, s.reps);
-      csv += `${date},"${name}",${group},${s.weight},${s.reps},${oneRM}\n`;
+      csv += `${date},${csvCell(name)},${csvCell(group)},${s.weight},${s.reps},${oneRM}\n`;
     });
   });
 
@@ -548,7 +511,7 @@ function exportForAppleHealth(): void {
       else setOrders[log.exName]++;
       
       const setOrder = setOrders[log.exName];
-      csv += `"${strongDate}","${workoutName}","${duration}","${log.exName}",${setOrder},${log.weight},${log.reps},0,0,"","",\n`;
+      csv += `${csvCell(strongDate)},${csvCell(workoutName)},${csvCell(duration)},${csvCell(log.exName)},${setOrder},${log.weight},${log.reps},0,0,"","",\n`;
     });
   });
 

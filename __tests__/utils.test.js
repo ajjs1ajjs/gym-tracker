@@ -3,7 +3,27 @@ import {
   calculate1RM,
   diffClass,
   getLastSessionSets,
+  escapeHtml,
 } from "../src/utils.js";
+
+describe("escapeHtml", () => {
+  test("escapes angle brackets and ampersands", () => {
+    expect(escapeHtml("<script>")).toBe("&lt;script&gt;");
+    expect(escapeHtml("a & b")).toBe("a &amp; b");
+  });
+
+  test("escapes quotes to prevent attribute breakout (XSS)", () => {
+    // Regression for C2: values are interpolated into double-quoted attributes
+    expect(escapeHtml('" onerror="alert(1)')).toBe(
+      "&quot; onerror=&quot;alert(1)",
+    );
+    expect(escapeHtml("'")).toBe("&#39;");
+  });
+
+  test("coerces non-string input safely", () => {
+    expect(escapeHtml(42)).toBe("42");
+  });
+});
 
 describe("safeJSONParse", () => {
   test("parses valid JSON", () => {

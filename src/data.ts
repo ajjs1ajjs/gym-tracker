@@ -17,6 +17,10 @@ import type {
 } from "./types.js";
 
 let completionState: Record<string, CompletionEntry> = {};
+// Kept in memory (mutated, never reassigned) so external readers can import a
+// stable live binding, and so the archive can be encrypted at rest like the
+// rest of the journal instead of living as plaintext in localStorage.
+const completionArchive: Record<string, Record<string, CompletionEntry>> = {};
 let exerciseLogs: Record<string, LogEntry[]> = {};
 let bodyWeightHistory: BodyWeightEntry[] = [];
 let customExercises: Exercise[] = [];
@@ -70,9 +74,56 @@ function migrateDateKeys(): void {
   }
 }
 
+// Replaces the in-memory archive contents with `data` (mutate, don't reassign,
+// to preserve the live binding for importers).
+function setArchive(data: Record<string, Record<string, CompletionEntry>>): void {
+  Object.keys(completionArchive).forEach((k) => delete completionArchive[k]);
+  Object.assign(completionArchive, data);
+}
+
+function loadArchiveFromStorage(): void {
+  const raw = localStorage.getItem("completionArchive");
+  // Skip ciphertext — decryptLocalData() populates the archive on unlock.
+  if (raw && !isEncrypted(raw)) {
+    setArchive(
+      safeJSONParse(raw, {}) as Record<
+        string,
+        Record<string, CompletionEntry>
+      >,
+    );
+  }
+}
+
+// Rolls yesterday's completion into the archive when the day changes. Must run
+// against the *real* (decrypted) state, so it is invoked from the plaintext
+// path of loadState() and, for encrypted data, from loadEncryptedOnStartup().
+function archivePreviousDayIfNeeded(): void {
+  const lastDate = localStorage.getItem("lastSessionDate");
+  const today = getDateKey(new Date());
+  if (lastDate && lastDate !== today) {
+    completionArchive[lastDate] = completionState;
+    completionState = {};
+    pruneOldArchiveEntries(completionArchive);
+    saveState(); // persists reset completionState (encryption-aware)
+    saveArchive(); // persists archive (encryption-aware)
+  }
+  localStorage.setItem("lastSessionDate", today);
+}
+
 function loadState(): void {
   migrateDateKeys();
+  loadArchiveFromStorage();
+
   const saved = localStorage.getItem("trainingProgress");
+  const encrypted = !!saved && isEncrypted(saved);
+
+  // Encrypted data is loaded later by loadEncryptedOnStartup(); parsing it here
+  // would yield empty objects and a premature rollover that wipes the journal.
+  if (encrypted) {
+    migrateLegacyLogbook();
+    return;
+  }
+
   if (saved) {
     completionState = safeJSONParse(saved, {}) as Record<
       string,
@@ -80,27 +131,7 @@ function loadState(): void {
     >;
   }
 
-  const lastDate = localStorage.getItem("lastSessionDate");
-  const today = getDateKey(new Date());
-
-  if (lastDate && lastDate !== today) {
-    const yesterdayArchive = localStorage.getItem("completionArchive");
-    const archive: Record<
-      string,
-      Record<string, CompletionEntry>
-    > = yesterdayArchive
-      ? (safeJSONParse(yesterdayArchive, {}) as Record<
-          string,
-          Record<string, CompletionEntry>
-        >)
-      : {};
-    archive[lastDate] = completionState;
-    localStorage.setItem("completionArchive", JSON.stringify(archive));
-    completionState = {};
-    localStorage.setItem("trainingProgress", JSON.stringify(completionState));
-    pruneOldArchiveEntries(archive);
-  }
-  localStorage.setItem("lastSessionDate", today);
+  archivePreviousDayIfNeeded();
 
   const logs = localStorage.getItem("exerciseLogs");
   if (logs)
@@ -118,33 +149,71 @@ function loadState(): void {
   migrateLegacyLogbook();
 }
 
+// Mutates `archive` in place; persistence is the caller's responsibility.
 function pruneOldArchiveEntries(
   archive: Record<string, Record<string, CompletionEntry>>,
 ): void {
   const cutoff = new Date();
   cutoff.setFullYear(cutoff.getFullYear() - 2);
   const cutoffStr = getDateKey(cutoff);
-  let pruned = 0;
   Object.keys(archive).forEach((dateStr) => {
-    // FIX #2: Compare date strings directly instead of creating Date objects
-    // Safe for YYYY-MM-DD format and prevents Invalid Date errors
+    // Compare date strings directly (safe for YYYY-MM-DD, avoids Invalid Date).
     if (dateStr < cutoffStr) {
       delete archive[dateStr];
-      pruned++;
     }
   });
-  if (pruned > 0) {
-    localStorage.setItem("completionArchive", JSON.stringify(archive));
+}
+
+// Encrypts the in-memory journal and writes ciphertext for the main keys.
+// Operates only on in-memory objects (always fresh plaintext), so repeated
+// calls are idempotent and race-safe — last write wins.
+async function persistEncryptedMain(passphrase: string): Promise<boolean> {
+  const keys: [string, unknown][] = [
+    ["trainingProgress", completionState],
+    ["exerciseLogs", exerciseLogs],
+    ["bodyWeightHistory", bodyWeightHistory],
+    ["customExercises", customExercises],
+    ["workoutPlans", workoutPlans],
+  ];
+  for (const [key, data] of keys) {
+    const enc = await encryptData(JSON.stringify(data), passphrase);
+    if (!safeSetItem(key, enc)) {
+      console.error(`Failed to encrypt and save ${key} - storage may be full`);
+      return false;
+    }
   }
+  return true;
 }
 
 function saveState(): boolean {
+  // When encryption is active, never write plaintext — re-encrypt instead.
+  const passphrase = getEncryptionPassphrase();
+  if (passphrase) {
+    void persistEncryptedMain(passphrase);
+    return true;
+  }
   const ok =
     safeSetItem("trainingProgress", JSON.stringify(completionState)) &&
     safeSetItem("exerciseLogs", JSON.stringify(exerciseLogs)) &&
     safeSetItem("bodyWeightHistory", JSON.stringify(bodyWeightHistory)) &&
     safeSetItem("customExercises", JSON.stringify(customExercises));
   return ok;
+}
+
+// Persists the workout archive, encrypting at rest when a passphrase is active.
+function saveArchive(): boolean {
+  const passphrase = getEncryptionPassphrase();
+  if (passphrase) {
+    void (async () => {
+      const enc = await encryptData(
+        JSON.stringify(completionArchive),
+        passphrase,
+      );
+      safeSetItem("completionArchive", enc);
+    })();
+    return true;
+  }
+  return safeSetItem("completionArchive", JSON.stringify(completionArchive));
 }
 
 function isEncrypted(value: string): boolean {
@@ -159,6 +228,7 @@ async function encryptLocalData(passphrase: string): Promise<boolean> {
       ["bodyWeightHistory", bodyWeightHistory],
       ["customExercises", customExercises],
       ["workoutPlans", workoutPlans],
+      ["completionArchive", completionArchive],
     ];
     for (const [key, data] of keys) {
       const plain = JSON.stringify(data);
@@ -243,6 +313,18 @@ async function decryptLocalData(passphrase: string): Promise<boolean> {
       workoutPlans.push(...parsed);
     }
 
+    const rawArchive = localStorage.getItem("completionArchive");
+    if (rawArchive && isEncrypted(rawArchive)) {
+      const dec = await decryptData(rawArchive, passphrase);
+      if (dec === null) return false;
+      const parsed = safeJSONParse(dec, {}) as Record<
+        string,
+        Record<string, CompletionEntry>
+      >;
+      if (parsed === null) return false;
+      setArchive(parsed);
+    }
+
     const rawWater = localStorage.getItem("gym_water_logs");
     if (rawWater && isEncrypted(rawWater)) {
       const dec = await decryptData(rawWater, passphrase);
@@ -270,7 +352,11 @@ async function loadEncryptedOnStartup(): Promise<boolean> {
   if (!test || !isEncrypted(test)) return false;
   const ok = await decryptLocalData(passphrase);
   if (ok) {
-    saveState();
+    // Do NOT call saveState() here — that would rewrite the decrypted journal
+    // back to localStorage as plaintext, defeating encryption at rest.
+    // The data is already populated in memory; on-disk stays ciphertext.
+    // Rollover was deferred from loadState() until the real state was available.
+    archivePreviousDayIfNeeded();
     mergeCustomExercises();
     console.log("Encrypted data loaded successfully on startup");
   } else {
@@ -361,6 +447,11 @@ function loadPlans(): void {
 }
 
 function savePlans(): boolean {
+  const passphrase = getEncryptionPassphrase();
+  if (passphrase) {
+    void persistEncryptedMain(passphrase);
+    return true;
+  }
   return safeSetItem("workoutPlans", JSON.stringify(workoutPlans));
 }
 
@@ -402,16 +493,9 @@ function getWorkoutHistory(
 
   processEntry(completionState);
 
-  const archive = localStorage.getItem("completionArchive");
-  if (archive) {
-    const archiveData = safeJSONParse(archive, {}) as Record<
-      string,
-      Record<string, CompletionEntry>
-    >;
-    Object.keys(archiveData).forEach((dateStr) => {
-      processEntry(archiveData[dateStr]);
-    });
-  }
+  Object.keys(completionArchive).forEach((dateStr) => {
+    processEntry(completionArchive[dateStr]);
+  });
 
   let workouts = Object.values(exerciseDates);
 
@@ -474,6 +558,7 @@ function pruneOldLogs(maxAgeDays = 365): void {
 export {
   trainingData,
   completionState,
+  completionArchive,
   exerciseLogs,
   bodyWeightHistory,
   customExercises,
@@ -484,6 +569,7 @@ export {
   mergeCustomExercises,
   loadState,
   saveState,
+  saveArchive,
   loadPlans,
   savePlans,
   getWorkoutHistory,

@@ -90,7 +90,10 @@ function startTimer(): void {
       clearInterval(timerInterval!);
       timerInterval = null;
       timerRunning = false;
-      if (Notification.permission === "granted") {
+      if (
+        typeof Notification !== "undefined" &&
+        Notification.permission === "granted"
+      ) {
         new Notification("GymProgress", { body: t('modal.timer.notification_body') });
       }
       playBeep();

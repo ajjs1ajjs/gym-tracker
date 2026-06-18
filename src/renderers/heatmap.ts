@@ -1,6 +1,6 @@
 import { t } from "../i18n.js";
-import { completionState } from "../data.js";
-import { getDateKey, safeJSONParse } from "../utils.js";
+import { completionState, completionArchive } from "../data.js";
+import { getDateKey } from "../utils.js";
 import type { CompletionEntry } from "../types.js";
 
 function renderHeatmap(): void {
@@ -16,20 +16,13 @@ function renderHeatmap(): void {
     }
   });
 
-  const archive = localStorage.getItem("completionArchive");
-  if (archive) {
-    const archiveData = safeJSONParse(archive, {}) as Record<
-      string,
-      Record<string, CompletionEntry>
-    >;
-    Object.keys(archiveData).forEach((dateStr) => {
-      const d = getDateKey(new Date(dateStr));
-      const completedExercises = Object.values(archiveData[dateStr]);
-      activity[d] =
-        (activity[d] || 0) +
-        completedExercises.filter((val) => val.completed).length;
-    });
-  }
+  Object.keys(completionArchive).forEach((dateStr) => {
+    const d = getDateKey(new Date(dateStr));
+    const completedExercises = Object.values(completionArchive[dateStr]);
+    activity[d] =
+      (activity[d] || 0) +
+      completedExercises.filter((val) => val.completed).length;
+  });
 
   const now = new Date();
   const ukLocale = new Intl.DateTimeFormat("uk-UA", {
