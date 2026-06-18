@@ -121,7 +121,9 @@ const translations: Record<string, string> = {
   'plans.name_label': 'Назва плану:',
   'plans.exercises_label': 'Оберіть вправи:',
   'plans.save': 'Зберегти план',
-  'plans.workout_progress': 'План: {0} ({1} вправ)',
+  'plans.workout_progress': 'План: {0} — вправа {1}/{2}',
+  'plans.next_exercise': 'Наступна вправа →',
+  'plans.finish_plan': '✓ Завершити план',
   'plans.modal_title': 'Новий план тренувань',
 
   // ─── Body / Weight Section ─────────────────────────────────────────
