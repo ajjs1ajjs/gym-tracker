@@ -13,7 +13,7 @@ const translations: Record<string, string> = {
   'nav.body': 'Тіло',
 
   // ─── Keyboard Hints ────────────────────────────────────────────────
-  'keyboard.hint': '{0} Таби · {1} Закрити · {2} Таймер · {3} Додати сет',
+  'keyboard.hint': 'Alt+1-5 — Таби · Esc — Закрити · T — Таймер · Ctrl+Enter — Додати сет',
 
   // ─── Header ────────────────────────────────────────────────────────
   'header.theme': 'Змінити тему',
@@ -265,6 +265,7 @@ const translations: Record<string, string> = {
   'toast.encrypt_enabled': '🔒 Дані зашифровано!',
   'toast.encrypt_disabled': '🔓 Шифрування вимкнено',
   'toast.wrong_password': 'Неправильний пароль.',
+  'toast.sync_decrypt_failed': 'Не вдалося розшифрувати синхронізовані дані. Перевірте пароль шифрування в налаштуваннях.',
   'toast.need_github_token': 'Будь ласка, введіть GitHub Token у налаштуваннях',
   'toast.syncing': '⏳ Синхронізація...',
   'toast.sync_success': 'Синхронізація успішна! ✅',

@@ -93,4 +93,14 @@ describe("Timer state transitions", () => {
     expect(timerDisplay.textContent).toBe("01:00");
     expect(btn.classList.add).toHaveBeenCalledWith("active");
   });
+
+  test("audit fix #9: changing the preset while running restarts the countdown (no snap-back)", () => {
+    const evt = { target: { classList: { remove() {}, add() {} } } };
+    timer.setTimer(90, evt);
+    timer.startTimer(); // targetEndTime = now + 90000
+    timer.setTimer(30, evt); // change preset WHILE running
+    jest.advanceTimersByTime(200); // one interval tick recomputes from targetEndTime
+    // With the fix, targetEndTime was reset to now+30000 → shows 00:30, not 01:30.
+    expect(timerDisplay.textContent).toBe("00:30");
+  });
 });

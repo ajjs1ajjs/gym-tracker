@@ -20,6 +20,8 @@ import {
   getEncryptionPassphrase,
   setEncryptionPassphrase,
   clearEncryptionPassphrase,
+  encryptData,
+  decryptData,
 } from "./utils.js";
 import { isEncrypted } from "./data.js";
 import {
@@ -197,12 +199,20 @@ async function syncToCloud(): Promise<void> {
     lastSync: new Date().toISOString(),
   };
 
+  // If the user enabled at-rest encryption, the cloud copy must NOT be weaker
+  // than the local copy — encrypt the payload before uploading to the Gist.
+  let content = JSON.stringify(data, null, 2);
+  const syncPassphrase = getEncryptionPassphrase();
+  if (syncPassphrase) {
+    content = await encryptData(content, syncPassphrase);
+  }
+
   const body = {
     description: "Gym Tracker Backup",
     public: false,
     files: {
       "gym-data.json": {
-        content: JSON.stringify(data, null, 2),
+        content,
       },
     },
   };
@@ -360,7 +370,18 @@ async function fetchFromCloud(): Promise<void> {
         showToast(t('toast.no_gist_file'), "warning");
         return;
       }
-      const content = result.files["gym-data.json"].content;
+      let content = result.files["gym-data.json"].content;
+      // The cloud copy may be encrypted (see syncToCloud). Decrypt with the
+      // active passphrase before parsing; abort cleanly if it can't be read.
+      if (isEncrypted(content)) {
+        const pass = getEncryptionPassphrase();
+        const decrypted = pass ? await decryptData(content, pass) : null;
+        if (decrypted === null) {
+          showToast(t('toast.sync_decrypt_failed'), "error");
+          return;
+        }
+        content = decrypted;
+      }
       const data = safeJSONParse(content, {}) as RemoteData;
 
       if (confirm(t('confirm.sync_merge'))) {

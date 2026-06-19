@@ -460,13 +460,20 @@ function migrateLegacyLogbook(): void {
     mergeCustomExercises();
 
     legacySessions.forEach((sess) => {
+      // A single malformed/invalid timestamp must not abort migration of the
+      // remaining sessions (new Date(bad).toISOString() throws RangeError).
+      const ts = new Date(sess.timestamp);
+      if (isNaN(ts.getTime())) {
+        console.warn("Skipping legacy session with invalid timestamp:", sess.timestamp);
+        return;
+      }
+      const setTime = ts.toISOString();
       const targetExId = legacyIdMap[sess.exerciseId] || sess.exerciseId;
       if (!exerciseLogs[targetExId]) {
         exerciseLogs[targetExId] = [];
       }
       if (sess.sets && Array.isArray(sess.sets)) {
         sess.sets.forEach((set) => {
-          const setTime = new Date(sess.timestamp).toISOString();
           const alreadyExists = exerciseLogs[targetExId].some(
             (logged) =>
               logged.date === setTime &&

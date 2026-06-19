@@ -218,8 +218,8 @@ function createExercise(): void {
     muscle: "Груди",
     muscleGroup: "Груди",
     difficulty: "Середній",
-    description: t('exercise.custom_description'),
-    instructions: [t('exercise.custom_description')],
+    description: t('custom_exercise.default_description'),
+    instructions: [t('custom_exercise.default_instructions')],
     sets: "3 x 10",
     image:
       "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=300&auto=format&fit=crop",

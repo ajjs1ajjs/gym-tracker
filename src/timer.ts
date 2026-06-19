@@ -40,6 +40,12 @@ function closeTimerModal(): void {
 function setTimer(seconds: number, e: Event): void {
   timerDefaultSeconds = seconds;
   timerSeconds = seconds;
+  // If a countdown is active, restart it with the new duration — otherwise the
+  // running interval recomputes timerSeconds from the stale targetEndTime on the
+  // next tick and the new preset visually snaps back to the old value.
+  if (timerRunning) {
+    targetEndTime = Date.now() + seconds * 1000;
+  }
   updateTimerDisplay();
   document
     .querySelectorAll(".timer-preset")

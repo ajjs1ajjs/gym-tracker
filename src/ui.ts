@@ -182,7 +182,7 @@ function renderExercises(): void {
                     const isCompleted = !!state;
 
                     return `
-                        <div class="exercise-card ${isCompleted ? "completed" : ""}" data-ex-id="${ex.id}">
+                        <div class="exercise-card ${isCompleted ? "completed" : ""}" data-ex-id="${escapeHtml(String(ex.id))}">
                             <div class="card-image">
                                 <img src="${escapeHtml(ex.image)}" alt="${escapeHtml(ex.name)}" loading="lazy">
                                 ${isCompleted ? '<div class="completed-badge">✓</div>' : ""}
@@ -194,7 +194,7 @@ function renderExercises(): void {
                                     <span class="difficulty-tag ${diffClass(ex.difficulty)}">${escapeHtml(ex.difficulty)}</span>
                                 </div>
                                 ${state ? `<p class="completed-date">${t('exercise.completed_date', formatDate(state.date))}</p>` : ""}
-                                <button class="check-btn ${isCompleted ? "checked" : ""}" data-check-id="${ex.id}">
+                                <button class="check-btn ${isCompleted ? "checked" : ""}" data-check-id="${escapeHtml(String(ex.id))}">
                                     ${isCompleted ? t('exercise.check_mark') : t('exercise.check_pending')}
                                 </button>
                             </div>
@@ -853,8 +853,8 @@ function openPlanModal(): void {
     container.innerHTML = allEx
       .map(
         (ex) => `
-        <label class="plan-exercise-option" data-plan-check="${ex.id}">
-            <input type="checkbox" value="${ex.id}">
+        <label class="plan-exercise-option" data-plan-check="${escapeHtml(String(ex.id))}">
+            <input type="checkbox" value="${escapeHtml(String(ex.id))}">
             <span>${escapeHtml(ex.name)} (${escapeHtml(ex.muscle)})</span>
         </label>
     `,

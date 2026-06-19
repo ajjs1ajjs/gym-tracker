@@ -7,7 +7,9 @@ self.addEventListener("install", (event) => {
       return cache.addAll(urlsToCache);
     }),
   );
-  self.skipWaiting();
+  // NOTE: do NOT skipWaiting() here — let the new worker stay in `waiting` so
+  // the app can show its update banner and skipWaiting only on user confirm
+  // (the SKIP_WAITING message below). Auto-skip caused surprise reloads.
 });
 
 self.addEventListener("message", (event) => {
@@ -24,22 +26,36 @@ self.addEventListener("fetch", (event) => {
       }
 
       return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== "basic") {
+        if (!response || response.status !== 200) {
+          return response;
+        }
+        // Same-origin assets are "basic"; the pinned CDN libs (chart.js,
+        // canvas-confetti) are "cors" — cache those too so charts/confetti
+        // keep working offline.
+        const url = event.request.url;
+        const isCdn = url.startsWith("https://cdn.jsdelivr.net/");
+        if (response.type !== "basic" && !isCdn) {
           return response;
         }
 
         const responseToCache = response.clone();
 
         caches.open(CACHE_NAME).then((cache) => {
-          if (
-            event.request.url.includes("/images/") ||
-            event.request.url.includes("/js/")
-          ) {
+          if (isCdn || url.includes("/images/") || url.includes("/js/")) {
             cache.put(event.request, responseToCache);
           }
         });
 
         return response;
+      }).catch((err) => {
+        // Offline navigation (e.g. cold launch from start_url './') won't match
+        // a cached document by URL — fall back to the precached app shell.
+        if (event.request.mode === "navigate") {
+          return caches.match("./index.html").then(
+            (shell) => shell || caches.match("index.html"),
+          );
+        }
+        throw err;
       });
     }),
   );
