@@ -262,6 +262,8 @@ const translations: Record<string, string> = {
   'toast.warning_token': '⚠️ Токен GitHub зберігається в localStorage у відкритому вигляді. Не використовуйте токен з повним доступом.',
   'toast.encrypt_disabled_prompt': 'Введіть поточний пароль для вимкнення шифрування',
   'toast.encrypt_too_short': 'Введіть пароль (мінімум 8 символів)',
+  'toast.encrypt_confirm_mismatch': 'Паролі не збігаються.',
+  'toast.encrypt_confirm_required': 'Введіть підтвердження нового пароля.',
   'toast.encrypt_enabled': '🔒 Дані зашифровано!',
   'toast.encrypt_disabled': '🔓 Шифрування вимкнено',
   'toast.wrong_password': 'Неправильний пароль.',

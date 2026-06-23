@@ -81,15 +81,25 @@ function openSettingsModal(): void {
   const encryptInput = document.getElementById(
     "encrypt-passphrase",
   ) as HTMLInputElement | null;
+  const encryptConfirm = document.getElementById(
+    "encrypt-passphrase-confirm",
+  ) as HTMLInputElement | null;
+
   const hasPassphrase = !!getEncryptionPassphrase();
   const dataEncrypted = isEncrypted(
     localStorage.getItem("trainingProgress") || "",
   );
   const encryptionOn = hasPassphrase || dataEncrypted;
+
   if (encryptToggle) {
     encryptToggle.checked = encryptionOn;
     encryptToggle.onchange = () => {
-      if (encryptInput) encryptInput.disabled = !encryptToggle.checked;
+      const wantEncrypt = encryptToggle.checked;
+      if (encryptInput) encryptInput.disabled = !wantEncrypt;
+      if (encryptConfirm) {
+        encryptConfirm.disabled = !wantEncrypt;
+        encryptConfirm.style.display = wantEncrypt && encryptInput && encryptInput.value !== "********" ? "block" : "none";
+      }
     };
   }
   if (encryptInput) {
@@ -98,7 +108,25 @@ function openSettingsModal(): void {
     if (!hasPassphrase && dataEncrypted) {
       encryptInput.placeholder = "Введіть пароль";
     }
+    // Show confirm field only when user starts typing a *new* passphrase.
+    encryptInput.oninput = () => {
+      if (!encryptConfirm) return;
+      const isNewPassphrase = encryptInput.value !== "********";
+      encryptConfirm.style.display = isNewPassphrase && !!encryptToggle?.checked ? "block" : "none";
+      encryptConfirm.disabled = !isNewPassphrase || !encryptToggle?.checked;
+      if (!isNewPassphrase) encryptConfirm.value = "";
+      else if (encryptConfirm.dataset.lastMain !== encryptInput.value) {
+        encryptConfirm.value = "";
+        encryptConfirm.dataset.lastMain = encryptInput.value;
+      }
+    };
   }
+  if (encryptConfirm) {
+    encryptConfirm.value = "";
+    encryptConfirm.style.display = "none";
+    encryptConfirm.disabled = true;
+  }
+
   const smartTimerToggle = document.getElementById(
     "smart-timer-toggle",
   ) as HTMLInputElement | null;
@@ -139,10 +167,24 @@ async function saveSettings(): Promise<void> {
   const encryptInput = document.getElementById(
     "encrypt-passphrase",
   ) as HTMLInputElement | null;
+  const encryptConfirm = document.getElementById(
+    "encrypt-passphrase-confirm",
+  ) as HTMLInputElement | null;
+
   if (encryptToggle?.checked) {
     const passphrase = encryptInput?.value;
     if (!passphrase || passphrase.length < 8 || passphrase === "********") {
       showToast(t('toast.encrypt_too_short'), "warning");
+      return;
+    }
+    // Passphrase was typed fresh — require confirmation.
+    const confirmValue = encryptConfirm?.value || "";
+    if (!confirmValue) {
+      showToast(t('toast.encrypt_confirm_required'), "warning");
+      return;
+    }
+    if (confirmValue !== passphrase) {
+      showToast(t('toast.encrypt_confirm_mismatch'), "warning");
       return;
     }
     setEncryptionPassphrase(passphrase);
