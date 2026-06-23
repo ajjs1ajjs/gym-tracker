@@ -889,11 +889,13 @@ function savePlan(): void {
   const selected = document.querySelectorAll(
     "#plan-exercises-select input:checked",
   );
-  const exerciseIds = Array.from(selected).map((cb) => {
-    const val = (cb as HTMLInputElement).value;
-    const num = parseInt(val);
-    return isNaN(num) ? val : num;
-  });
+  const exerciseIds = Array.from(selected)
+    .filter((el): el is HTMLInputElement => el instanceof HTMLInputElement)
+    .map((cb) => {
+      const val = cb.value;
+      const num = parseInt(val);
+      return isNaN(num) ? val : num;
+    });
 
   if (exerciseIds.length === 0) {
     showToast(t('toast.select_exercise'), "warning");

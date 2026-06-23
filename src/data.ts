@@ -634,7 +634,9 @@ function loadPlans(): void {
 function savePlans(): boolean {
   const passphrase = getEncryptionPassphrase();
   if (passphrase) {
-    void persistEncryptedMain(passphrase);
+    _storageWriteQueue = _storageWriteQueue.then(() =>
+      persistEncryptedMain(passphrase),
+    );
     return true;
   }
   return safeSetItem("workoutPlans", JSON.stringify(workoutPlans));
@@ -649,38 +651,28 @@ function getWorkoutHistory(
   > = {};
   const allEx = getAllExercises();
 
-  const processedDates = new Set<string>();
-
   const processEntry = (state: Record<string, CompletionEntry>) => {
-    allEx.forEach((ex) => {
-      if (state[ex.id] && state[ex.id].date) {
-        const dateStr = getDateKey(new Date(state[ex.id].date));
-        if (processedDates.has(dateStr)) return;
-        processedDates.add(dateStr);
-        if (!exerciseDates[dateStr]) {
-          exerciseDates[dateStr] = {
-            date: state[ex.id].date,
-            exercises: [],
-            count: 0,
-          };
-        }
+    for (const ex of allEx) {
+      const entry = state[ex.id];
+      if (!entry?.date) continue;
+      const dateStr = getDateKey(new Date(entry.date));
+      if (!exerciseDates[dateStr]) {
+        exerciseDates[dateStr] = {
+          date: entry.date,
+          exercises: [],
+          count: 0,
+        };
       }
-    });
-
-    allEx.forEach((ex) => {
-      if (state[ex.id] && state[ex.id].date) {
-        const dateStr = getDateKey(new Date(state[ex.id].date));
-        exerciseDates[dateStr].exercises.push(ex.id);
-        exerciseDates[dateStr].count++;
-      }
-    });
+      exerciseDates[dateStr].exercises.push(ex.id);
+      exerciseDates[dateStr].count++;
+    }
   };
 
   processEntry(completionState);
 
-  Object.keys(completionArchive).forEach((dateStr) => {
+  for (const dateStr of Object.keys(completionArchive)) {
     processEntry(completionArchive[dateStr]);
-  });
+  }
 
   let workouts = Object.values(exerciseDates);
 
