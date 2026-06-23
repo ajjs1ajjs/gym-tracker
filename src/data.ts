@@ -85,6 +85,99 @@ function mergeCustomExercises(): void {
   });
 }
 
+// Maps old local-timezone YYYY-MM-DD keys to their UTC equivalents and
+// merges values when collisions occur (newer `date` wins for completion).
+function _localDateKeyToUTC(key: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return key;
+  const [y, m, d] = key.split("-").map(Number);
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return key;
+  const localMidnight = new Date(y, m - 1, d);
+  if (isNaN(localMidnight.getTime())) return key;
+  return getDateKey(localMidnight);
+}
+
+function _migrateCompletionObjectKeys(
+  obj: Record<string, Record<string, CompletionEntry>>,
+): Record<string, Record<string, CompletionEntry>> {
+  const result: Record<string, Record<string, CompletionEntry>> = {};
+  for (const [key, val] of Object.entries(obj)) {
+    const utcKey = _localDateKeyToUTC(key);
+    if (!result[utcKey]) {
+      result[utcKey] = val;
+    } else {
+      for (const [exId, entry] of Object.entries(val)) {
+        const existing = result[utcKey][exId];
+        if (!existing || (entry.date && new Date(entry.date) > new Date(existing.date))) {
+          result[utcKey][exId] = entry;
+        }
+      }
+    }
+  }
+  return result;
+}
+
+function _migrateScalarObjectKeys(obj: Record<string, number>): Record<string, number> {
+  const result: Record<string, number> = {};
+  for (const [key, val] of Object.entries(obj)) {
+    const utcKey = _localDateKeyToUTC(key);
+    result[utcKey] = Math.max(result[utcKey] || 0, val);
+  }
+  return result;
+}
+
+const UTC_MIGRATION_FLAG = "gym_utc_migration_done";
+
+// Converts persisted date keys from local timezone to UTC. Runs once (flag).
+// Handles both plaintext and in-memory data after decryption.
+function migrateDateKeysToUTC(): void {
+  if (localStorage.getItem(UTC_MIGRATION_FLAG)) return;
+
+  // --- lastSessionDate ---
+  const oldLast = localStorage.getItem("lastSessionDate");
+  if (oldLast && /^\d{4}-\d{2}-\d{2}$/.test(oldLast)) {
+    localStorage.setItem("lastSessionDate", _localDateKeyToUTC(oldLast));
+  }
+
+  // --- completionArchive on disk (plaintext only; ciphertext is migrated
+  //     in loadEncryptedOnStartup via the in-memory path below) ---
+  const rawArchive = localStorage.getItem("completionArchive");
+  if (rawArchive && !isEncrypted(rawArchive)) {
+    const parsed = safeJSONParse(rawArchive, {}) as Record<string, Record<string, CompletionEntry>>;
+    const migrated = _migrateCompletionObjectKeys(parsed);
+    localStorage.setItem("completionArchive", JSON.stringify(migrated));
+    setArchive(migrated);
+  }
+
+  // --- completionArchive in memory (covers the encrypted path where
+  //     decryptLocalData already loaded it into the live object) ---
+  const archiveChanged =
+    Object.keys(completionArchive).some((k) => _localDateKeyToUTC(k) !== k);
+  if (archiveChanged) {
+    const migrated = _migrateCompletionObjectKeys(completionArchive);
+    setArchive(migrated);
+    saveArchive();
+  }
+
+  // --- waterLogs on disk (plaintext) ---
+  const rawWater = localStorage.getItem("gym_water_logs");
+  if (rawWater && !isEncrypted(rawWater)) {
+    const parsed = safeJSONParse(rawWater, {}) as Record<string, number>;
+    const migrated = _migrateScalarObjectKeys(parsed);
+    localStorage.setItem("gym_water_logs", JSON.stringify(migrated));
+    waterLogs = migrated;
+  } else {
+    // In-memory (encrypted path)
+    const waterChanged =
+      Object.keys(waterLogs).some((k) => _localDateKeyToUTC(k) !== k);
+    if (waterChanged) {
+      waterLogs = _migrateScalarObjectKeys(waterLogs);
+      saveWaterLogs();
+    }
+  }
+
+  localStorage.setItem(UTC_MIGRATION_FLAG, "1");
+}
+
 function migrateDateKeys(): void {
   const lastDate = localStorage.getItem("lastSessionDate");
   if (lastDate && lastDate.includes(" ")) {
@@ -234,6 +327,10 @@ function loadState(): void {
   }
 
   migrateLegacyLogbook();
+
+  // One-time UTC date-key migration (local → UTC).  Must run after all
+  // plaintext data is in memory but before the UI renders.
+  migrateDateKeysToUTC();
 }
 
 // Mutates `archive` in place; persistence is the caller's responsibility.
@@ -437,6 +534,8 @@ async function loadEncryptedOnStartup(): Promise<boolean> {
     // Rollover was deferred from loadState() until the real state was available.
     archivePreviousDayIfNeeded();
     mergeCustomExercises();
+    // One-time UTC date-key migration for encrypted data.
+    migrateDateKeysToUTC();
     console.log("Encrypted data loaded successfully on startup");
   } else {
     console.warn("Decryption failed on startup — wrong passphrase?");

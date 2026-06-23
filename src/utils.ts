@@ -415,10 +415,9 @@ function getLastSessionSets(logs: LogEntry[]): LogEntry[] {
 }
 
 function getDateKey(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  // UTC-based to keep date keys consistent across timezones
+  // (critical for cloud-sync merge correctness).
+  return d.toISOString().split("T")[0];
 }
 
 export {

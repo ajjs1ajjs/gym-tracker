@@ -105,23 +105,23 @@ describe("Training data integrity", () => {
 
 describe("getDateKey", () => {
   test("returns YYYY-MM-DD format", () => {
-    const key = getDateKey(new Date(2024, 0, 15));
+    const key = getDateKey(new Date(Date.UTC(2024, 0, 15)));
     expect(key).toBe("2024-01-15");
   });
 
   test("pads single digit months and days", () => {
-    const key = getDateKey(new Date(2024, 2, 5));
+    const key = getDateKey(new Date(Date.UTC(2024, 2, 5)));
     expect(key).toBe("2024-03-05");
   });
 
   test("works with December date", () => {
-    const key = getDateKey(new Date(2024, 11, 31));
+    const key = getDateKey(new Date(Date.UTC(2024, 11, 31)));
     expect(key).toBe("2024-12-31");
   });
 
   test("produces sortable format", () => {
-    const earlier = getDateKey(new Date(2024, 0, 1));
-    const later = getDateKey(new Date(2024, 11, 31));
+    const earlier = getDateKey(new Date(Date.UTC(2024, 0, 1)));
+    const later = getDateKey(new Date(Date.UTC(2024, 11, 31)));
     expect(earlier < later).toBe(true);
   });
 });
