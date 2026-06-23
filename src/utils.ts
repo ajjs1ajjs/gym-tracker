@@ -45,7 +45,11 @@ function vibrate(pattern: number | number[] = 50): void {
 
 let audioCtx: AudioContext | null = null;
 
-function initAudio(): void {
+// Unlocks the Web Audio API on the first user gesture (works around
+// autoplay policies in Safari / Chrome).  Called once via click/touch
+// listeners registered below; also called lazily by playBeep() as a
+// fallback if a beep is requested before any gesture.
+function _ensureAudioContext(): void {
   if (audioCtx) return;
   if (typeof window === "undefined") return;
   try {
@@ -54,35 +58,44 @@ function initAudio(): void {
       (window as unknown as { webkitAudioContext: typeof AudioContext })
         .webkitAudioContext;
     audioCtx = new AudioContextClass();
-    const ctx = audioCtx;
-    const buffer = ctx.createBuffer(1, 1, 22050);
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(ctx.destination);
-    if (source.start) source.start(0);
-    ["touchstart", "touchend", "click"].forEach((evt) =>
-      document.body.removeEventListener(evt, initAudio),
-    );
+    // Fire a short silent buffer to flip the context out of "suspended"
+    // on iOS Safari.
+    const buf = audioCtx.createBuffer(1, 1, 22050);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.connect(audioCtx.destination);
+    src.start(0);
   } catch (e) {
     console.log("Audio init failed", e);
   }
 }
 
+// One-shot unlock on the first user interaction (touch / click).
+// { once: true } auto-removes the listener after the first invocation.
 if (typeof document !== "undefined" && document.body) {
   ["touchstart", "touchend", "click"].forEach((evt) =>
-    document.body.addEventListener(evt, initAudio, { once: true }),
+    document.body.addEventListener(evt, _ensureAudioContext, { once: true }),
   );
 }
 
+let _lastBeepTime = 0;
+const BEEP_DEBOUNCE_MS = 200;
+
 function playBeep(soundName?: string): void {
-  if (!audioCtx) initAudio();
+  _ensureAudioContext();
   if (!audioCtx) return;
   if (audioCtx.state === "suspended") {
     audioCtx.resume();
   }
+
+  // Debounce — prevents oscillator pile-up when the timer fires while
+  // the user is already double-clicking a preset button.
+  const callTime = Date.now();
+  if (callTime - _lastBeepTime < BEEP_DEBOUNCE_MS) return;
+  _lastBeepTime = callTime;
+
   let sound = "classic";
   try {
-    // FIX #9: Safe localStorage access (may fail in private mode)
     sound = soundName || localStorage.getItem("gym_timer_sound") || "classic";
   } catch (e) {
     console.log("Could not access localStorage for sound setting:", e);
@@ -419,6 +432,9 @@ function getDateKey(d: Date): string {
   // (critical for cloud-sync merge correctness).
   return d.toISOString().split("T")[0];
 }
+
+// Backward-compat alias — kept exported so existing consumers still compile.
+const initAudio = _ensureAudioContext;
 
 export {
   safeJSONParse,
