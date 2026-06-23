@@ -29,9 +29,6 @@ self.addEventListener("fetch", (event) => {
         if (!response || response.status !== 200) {
           return response;
         }
-        // Same-origin assets are "basic"; the pinned CDN libs (chart.js,
-        // canvas-confetti) are "cors" — cache those too so charts/confetti
-        // keep working offline.
         const url = event.request.url;
         const isCdn = url.startsWith("https://cdn.jsdelivr.net/");
         if (response.type !== "basic" && !isCdn) {
@@ -40,11 +37,13 @@ self.addEventListener("fetch", (event) => {
 
         const responseToCache = response.clone();
 
-        caches.open(CACHE_NAME).then((cache) => {
-          if (isCdn || url.includes("/images/") || url.includes("/js/")) {
-            cache.put(event.request, responseToCache);
-          }
-        });
+        event.waitUntil(
+          caches.open(CACHE_NAME).then((cache) => {
+            if (isCdn || url.includes("/images/") || url.includes("/js/")) {
+              return cache.put(event.request, responseToCache);
+            }
+          }).catch(() => { /* cache write is best-effort */ }),
+        );
 
         return response;
       }).catch((err) => {

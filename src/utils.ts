@@ -9,6 +9,16 @@ function safeJSONParse(str: string, fallback: unknown = null): unknown {
   }
 }
 
+// Like safeJSONParse but returns `undefined` on parse error, so callers
+// can distinguish `null` (valid JSON literal) from a malformed input.
+function safeJSONParseOrUndefined(str: string): unknown {
+  try {
+    return JSON.parse(str);
+  } catch {
+    return undefined;
+  }
+}
+
 function formatDate(timestamp: string): string {
   if (!timestamp) return "";
   const date = new Date(timestamp);
@@ -164,10 +174,11 @@ function playBeep(soundName?: string): void {
 
 function celebration(): void {
   if (typeof confetti !== "function") return;
-  const duration = 3 * 1000;
+  const CONFETTI_DURATION_MS = 3 * 1000;
+  const MAX_FRAMES = 300;
+  const duration = CONFETTI_DURATION_MS;
   const end = Date.now() + duration;
   let iterations = 0;
-  const MAX_FRAMES = 300;
   (function frame() {
     if (iterations++ >= MAX_FRAMES) return;
     confetti({
@@ -287,6 +298,7 @@ async function deriveKey(
   passphrase: string,
   salt: Uint8Array,
 ): Promise<CryptoKey> {
+  const PBKDF2_ITERATIONS = 600_000;
   const encoder = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
@@ -299,7 +311,7 @@ async function deriveKey(
     {
       name: "PBKDF2",
       salt: salt as unknown as BufferSource,
-      iterations: 600000,
+      iterations: PBKDF2_ITERATIONS,
       hash: "SHA-256",
     },
     keyMaterial,
@@ -411,6 +423,7 @@ function getDateKey(d: Date): string {
 
 export {
   safeJSONParse,
+  safeJSONParseOrUndefined,
   safeSetItem,
   formatDate,
   calculate1RM,

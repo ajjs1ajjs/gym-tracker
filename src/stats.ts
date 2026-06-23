@@ -233,25 +233,34 @@ function calculateCalories(interactive = true): void {
   const params: CalorieParams = { gender, age, height, weight, activity, goal };
   setCalorieParams(params as unknown as Record<string, unknown>);
 
-  // Mifflin-St Jeor
+  // Mifflin-St Jeor equation constants
+  const BMR_WEIGHT_FACTOR = 10;
+  const BMR_HEIGHT_FACTOR = 6.25;
+  const BMR_AGE_FACTOR = 5;
+  const BMR_MALE_OFFSET = 5;
+  const BMR_FEMALE_OFFSET = -161;
+  const CALORIE_MINIMUM = 1200;
+  const DEFICIT_KCAL = 500;
+  const SURPLUS_KCAL = 300;
+
   let bmr = 0;
   if (gender === "male") {
-    bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+    bmr = BMR_WEIGHT_FACTOR * weight + BMR_HEIGHT_FACTOR * height - BMR_AGE_FACTOR * age + BMR_MALE_OFFSET;
   } else {
-    bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+    bmr = BMR_WEIGHT_FACTOR * weight + BMR_HEIGHT_FACTOR * height - BMR_AGE_FACTOR * age + BMR_FEMALE_OFFSET;
   }
 
   const tdee = bmr * activity;
 
   let targetCalories = tdee;
   if (goal === "loss") {
-    targetCalories = tdee - 500;
+    targetCalories = tdee - DEFICIT_KCAL;
   } else if (goal === "gain") {
-    targetCalories = tdee + 300;
+    targetCalories = tdee + SURPLUS_KCAL;
   }
 
-  if (targetCalories < 1200) {
-    targetCalories = 1200;
+  if (targetCalories < CALORIE_MINIMUM) {
+    targetCalories = CALORIE_MINIMUM;
   }
 
   const caloriesRounded = Math.round(targetCalories);

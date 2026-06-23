@@ -270,6 +270,7 @@ const translations: Record<string, string> = {
   'toast.syncing': '⏳ Синхронізація...',
   'toast.sync_success': 'Синхронізація успішна! ✅',
   'toast.sync_error': 'Помилка синхронізації: {0}',
+  'toast.sync_timeout': '⏰ Час синхронізації вичерпано. Перевірте з\'єднання.',
   'toast.network_error': 'Помилка мережі: {0}',
   'toast.downloading': '⏳ Завантаження...',
   'toast.need_token_and_gist': 'Налаштуйте Token та Gist ID для імпорту',
@@ -280,6 +281,8 @@ const translations: Record<string, string> = {
   'toast.import_error': 'Помилка при читанні файлу. Перевірте формат.',
   'toast.storage_full': 'Недостатньо місця у сховищі. Зробіть експорт та очистіть дані.',
   'toast.save_error': 'Помилка збереження даних: {0}',
+  'toast.logs_pruned': '🗑️ Видалено {0} старих записів (>1 рік) для звільнення місця',
+  'toast.too_many_sets': '⚠️ Досягнуто ліміт підходів для цієї вправи. Зробіть експорт.',
 
   // ─── Difficulty Labels ─────────────────────────────────────────────
   'difficulty.easy': 'Легкий',

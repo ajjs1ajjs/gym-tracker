@@ -412,6 +412,12 @@ function logSet(): void {
     return;
   }
 
+  const MAX_SETS_PER_EXERCISE = 10000;
+  if (exerciseLogs[selectedExerciseId] && exerciseLogs[selectedExerciseId].length >= MAX_SETS_PER_EXERCISE) {
+    showToast(t('toast.too_many_sets'), "error");
+    return;
+  }
+
   if (!exerciseLogs[selectedExerciseId]) exerciseLogs[selectedExerciseId] = [];
 
   exerciseLogs[selectedExerciseId].push({

@@ -42,16 +42,20 @@ import type {
 let isSyncing = false;
 let isFetching = false;
 
+const SYNC_TIMEOUT_MS = 30_000;
+
 const TOKEN_KEY = "gym_github_token";
 const GIST_KEY = "gym_gist_id";
 
 function getStoredToken(): string | null {
-  const raw = localStorage.getItem(TOKEN_KEY);
+  // Token stored in sessionStorage to reduce exposure window —
+  // it lives only while the tab is open, never persisted to disk.
+  const raw = sessionStorage.getItem(TOKEN_KEY);
   return raw || null;
 }
 
 function setStoredToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token);
+  sessionStorage.setItem(TOKEN_KEY, token);
 }
 
 function getStoredGistId(): string | null {
@@ -223,6 +227,9 @@ async function syncToCloud(): Promise<void> {
       : "https://api.github.com/gists";
     const method = gistId ? "PATCH" : "POST";
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), SYNC_TIMEOUT_MS);
+
     const response = await fetch(url, {
       method,
       headers: {
@@ -230,7 +237,10 @@ async function syncToCloud(): Promise<void> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
+
+    clearTimeout(timer);
 
     if (response.ok) {
       const result = (await response.json()) as { id?: string };
@@ -253,8 +263,12 @@ async function syncToCloud(): Promise<void> {
       );
     }
   } catch (e: unknown) {
-    const err = e as { message: string };
-    showToast(t('toast.network_error', err.message), "error");
+    const err = e as { name?: string; message: string };
+    if (err.name === "AbortError") {
+      showToast(t('toast.sync_timeout'), "error");
+    } else {
+      showToast(t('toast.network_error', err.message), "error");
+    }
   } finally {
     isSyncing = false;
   }
@@ -358,9 +372,15 @@ async function fetchFromCloud(): Promise<void> {
   showToast(t('toast.downloading'), "info", 60000);
 
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), SYNC_TIMEOUT_MS);
+
     const response = await fetch(`https://api.github.com/gists/${gistId}`, {
       headers: { Authorization: `token ${token}` },
+      signal: controller.signal,
     });
+
+    clearTimeout(timer);
 
     if (response.ok) {
       const result = (await response.json()) as {
@@ -401,8 +421,12 @@ async function fetchFromCloud(): Promise<void> {
       );
     }
   } catch (e: unknown) {
-    const err = e as { message: string };
-    showToast(t('toast.network_error', err.message), "error");
+    const err = e as { name?: string; message: string };
+    if (err.name === "AbortError") {
+      showToast(t('toast.sync_timeout'), "error");
+    } else {
+      showToast(t('toast.network_error', err.message), "error");
+    }
   } finally {
     isFetching = false;
   }

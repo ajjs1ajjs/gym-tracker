@@ -1,21 +1,22 @@
 import { t } from "./i18n.js";
 import { calculate1RM, vibrate } from "./utils.js";
 
+const BAR_WEIGHT_KG = 20;
+const AVAILABLE_PLATES_KG = [25, 20, 15, 10, 5, 2.5, 1.25];
+
 function calculatePlates(): void {
   const weightInput = document.getElementById(
     "plate-weight-input",
   ) as HTMLInputElement;
   const totalWeight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
-  const barWeight = 20;
-  let weightToDistribute = (totalWeight - barWeight) / 2;
+  let weightToDistribute = (totalWeight - BAR_WEIGHT_KG) / 2;
 
   if (weightToDistribute < 0) weightToDistribute = 0;
 
-  const availablePlates = [25, 20, 15, 10, 5, 2.5, 1.25];
   const result: number[] = [];
 
   let temp = weightToDistribute;
-  availablePlates.forEach((p) => {
+  AVAILABLE_PLATES_KG.forEach((p) => {
     const count = Math.floor(temp / p);
     if (count > 0) {
       for (let i = 0; i < count; i++) result.push(p);

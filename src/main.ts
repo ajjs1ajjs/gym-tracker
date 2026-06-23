@@ -5,6 +5,7 @@ import {
   loadPlans,
   pruneOldLogs,
   loadEncryptedOnStartup,
+  flushStorageQueue,
 } from "./data.js";
 import {
   updateStats,
@@ -394,6 +395,14 @@ async function init(): Promise<void> {
       requestWakeLock();
     } else {
       releaseWakeLock();
+    }
+  });
+
+  // Flush queued encrypted writes when the tab is hidden (more reliable
+  // than beforeunload for async localStorage operations).
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      flushStorageQueue();
     }
   });
 

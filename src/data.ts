@@ -7,6 +7,7 @@ import {
   decryptData,
   getEncryptionPassphrase,
   getDateKey,
+  showToast,
 } from "./utils.js";
 import type {
   CompletionEntry,
@@ -33,6 +34,40 @@ let customExercises: Exercise[] = [];
 let workoutPlans: WorkoutPlan[] = [];
 let selectedMuscleGroup: string | null = null;
 let selectedExerciseId: string | number | null = null;
+
+// Serializes encrypted localStorage writes so multiple rapid calls
+// (e.g. finishWorkout + toggleExercise) don't race against each other.
+// Non-encrypted writes are synchronous and bypass the queue.
+let _storageWriteQueue: Promise<unknown> = Promise.resolve();
+
+async function _enqueueStorageWrite(
+  key: string,
+  data: unknown,
+  passphrase: string,
+): Promise<boolean> {
+  try {
+    const enc = await encryptData(JSON.stringify(data), passphrase);
+    return safeSetItem(key, enc);
+  } catch {
+    return false;
+  }
+}
+
+function _scheduleEncryptedWrite(
+  key: string,
+  data: unknown,
+  passphrase: string,
+): void {
+  _storageWriteQueue = _storageWriteQueue.then(() =>
+    _enqueueStorageWrite(key, data, passphrase),
+  );
+}
+
+// Flushes pending encrypted writes. Attach to beforeunload in environments
+// where the browser honours async work during unload (not guaranteed).
+async function flushStorageQueue(): Promise<void> {
+  await _storageWriteQueue;
+}
 
 function getAllExercises(): Exercise[] {
   return trainingData.flatMap((group) => group.exercises) as Exercise[];
@@ -132,15 +167,13 @@ function loadNutrition(): void {
   }
 }
 
-// Persists a single nutrition key, encrypting at rest when a passphrase is active.
+// Persists a single nutrition key. Encrypted writes are serialised through
+// the storage queue (same as saveArchive) to avoid race conditions.
 function persistNutritionKey(key: string, data: unknown): boolean {
   const passphrase = getEncryptionPassphrase();
   const json = JSON.stringify(data);
   if (passphrase) {
-    void (async () => {
-      const enc = await encryptData(json, passphrase);
-      safeSetItem(key, enc);
-    })();
+    _scheduleEncryptedWrite(key, data, passphrase);
     return true;
   }
   return safeSetItem(key, json);
@@ -218,32 +251,54 @@ function pruneOldArchiveEntries(
   });
 }
 
-// Encrypts the in-memory journal and writes ciphertext for the main keys.
-// Operates only on in-memory objects (always fresh plaintext), so repeated
-// calls are idempotent and race-safe — last write wins.
-async function persistEncryptedMain(passphrase: string): Promise<boolean> {
-  const keys: [string, unknown][] = [
-    ["trainingProgress", completionState],
-    ["exerciseLogs", exerciseLogs],
-    ["bodyWeightHistory", bodyWeightHistory],
-    ["customExercises", customExercises],
-    ["workoutPlans", workoutPlans],
-  ];
-  for (const [key, data] of keys) {
-    const enc = await encryptData(JSON.stringify(data), passphrase);
+// Canonical list of every localStorage key that carries encrypted journal
+// data.  Used by both persistEncryptedMain (auto-save) and encryptLocalData
+// (explicit toggle on) so they stay in sync.
+const ENCRYPTED_MAIN_KEYS: [string, (() => unknown)][] = [
+  ["trainingProgress", () => completionState],
+  ["exerciseLogs", () => exerciseLogs],
+  ["bodyWeightHistory", () => bodyWeightHistory],
+  ["customExercises", () => customExercises],
+  ["workoutPlans", () => workoutPlans],
+  ["completionArchive", () => completionArchive],
+];
+
+const ENCRYPTED_NUTRITION_KEYS: [string, (() => unknown)][] = [
+  ["gym_water_logs", () => waterLogs],
+  ["gym_calorie_calculator_params", () => calorieParams ?? {}],
+];
+
+// Serialises and encrypts every entry in `keys`, writing each to localStorage.
+async function _encryptKeyList(
+  keys: [string, (() => unknown)][],
+  passphrase: string,
+): Promise<boolean> {
+  let ok = true;
+  for (const [key, getData] of keys) {
+    const enc = await encryptData(JSON.stringify(getData()), passphrase);
     if (!safeSetItem(key, enc)) {
       console.error(`Failed to encrypt and save ${key} - storage may be full`);
-      return false;
+      ok = false;
     }
   }
-  return true;
+  return ok;
+}
+
+// Writes ciphertext for the journal's main keys. Serialised via the
+// storage queue so concurrent calls (e.g. toggle + finishWorkout) never
+// interleave and corrupt on-disk state.
+async function persistEncryptedMain(passphrase: string): Promise<boolean> {
+  return _encryptKeyList(ENCRYPTED_MAIN_KEYS, passphrase);
 }
 
 function saveState(): boolean {
-  // When encryption is active, never write plaintext — re-encrypt instead.
   const passphrase = getEncryptionPassphrase();
   if (passphrase) {
-    void persistEncryptedMain(passphrase);
+    // Enqueue via the serialised write queue so rapid consecutive calls
+    // don't race; the queue guarantees last-write-wins ordering.
+    _storageWriteQueue = _storageWriteQueue.then(() =>
+      persistEncryptedMain(passphrase),
+    );
     return true;
   }
   const ok =
@@ -254,17 +309,12 @@ function saveState(): boolean {
   return ok;
 }
 
-// Persists the workout archive, encrypting at rest when a passphrase is active.
+// Persists the workout archive. Encrypted writes are serialised through the
+// storage queue to prevent data loss from concurrent fire-and-forget calls.
 function saveArchive(): boolean {
   const passphrase = getEncryptionPassphrase();
   if (passphrase) {
-    void (async () => {
-      const enc = await encryptData(
-        JSON.stringify(completionArchive),
-        passphrase,
-      );
-      safeSetItem("completionArchive", enc);
-    })();
+    _scheduleEncryptedWrite("completionArchive", completionArchive, passphrase);
     return true;
   }
   return safeSetItem("completionArchive", JSON.stringify(completionArchive));
@@ -276,36 +326,12 @@ function isEncrypted(value: string): boolean {
 
 async function encryptLocalData(passphrase: string): Promise<boolean> {
   try {
-    const keys: [string, unknown][] = [
-      ["trainingProgress", completionState],
-      ["exerciseLogs", exerciseLogs],
-      ["bodyWeightHistory", bodyWeightHistory],
-      ["customExercises", customExercises],
-      ["workoutPlans", workoutPlans],
-      ["completionArchive", completionArchive],
+    const allKeys: [string, (() => unknown)][] = [
+      ...ENCRYPTED_MAIN_KEYS,
+      ...ENCRYPTED_NUTRITION_KEYS,
     ];
-    for (const [key, data] of keys) {
-      const plain = JSON.stringify(data);
-      const enc = await encryptData(plain, passphrase);
-      // FIX #1: Use safeSetItem to handle quota errors
-      if (!safeSetItem(key, enc)) {
-        console.error(`Failed to encrypt and save ${key} - storage may be full`);
-        return false;
-      }
-    }
-
-    const extraKeys: [string, unknown][] = [
-      ["gym_water_logs", waterLogs],
-      ["gym_calorie_calculator_params", calorieParams ?? {}],
-    ];
-    for (const [key, data] of extraKeys) {
-      const enc = await encryptData(JSON.stringify(data), passphrase);
-      if (!safeSetItem(key, enc)) {
-        console.error(`Failed to encrypt and save ${key} - storage may be full`);
-        return false;
-      }
-    }
-    return true;
+    const ok = await _encryptKeyList(allKeys, passphrase);
+    return ok;
   } catch (e) {
     console.error("Error during encryption:", e);
     return false;
@@ -313,84 +339,83 @@ async function encryptLocalData(passphrase: string): Promise<boolean> {
 }
 
 async function decryptLocalData(passphrase: string): Promise<boolean> {
+  const PARSE_FAILED = Symbol("parse-failed");
   try {
     const rawProgress = localStorage.getItem("trainingProgress");
     if (rawProgress && isEncrypted(rawProgress)) {
       const dec = await decryptData(rawProgress, passphrase);
       if (dec === null) return false;
-      const parsed = safeJSONParse(dec, {}) as Record<string, CompletionEntry>;
-      if (parsed === null) return false;
+      const parsed = safeJSONParse(dec, PARSE_FAILED);
+      if (parsed === PARSE_FAILED) return false;
       Object.keys(completionState).forEach((k) => delete completionState[k]);
-      Object.assign(completionState, parsed);
+      Object.assign(completionState, parsed as Record<string, CompletionEntry>);
     }
 
     const rawLogs = localStorage.getItem("exerciseLogs");
     if (rawLogs && isEncrypted(rawLogs)) {
       const dec = await decryptData(rawLogs, passphrase);
       if (dec === null) return false;
-      const parsed = safeJSONParse(dec, {}) as Record<string, LogEntry[]>;
-      if (parsed === null) return false;
+      const parsed = safeJSONParse(dec, PARSE_FAILED);
+      if (parsed === PARSE_FAILED) return false;
       Object.keys(exerciseLogs).forEach((k) => delete exerciseLogs[k]);
-      Object.assign(exerciseLogs, parsed);
+      Object.assign(exerciseLogs, parsed as Record<string, LogEntry[]>);
     }
 
     const rawBw = localStorage.getItem("bodyWeightHistory");
     if (rawBw && isEncrypted(rawBw)) {
       const dec = await decryptData(rawBw, passphrase);
       if (dec === null) return false;
-      const parsed = safeJSONParse(dec, []) as BodyWeightEntry[];
-      if (parsed === null) return false;
+      const parsed = safeJSONParse(dec, PARSE_FAILED);
+      if (parsed === PARSE_FAILED) return false;
       bodyWeightHistory.length = 0;
-      bodyWeightHistory.push(...parsed);
+      bodyWeightHistory.push(...(parsed as BodyWeightEntry[]));
     }
 
     const rawCe = localStorage.getItem("customExercises");
     if (rawCe && isEncrypted(rawCe)) {
       const dec = await decryptData(rawCe, passphrase);
       if (dec === null) return false;
-      const parsed = safeJSONParse(dec, []) as Exercise[];
-      if (parsed === null) return false;
+      const parsed = safeJSONParse(dec, PARSE_FAILED);
+      if (parsed === PARSE_FAILED) return false;
       customExercises.length = 0;
-      customExercises.push(...parsed);
+      customExercises.push(...(parsed as Exercise[]));
     }
 
     const rawWp = localStorage.getItem("workoutPlans");
     if (rawWp && isEncrypted(rawWp)) {
       const dec = await decryptData(rawWp, passphrase);
       if (dec === null) return false;
-      const parsed = safeJSONParse(dec, []) as WorkoutPlan[];
-      if (parsed === null) return false;
+      const parsed = safeJSONParse(dec, PARSE_FAILED);
+      if (parsed === PARSE_FAILED) return false;
       workoutPlans.length = 0;
-      workoutPlans.push(...parsed);
+      workoutPlans.push(...(parsed as WorkoutPlan[]));
     }
 
     const rawArchive = localStorage.getItem("completionArchive");
     if (rawArchive && isEncrypted(rawArchive)) {
       const dec = await decryptData(rawArchive, passphrase);
       if (dec === null) return false;
-      const parsed = safeJSONParse(dec, {}) as Record<
-        string,
-        Record<string, CompletionEntry>
-      >;
-      if (parsed === null) return false;
-      setArchive(parsed);
+      const parsed = safeJSONParse(dec, PARSE_FAILED);
+      if (parsed === PARSE_FAILED) return false;
+      setArchive(parsed as Record<string, Record<string, CompletionEntry>>);
     }
 
     const rawWater = localStorage.getItem("gym_water_logs");
     if (rawWater && isEncrypted(rawWater)) {
       const dec = await decryptData(rawWater, passphrase);
       if (dec === null) return false;
-      waterLogs = safeJSONParse(dec, {}) as Record<string, number>;
+      const parsed = safeJSONParse(dec, PARSE_FAILED);
+      if (parsed === PARSE_FAILED) return false;
+      waterLogs = parsed as Record<string, number>;
     }
 
     const rawCal = localStorage.getItem("gym_calorie_calculator_params");
     if (rawCal && isEncrypted(rawCal)) {
       const dec = await decryptData(rawCal, passphrase);
       if (dec === null) return false;
-      calorieParams = safeJSONParse(dec, null) as Record<
-        string,
-        unknown
-      > | null;
+      const parsed = safeJSONParse(dec, PARSE_FAILED);
+      if (parsed === PARSE_FAILED) return false;
+      calorieParams = parsed as Record<string, unknown> | null;
     }
 
     return true;
@@ -612,7 +637,7 @@ function pruneOldLogs(maxAgeDays = 365): void {
   });
   if (pruned > 0) {
     saveState();
-    console.log(`Pruned ${pruned} old log entries`);
+    showToast(t('toast.logs_pruned', String(pruned)), "info", 8000);
   }
 }
 
@@ -648,4 +673,5 @@ export {
   decryptLocalData,
   loadEncryptedOnStartup,
   isEncrypted,
+  flushStorageQueue,
 };

@@ -302,12 +302,18 @@ function filterSelect(selectId: string, query: string): void {
   const select = document.getElementById(selectId) as HTMLSelectElement;
   if (!select) return;
   const q = query.toLowerCase().trim();
-  for (let i = 0; i < select.options.length; i++) {
-    const opt = select.options[i];
-    if (!opt.value) continue;
-    opt.style.display =
-      !q || opt.text.toLowerCase().includes(q) ? "" : "none";
-  }
+
+  // Hiding <option> via style.display is not reliable across browsers;
+  // rebuild the select from the stored options list instead.
+  const allOptions = Array.from(select.options).filter((o) => o.value);
+  const placeholder = select.options[0]?.value === "" ? select.options[0] : null;
+
+  select.innerHTML = "";
+  if (placeholder) select.appendChild(placeholder.cloneNode(true));
+
+  allOptions
+    .filter((o) => !q || o.text.toLowerCase().includes(q))
+    .forEach((o) => select.appendChild(o.cloneNode(true)));
 }
 
 function renderHistory(): void {
@@ -440,7 +446,14 @@ function bindEvents(): void {
       if (!wInput || !rInput) return;
       const w = parseFloat(wInput.value);
       const r = parseInt(rInput.value);
-      if (isNaN(w) || isNaN(r) || w <= 0 || r <= 0) return;
+      if (isNaN(w) || isNaN(r)) {
+        showToast(t('toast.enter_weight_reps'), "warning");
+        return;
+      }
+      if (w <= 0 || r <= 0) {
+        showToast(t('toast.weight_reps_positive'), "warning");
+        return;
+      }
 
       activeSets.push({ weight: w, reps: r });
       wInput.value = "";
@@ -459,6 +472,13 @@ function bindEvents(): void {
       const exerciseId = select?.value;
 
       if (!exerciseId || activeSets.length === 0) return;
+
+      const MAX_SETS_PER_EXERCISE = 10000;
+      const currentLength = exerciseLogs[exerciseId]?.length || 0;
+      if (currentLength + activeSets.length > MAX_SETS_PER_EXERCISE) {
+        showToast(t('toast.too_many_sets'), "error");
+        return;
+      }
 
       if (!exerciseLogs[exerciseId]) {
         exerciseLogs[exerciseId] = [];
